@@ -152,7 +152,7 @@ export function LeaveRequestsClient({
               <select
                 id="status-filter"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "approved" | "cancelled")}
                 style={{
                   background: "rgba(255, 255, 255, 0.08)",
                   color: "#f8fafc",

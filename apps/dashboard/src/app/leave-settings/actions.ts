@@ -52,7 +52,6 @@ export async function createLeaveType(formData: FormData) {
 
     // Automatically create/update leave balances for active employees for the current year
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
     const employees = await db.employee.findMany({ select: { id: true } });
 
     const accrued = defaultAllocation;
@@ -82,9 +81,10 @@ export async function createLeaveType(formData: FormData) {
     revalidatePath("/leave-settings");
     revalidatePath("/leave-requests");
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create leave type.";
     console.error("Failed to create leave type:", err);
-    return { error: err.message || "Failed to create leave type." };
+    return { error: message };
   }
 }
 
@@ -103,7 +103,8 @@ export async function toggleLeaveTypeStatus(id: string, isActive: boolean) {
     revalidatePath("/leave-settings");
     revalidatePath("/leave-requests");
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message || "Failed to update leave type status." };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to update leave type status.";
+    return { error: message };
   }
 }

@@ -91,7 +91,7 @@ export default async function MyAttendancePage(props: PageProps) {
   const now = new Date();
   let startDate: Date;
   let endDate: Date;
-  let bannerTitle = "Last Week's Attendance Summary";
+  let bannerTitle: string;
 
   if (range === "today") {
     startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);

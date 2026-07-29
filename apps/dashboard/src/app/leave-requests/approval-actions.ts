@@ -1,4 +1,3 @@
-"use me";
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -9,13 +8,24 @@ import { calculateAvailableBalance } from "@attendance/attendance-core";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
+interface LeaveReqForDeduction {
+  id: string;
+  employeeId: string;
+  leaveTypeId: string;
+  totalDays: number;
+  leaveType: {
+    isPaid: boolean;
+    defaultAllocation?: number;
+  };
+}
+
 async function applyLeaveBalanceDeduction(
-  leaveReq: any,
+  leaveReq: LeaveReqForDeduction,
   currentYear: number,
   overrideAllPaid: boolean
 ) {
-  let paidToDeduct = leaveReq.totalDays;
-  let unpaidToDeduct = 0;
+  let paidToDeduct: number;
+  let unpaidToDeduct: number;
 
   if (leaveReq.leaveType.isPaid) {
     if (overrideAllPaid) {
@@ -63,8 +73,8 @@ async function applyLeaveBalanceDeduction(
           employeeId: leaveReq.employeeId,
           year: currentYear,
           leaveTypeId: leaveReq.leaveTypeId,
-          allocated: leaveReq.leaveType.defaultAllocation,
-          accrued: leaveReq.leaveType.defaultAllocation,
+          allocated: leaveReq.leaveType.defaultAllocation ?? 0,
+          accrued: leaveReq.leaveType.defaultAllocation ?? 0,
           used: paidToDeduct,
           carriedOver: 0
         }
@@ -238,9 +248,10 @@ export async function approveLeaveRequestAction(requestId: string, overrideAllPa
     revalidatePath("/leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to approve leave request.";
     console.error("Approve leave request error:", err);
-    return { error: err.message || "Failed to approve leave request." };
+    return { error: message };
   }
 }
 
@@ -282,7 +293,8 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
     revalidatePath("/leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message || "Failed to reject leave request." };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to reject leave request.";
+    return { error: message };
   }
 }

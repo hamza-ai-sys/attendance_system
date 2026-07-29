@@ -69,10 +69,10 @@ export default async function LeaveRequestsPage() {
   const formattedBalances: LeaveBalanceItem[] = [];
   for (const lt of activeLeaveTypes) {
     const existing = rawBalances.find((b) => b.leaveTypeId === lt.id);
-    let accrued = lt.defaultAllocation;
-    let used = existing ? existing.used : 0;
-    let carriedOver = existing ? existing.carriedOver : 0;
-    let allocated = existing ? existing.allocated : lt.defaultAllocation;
+    const accrued = lt.defaultAllocation;
+    const used = existing ? existing.used : 0;
+    const carriedOver = existing ? existing.carriedOver : 0;
+    const allocated = existing ? existing.allocated : lt.defaultAllocation;
 
     if (!existing) {
       await db.leaveBalance.create({

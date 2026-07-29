@@ -302,7 +302,6 @@ async function main() {
     }
 
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
     const allEmps = [owner, hr, manager, employee];
 
     for (const emp of allEmps) {

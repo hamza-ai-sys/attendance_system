@@ -72,8 +72,8 @@ export async function submitLeaveRequest(formData: FormData) {
   });
 
   // Calculate estimated paid vs unpaid split at submission
-  let estPaidDays = totalWorkingDays;
-  let estUnpaidDays = 0;
+  let estPaidDays: number;
+  let estUnpaidDays: number;
 
   if (leaveType.isPaid) {
     const available = balance ? calculateAvailableBalance(balance.accrued, balance.carriedOver, balance.used) : 0;
@@ -151,9 +151,10 @@ export async function submitLeaveRequest(formData: FormData) {
     revalidatePath("/my-attendance");
     revalidatePath("/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to submit leave request.";
     console.error("Leave request submission error:", err);
-    return { error: err.message || "Failed to submit leave request." };
+    return { error: message };
   }
 }
 
@@ -181,7 +182,8 @@ export async function cancelLeaveRequest(requestId: string) {
     revalidatePath("/leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message || "Failed to cancel leave request." };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to cancel leave request.";
+    return { error: message };
   }
 }
