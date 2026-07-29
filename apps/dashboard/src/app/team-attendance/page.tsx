@@ -3,6 +3,7 @@ import { hasPermission } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
+import { evaluateShiftAttendance } from "@attendance/attendance-core";
 import { logout } from "../login/actions";
 
 export const dynamic = "force-dynamic";
@@ -122,18 +123,23 @@ export default async function TeamAttendancePage() {
 
     if (scanCount > 0) {
       const firstScan = empScans[0]!;
+      const lastScan = empScans[scanCount - 1]!;
       firstInStr = formatTime(firstScan.serverReceivedAt);
       
       if (scanCount > 1) {
-        const lastScan = empScans[scanCount - 1]!;
         lastOutStr = formatTime(lastScan.serverReceivedAt);
       }
 
-      // Check if late (e.g. first scan after 9:00 AM)
-      const firstScanHour = firstScan.serverReceivedAt.getHours();
-      const firstScanMinute = firstScan.serverReceivedAt.getMinutes();
+      const evalRes = evaluateShiftAttendance({
+        firstScanTime: firstScan.serverReceivedAt,
+        lastScanTime: scanCount > 1 ? lastScan.serverReceivedAt : firstScan.serverReceivedAt,
+        shiftInTime: emp.shiftInTime,
+        shiftOutTime: emp.shiftOutTime,
+        graceMinutes: 20,
+        halfDayThresholdHours: 3
+      });
 
-      if (firstScanHour > 9 || (firstScanHour === 9 && firstScanMinute > 15)) {
+      if (evalRes.status === "HALF_DAY") {
         status = "LATE";
         lateCount++;
         presentCount++;

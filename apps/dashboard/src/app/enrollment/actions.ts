@@ -26,6 +26,8 @@ export async function createEmployee(prevState: EnrollmentState, formData: FormD
   const password = formData.get("password") as string;
   const roleId = formData.get("roleId") as string;
   const managerId = formData.get("managerId") as string;
+  const shiftInTime = (formData.get("shiftInTime") as string)?.trim() || "09:00";
+  const shiftOutTime = (formData.get("shiftOutTime") as string)?.trim() || "17:00";
   const timezone = (formData.get("timezone") as string)?.trim() || "Asia/Karachi";
 
   if (!fullName) {
@@ -76,6 +78,8 @@ export async function createEmployee(prevState: EnrollmentState, formData: FormD
       passwordHash,
       roleId: roleId || null,
       managerId: managerId || null,
+      shiftInTime,
+      shiftOutTime,
       timezone,
       status: "ACTIVE"
     }

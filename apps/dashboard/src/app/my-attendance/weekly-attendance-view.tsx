@@ -15,8 +15,11 @@ export interface WeekdayData {
   dateStr: string;
   fullDate: Date;
   scans: DisplayScan[];
-  status?: "PRESENT" | "LATE" | "ABSENT" | "HOLIDAY" | "WEEKEND";
+  status?: "PRESENT" | "HALF_DAY" | "LATE" | "ABSENT" | "HOLIDAY" | "WEEKEND" | "APPROVED_LEAVE" | "PENDING_LEAVE";
   holidayName?: string;
+  leaveTypeName?: string;
+  attendanceValue?: number;
+  evaluationReason?: string;
 }
 
 interface WeeklyAttendanceViewProps {
@@ -52,8 +55,8 @@ export function WeeklyAttendanceView({ weekdays }: WeeklyAttendanceViewProps) {
         <table className="attendance-table">
           <thead>
             <tr>
-              {weekdays.map((day) => (
-                <th key={day.dayName}>
+              {weekdays.map((day, idx) => (
+                <th key={`${day.dayName}-${day.dateStr}-${idx}`}>
                   <span className="weekday-name">{day.dayName}</span>
                   <span className="weekday-date">{day.dateStr}</span>
                 </th>
@@ -62,8 +65,8 @@ export function WeeklyAttendanceView({ weekdays }: WeeklyAttendanceViewProps) {
           </thead>
           <tbody>
             <tr>
-              {weekdays.map((day) => (
-                <td key={day.dayName}>
+              {weekdays.map((day, idx) => (
+                <td key={`${day.dayName}-${day.dateStr}-${idx}`}>
                   {day.scans.length > 0 ? (
                     <div className="scans-container">
                       {day.scans.map((scan) => {
@@ -95,9 +98,56 @@ export function WeeklyAttendanceView({ weekdays }: WeeklyAttendanceViewProps) {
                           </div>
                         );
                       })}
+                      {day.status === "HALF_DAY" && (
+                        <div style={{ marginTop: "6px" }}>
+                          <span
+                            style={{
+                              background: "rgba(251, 191, 36, 0.15)",
+                              color: "#fbbf24",
+                              border: "1px solid rgba(251, 191, 36, 0.3)",
+                              padding: "4px 10px",
+                              borderRadius: "12px",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              display: "inline-block"
+                            }}
+                            title={day.evaluationReason}
+                          >
+                            🌗 Half Leave (0.5)
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{ padding: "8px 0" }}>
+                      {day.status === "APPROVED_LEAVE" && (
+                        <span style={{
+                          background: "rgba(74, 222, 128, 0.15)",
+                          color: "#4ade80",
+                          border: "1px solid rgba(74, 222, 128, 0.3)",
+                          padding: "6px 12px",
+                          borderRadius: "12px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          display: "inline-block"
+                        }}>
+                          🌴 Approved Leave ({day.leaveTypeName || "Leave"})
+                        </span>
+                      )}
+                      {day.status === "PENDING_LEAVE" && (
+                        <span style={{
+                          background: "rgba(251, 191, 36, 0.15)",
+                          color: "#fbbf24",
+                          border: "1px solid rgba(251, 191, 36, 0.3)",
+                          padding: "6px 12px",
+                          borderRadius: "12px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          display: "inline-block"
+                        }}>
+                          ⏳ Pending Leave ({day.leaveTypeName || "Leave"})
+                        </span>
+                      )}
                       {day.status === "HOLIDAY" && (
                         <span style={{
                           background: "rgba(192, 132, 252, 0.15)",

@@ -19,6 +19,10 @@ export async function submitManualRequest(prevState: RequestState, formData: For
     return { error: "Unauthorized: Please log in to submit requests." };
   }
 
+  if (user.roleName === "owner") {
+    return { error: "Company Owners cannot submit manual attendance requests." };
+  }
+
   const punchType = formData.get("punchType") as string;
   const dateStr = formData.get("date") as string;
   const timeStr = formData.get("time") as string;

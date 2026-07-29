@@ -12,6 +12,8 @@ const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
   { name: "My attendance", permission: "my_attendance", description: "View and manage your own daily attendance logs.", href: "/my-attendance" },
+  { name: "Apply for Leave", permission: "my_attendance", description: "Submit leave applications, track leave balances, and view approval status.", href: "/leave-requests" },
+  { name: "Leave", permission: "reports", description: "Configure HR leave categories, quotas, and monthly/annual accrual rules.", href: "/leave-settings" },
   { name: "List all employees", permission: "enrollment", description: "View the complete list of all registered employees and staff details.", href: "/employees" },
   { name: "Team attendance", permission: "team_attendance", description: "Monitor the attendance status of your entire team.", href: "/team-attendance" },
   { name: "Manual requests", permission: "manual_reports", description: "Submit manual requests for missing punches or time-off.", href: "/manual-requests" },
@@ -33,6 +35,12 @@ export default async function Home() {
 
   // Filter modules based on user role permissions & role fallback
   const allowedModules = allModules.filter(m => {
+    if (roleName === "owner") {
+      // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
+      if (m.href === "/leave-requests" || m.href === "/manual-requests" || m.href === "/my-attendance") {
+        return false;
+      }
+    }
     if (m.permission === "approvals") {
       return hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
     }
@@ -45,17 +53,29 @@ export default async function Home() {
 
   if (canApprove) {
     if (roleName === "manager") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_MANAGER" }
+      const attCount = await db.manualAttendanceRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
-    } else if (roleName === "hr") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_HR" }
+      const leaveCount = await db.leaveRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
+      pendingApprovalsCount = attCount + leaveCount;
     } else {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
+      const attCount = await db.manualAttendanceRequest.count({
         where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
       });
+      const leaveCount = await db.leaveRequest.count({
+        where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
+      });
+      pendingApprovalsCount = attCount + leaveCount;
     }
   }
 
