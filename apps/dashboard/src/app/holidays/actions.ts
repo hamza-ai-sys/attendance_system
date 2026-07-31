@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission, hasAnyPermission } from "../../lib/rbac";
+import { hasAnyPermission } from "../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 

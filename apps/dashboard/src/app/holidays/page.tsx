@@ -1,5 +1,5 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission, hasAnyPermission } from "../../lib/rbac";
+import { hasAnyPermission } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
