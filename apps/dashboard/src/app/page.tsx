@@ -11,15 +11,71 @@ export const dynamic = "force-dynamic";
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
-  { name: "My attendance", permission: "my_attendance", description: "View and manage your own daily attendance logs.", href: "/my-attendance" },
-  { name: "List all employees", permission: "enrollment", description: "View the complete list of all registered employees and staff details.", href: "/employees" },
-  { name: "Team attendance", permission: "team_attendance", description: "Monitor the attendance status of your entire team.", href: "/team-attendance" },
-  { name: "Manual requests", permission: "manual_reports", description: "Submit manual requests for missing punches or time-off.", href: "/manual-requests" },
-  { name: "Approvals", permission: "approvals", description: "Review and approve pending requests from employees.", href: "/approvals" },
-  { name: "Enrollment", permission: "enrollment", description: "Enroll new employees and manage access credentials.", href: "/enrollment" },
-  { name: "Reports", permission: "reports", description: "Generate detailed attendance reports for payroll and compliance." },
-  { name: "Workdays & Holidays", permission: "reports", description: "Configure weekly off-days and manage official company holidays.", href: "/holidays" },
-  { name: "Company Attendance", permission: "company_attendance", description: "Executive organization attendance metrics and real-time punch feeds.", href: "/company-attendance" }
+  {
+    name: "My attendance",
+    permission: "my_attendance",
+    description: "View and manage your own daily attendance logs.",
+    href: "/my-attendance"
+  },
+  {
+    name: "Apply for Leave",
+    permission: "my_attendance",
+    description: "Submit leave applications, track leave balances, and view approval status.",
+    href: "/leave-requests"
+  },
+  {
+    name: "Leave",
+    permission: "reports",
+    description: "Configure HR leave categories, quotas, and monthly/annual accrual rules.",
+    href: "/leave-settings"
+  },
+  {
+    name: "List all employees",
+    permission: "enrollment",
+    description: "View the complete list of all registered employees and staff details.",
+    href: "/employees"
+  },
+  {
+    name: "Team attendance",
+    permission: "team_attendance",
+    description: "Monitor the attendance status of your entire team.",
+    href: "/team-attendance"
+  },
+  {
+    name: "Manual requests",
+    permission: "manual_reports",
+    description: "Submit manual requests for missing punches or time-off.",
+    href: "/manual-requests"
+  },
+  {
+    name: "Approvals",
+    permission: "approvals",
+    description: "Review and approve pending requests from employees.",
+    href: "/approvals"
+  },
+  {
+    name: "Enrollment",
+    permission: "enrollment",
+    description: "Enroll new employees and manage access credentials.",
+    href: "/enrollment"
+  },
+  {
+    name: "Reports",
+    permission: "reports",
+    description: "Generate detailed attendance reports for payroll and compliance."
+  },
+  {
+    name: "Workdays & Holidays",
+    permission: "reports",
+    description: "Configure weekly off-days and manage official company holidays.",
+    href: "/holidays"
+  },
+  {
+    name: "Company Attendance",
+    permission: "company_attendance",
+    description: "Executive organization attendance metrics and real-time punch feeds.",
+    href: "/company-attendance"
+  }
 ];
 
 export default async function Home() {
@@ -32,30 +88,55 @@ export default async function Home() {
   const roleName = user.roleName?.toLowerCase() || "";
 
   // Filter modules based on user role permissions & role fallback
-  const allowedModules = allModules.filter(m => {
+  const allowedModules = allModules.filter((m) => {
+    if (roleName === "owner") {
+      // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
+      if (
+        m.href === "/leave-requests" ||
+        m.href === "/manual-requests" ||
+        m.href === "/my-attendance"
+      ) {
+        return false;
+      }
+    }
     if (m.permission === "approvals") {
-      return hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+      return (
+        hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
+      );
     }
     return hasPermission(user, m.permission);
   });
 
   // Query live pending approvals count for users with approval privileges
   let pendingApprovalsCount = 0;
-  const canApprove = hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+  const canApprove =
+    hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
 
   if (canApprove) {
     if (roleName === "manager") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_MANAGER" }
+      const attCount = await db.manualAttendanceRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
-    } else if (roleName === "hr") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_HR" }
+      const leaveCount = await db.leaveRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
+      pendingApprovalsCount = attCount + leaveCount;
     } else {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
+      const attCount = await db.manualAttendanceRequest.count({
         where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
       });
+      const leaveCount = await db.leaveRequest.count({
+        where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
+      });
+      pendingApprovalsCount = attCount + leaveCount;
     }
   }
 
@@ -68,9 +149,16 @@ export default async function Home() {
             Welcome back, <strong>{user.fullName}</strong> ({user.roleName})
           </p>
         </div>
-        <form action={logout}>
-          <button type="submit" className="logout-btn">Sign Out</button>
-        </form>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <Link href={"/personal-records" as Route} className="back-link" style={{ textDecoration: "none" }}>
+            👤 My Profile
+          </Link>
+          <form action={logout}>
+            <button type="submit" className="logout-btn">
+              Sign Out
+            </button>
+          </form>
+        </div>
       </header>
 
       <section className="panel-grid" aria-label="Dashboard modules">
@@ -82,18 +170,26 @@ export default async function Home() {
 
           const content = (
             <article className="panel" key={module.name}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start"
+                }}
+              >
                 <h2>{module.name}</h2>
                 {isApprovals && pendingApprovalsCount > 0 && (
-                  <span style={{
-                    background: "rgba(251, 191, 36, 0.2)",
-                    color: "#fbbf24",
-                    border: "1px solid rgba(251, 191, 36, 0.4)",
-                    padding: "4px 10px",
-                    borderRadius: "12px",
-                    fontSize: "0.8rem",
-                    fontWeight: 600
-                  }}>
+                  <span
+                    style={{
+                      background: "rgba(251, 191, 36, 0.2)",
+                      color: "#fbbf24",
+                      border: "1px solid rgba(251, 191, 36, 0.4)",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600
+                    }}
+                  >
                     {pendingApprovalsCount} Pending
                   </span>
                 )}

@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { approveRequest, rejectRequest, type RequestState } from "../manual-requests/actions";
+import { approveLeaveRequestAction, rejectLeaveRequestAction } from "../leave-requests/approval-actions";
 
-export function ApprovalActionsClient({
+export function LeaveApprovalActionsClient({
   requestId,
   status,
-  isSelfRequest = false
+  isSelfRequest = false,
+  hasExcessUnpaid = false
 }: {
   requestId: string;
   status: string;
   isSelfRequest?: boolean;
+  hasExcessUnpaid?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<RequestState | null>(null);
+  const [feedback, setFeedback] = useState<{ error?: string; success?: boolean } | null>(null);
 
   if (isSelfRequest) {
     return (
@@ -23,12 +25,16 @@ export function ApprovalActionsClient({
     );
   }
 
-  const handleApprove = async () => {
+  const handleApprove = async (overrideAllPaid: boolean = false) => {
     setLoading(true);
     setFeedback(null);
     try {
-      const res = await approveRequest(requestId);
-      setFeedback(res);
+      const res = await approveLeaveRequestAction(requestId, overrideAllPaid);
+      if (res?.error) {
+        setFeedback({ error: res.error });
+      } else {
+        setFeedback({ success: true });
+      }
     } catch (err) {
       setFeedback({ error: err instanceof Error ? err.message : "Approval failed" });
     } finally {
@@ -40,8 +46,12 @@ export function ApprovalActionsClient({
     setLoading(true);
     setFeedback(null);
     try {
-      const res = await rejectRequest(requestId);
-      setFeedback(res);
+      const res = await rejectLeaveRequestAction(requestId);
+      if (res?.error) {
+        setFeedback({ error: res.error });
+      } else {
+        setFeedback({ success: true });
+      }
     } catch (err) {
       setFeedback({ error: err instanceof Error ? err.message : "Rejection failed" });
     } finally {
@@ -58,12 +68,12 @@ export function ApprovalActionsClient({
       )}
       {feedback?.success && (
         <span style={{ color: "#4ade80", fontSize: "0.8rem", fontWeight: 500 }}>
-          ✅ {feedback.success}
+          ✅ Processed
         </span>
       )}
 
-      {status !== "APPROVED" && status !== "REJECTED" && (
-        <div style={{ display: "flex", gap: "8px" }}>
+      {status !== "APPROVED" && status !== "REJECTED" && status !== "CANCELLED" && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button
             type="button"
             disabled={loading}
@@ -81,12 +91,13 @@ export function ApprovalActionsClient({
           >
             Reject
           </button>
+
           <button
             type="button"
             disabled={loading}
-            onClick={handleApprove}
+            onClick={() => handleApprove(false)}
             style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+              background: "linear-gradient(135deg, #10b981, #059669)",
               color: "#fff",
               border: "none",
               padding: "6px 16px",
@@ -96,8 +107,29 @@ export function ApprovalActionsClient({
               cursor: loading ? "not-allowed" : "pointer"
             }}
           >
-            Approve
+            Approve Leave
           </button>
+
+          {hasExcessUnpaid && (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleApprove(true)}
+              title="HR Override: Approve the entire duration as fully Paid Leave"
+              style={{
+                background: "rgba(96, 165, 250, 0.15)",
+                color: "#60a5fa",
+                border: "1px solid rgba(96, 165, 250, 0.3)",
+                padding: "6px 14px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                cursor: loading ? "not-allowed" : "pointer"
+              }}
+            >
+              Approve All as Paid
+            </button>
+          )}
         </div>
       )}
     </div>

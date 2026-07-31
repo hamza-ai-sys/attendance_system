@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasPermission, hasAnyPermission, hasAllPermissions } from "./rbac";
+import { hasPermission, hasAnyPermission, hasAllPermissions, getPendingHRStatusText } from "./rbac";
 import type { SessionUser } from "./session";
 
 const mockUser: SessionUser = {
@@ -25,10 +25,38 @@ describe("rbac", () => {
     });
 
     it("verifies owner and hr have company_attendance permission whereas manager and employee do not", () => {
-      const ownerUser: SessionUser = { ...mockUser, roleName: "owner", permissions: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance"] };
-      const hrUser: SessionUser = { ...mockUser, roleName: "hr", permissions: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance"] };
-      const managerUser: SessionUser = { ...mockUser, roleName: "manager", permissions: ["my_attendance", "manual_reports", "team_attendance", "approvals"] };
-      const employeeUser: SessionUser = { ...mockUser, roleName: "employee", permissions: ["my_attendance", "manual_reports"] };
+      const ownerUser: SessionUser = {
+        ...mockUser,
+        roleName: "owner",
+        permissions: [
+          "my_attendance",
+          "manual_reports",
+          "enrollment",
+          "reports",
+          "company_attendance"
+        ]
+      };
+      const hrUser: SessionUser = {
+        ...mockUser,
+        roleName: "hr",
+        permissions: [
+          "my_attendance",
+          "manual_reports",
+          "enrollment",
+          "reports",
+          "company_attendance"
+        ]
+      };
+      const managerUser: SessionUser = {
+        ...mockUser,
+        roleName: "manager",
+        permissions: ["my_attendance", "manual_reports", "team_attendance", "approvals"]
+      };
+      const employeeUser: SessionUser = {
+        ...mockUser,
+        roleName: "employee",
+        permissions: ["my_attendance", "manual_reports"]
+      };
 
       expect(hasPermission(ownerUser, "company_attendance")).toBe(true);
       expect(hasPermission(hrUser, "company_attendance")).toBe(true);
@@ -62,6 +90,47 @@ describe("rbac", () => {
 
     it("returns false if user is missing one of the permissions", () => {
       expect(hasAllPermissions(mockUser, ["team_attendance", "reports"])).toBe(false);
+    });
+  });
+
+  describe("owner overrides", () => {
+    const ownerUser: SessionUser = {
+      email: "owner@test.com",
+      fullName: "Owner User",
+      employeeId: "emp-owner",
+      roleName: "owner",
+      permissions: []
+    };
+
+    it("restricts owner from tracking personal attendance", () => {
+      expect(hasPermission(ownerUser, "my_attendance")).toBe(false);
+    });
+
+    it("restricts owner from submitting manual requests", () => {
+      expect(hasPermission(ownerUser, "manual_reports")).toBe(false);
+    });
+
+    it("grants owner all other permissions automatically", () => {
+      expect(hasPermission(ownerUser, "team_attendance")).toBe(true);
+      expect(hasPermission(ownerUser, "company_attendance")).toBe(true);
+      expect(hasPermission(ownerUser, "approvals")).toBe(true);
+      expect(hasPermission(ownerUser, "enrollment")).toBe(true);
+      expect(hasPermission(ownerUser, "reports")).toBe(true);
+    });
+  });
+
+  describe("getPendingHRStatusText", () => {
+    it("returns correct status text for attendance requests", () => {
+      expect(getPendingHRStatusText("employee", "hr")).toBe("Pending Owner Approval");
+      expect(getPendingHRStatusText("owner", "employee")).toBe("Pending Owner Approval");
+      expect(getPendingHRStatusText("hr", "employee")).toBe("Stage 2: Awaiting HR Approval");
+      expect(getPendingHRStatusText("manager", "employee")).toBe("Stage 2: Awaiting HR Approval");
+    });
+
+    it("returns correct status text for leave requests", () => {
+      expect(getPendingHRStatusText("hr", "employee", true)).toBe("Pending Owner Approval");
+      expect(getPendingHRStatusText("owner", "employee", true)).toBe("Pending Owner Approval");
+      expect(getPendingHRStatusText("employee", "employee", true)).toBe("Pending HR Approval");
     });
   });
 });

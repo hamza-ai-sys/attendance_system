@@ -6,6 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AccrualFrequency {
+  MONTHLY
+  ANNUALLY
+}
+
+enum LeaveRequestStatus {
+  PENDING_MANAGER
+  PENDING_HR
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum EmployeeStatus {
   ACTIVE
   INACTIVE
@@ -93,9 +106,19 @@ model Employee {
   status               EmployeeStatus            @default(ACTIVE)
   managerId            String?
   roleId               String?
-  timezone             String                    @default("Asia/Karachi")
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
+  shiftInTime          String?                   @default("09:00")
+  shiftOutTime         String?                   @default("17:00")
+  timezone              String                    @default("Asia/Karachi")
+  phone                 String?
+  dateOfBirth           String?
+  gender                String?
+  maritalStatus         String?
+  currentAddress        String?
+  permanentAddress      String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
   role                 Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
   manager              Employee?                 @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
   directReports        Employee[]                @relation("EmployeeManager")
@@ -110,6 +133,9 @@ model Employee {
   reportExports        ReportExport[]
   scanEvents           ScanEvent[]
   shiftAssignments     EmployeeShiftAssignment[]
+  leaveRequests        LeaveRequest[]            @relation("LeaveRequestEmployee")
+  leaveApprovalSteps   LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
+  leaveBalances        LeaveBalance[]
 
   @@index([managerId])
 }
@@ -347,3 +373,79 @@ model CompanySetting {
   value     Json
   updatedAt DateTime @updatedAt
 }
+
+model LeaveTypeConfig {
+  id                  String           @id @default(cuid())
+  code                String           @unique
+  name                String
+  description         String?
+  accrualFrequency    AccrualFrequency @default(ANNUALLY)
+  defaultAllocation   Float            @default(0)
+  allowCarryForward   Boolean          @default(false)
+  maxCarryForwardDays Float            @default(0)
+  isPaid              Boolean          @default(true)
+  isActive            Boolean          @default(true)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  leaveRequests       LeaveRequest[]
+  leaveBalances       LeaveBalance[]
+}
+
+model LeaveRequest {
+  id              String              @id @default(cuid())
+  employeeId      String
+  leaveTypeId     String
+  startDate       DateTime
+  endDate         DateTime
+  totalDays       Float
+  paidDays        Float?              @default(0)
+  unpaidDays      Float?              @default(0)
+  reason          String
+  status          LeaveRequestStatus  @default(PENDING_MANAGER)
+  rejectionReason String?
+  appliedAt       DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  employee        Employee            @relation("LeaveRequestEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType       LeaveTypeConfig     @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
+  approvalSteps   LeaveApprovalStep[]
+
+  @@index([employeeId, createdAt])
+  @@index([status, createdAt])
+}
+
+model LeaveApprovalStep {
+  id                 String         @id @default(cuid())
+  leaveRequestId     String
+  sequence           Int
+  approverEmployeeId String
+  approverKind       ApproverKind
+  status             ApprovalStatus @default(PENDING)
+  comment            String?
+  decidedAt          DateTime?
+  createdAt          DateTime       @default(now())
+  approver           Employee       @relation("LeaveApprovalStepApprover", fields: [approverEmployeeId], references: [id], onDelete: Cascade)
+  leaveRequest       LeaveRequest   @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([leaveRequestId, sequence])
+  @@index([approverEmployeeId, status])
+}
+
+model LeaveBalance {
+  id          String          @id @default(cuid())
+  employeeId  String
+  year        Int
+  leaveTypeId String
+  allocated   Float           @default(0)
+  accrued     Float           @default(0)
+  used        Float           @default(0)
+  carriedOver Float           @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  employee    Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType   LeaveTypeConfig @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, year, leaveTypeId])
+  @@index([employeeId, year])
+}
+
