@@ -63,22 +63,33 @@ export default async function MyAttendancePage(props: PageProps) {
     redirect("/login");
   }
 
-  if (user.roleName === "owner" || !hasPermission(user, "my_attendance")) {
+  if (!hasPermission(user, "my_attendance")) {
     return (
       <main className="app-shell">
         <header className="topbar">
           <div>
-            <Link href="/" className="back-link">← Back to Dashboard</Link>
+            <Link href="/" className="back-link">
+              ← Back to Dashboard
+            </Link>
             <h1 style={{ color: "#ef4444", background: "none" }}>Access Restricted</h1>
           </div>
           <form action={logout}>
-            <button type="submit" className="logout-btn">Sign Out</button>
+            <button type="submit" className="logout-btn">
+              Sign Out
+            </button>
           </form>
         </header>
-        <div className="panel" style={{ cursor: "default", borderLeft: "4px solid #ef4444", padding: "24px" }}>
+        <div
+          className="panel"
+          style={{ cursor: "default", borderLeft: "4px solid #ef4444", padding: "24px" }}
+        >
           <h2>Owner Notice</h2>
           <p className="muted" style={{ marginTop: "8px" }}>
-            Company Owners do not track personal attendance logs. Use <Link href="/company-attendance" style={{ color: "#60a5fa" }}>Company Attendance</Link> to view organization metrics.
+            Company Owners do not track personal attendance logs. Use{" "}
+            <Link href="/company-attendance" style={{ color: "#60a5fa" }}>
+              Company Attendance
+            </Link>{" "}
+            to view organization metrics.
           </p>
         </div>
       </main>
@@ -140,7 +151,9 @@ export default async function MyAttendancePage(props: PageProps) {
   const offDaysSetting = await db.companySetting.findUnique({
     where: { key: "weekly_off_days" }
   });
-  const offDaysArray: number[] = Array.isArray(offDaysSetting?.value) ? (offDaysSetting.value as number[]) : [0];
+  const offDaysArray: number[] = Array.isArray(offDaysSetting?.value)
+    ? (offDaysSetting.value as number[])
+    : [0];
 
   // 2. Fetch holidays during the selected period
   const holidays = await db.holiday.findMany({
@@ -218,9 +231,10 @@ export default async function MyAttendancePage(props: PageProps) {
     // Determine shift attendance status & value
     if (weekdays[i]!.scans.length > 0) {
       const firstScan = rawDayScans[0] ? new Date(rawDayScans[0].serverReceivedAt) : null;
-      const lastScan = rawDayScans.length > 0
-        ? new Date(rawDayScans[rawDayScans.length - 1]!.serverReceivedAt)
-        : firstScan;
+      const lastScan =
+        rawDayScans.length > 0
+          ? new Date(rawDayScans[rawDayScans.length - 1]!.serverReceivedAt)
+          : firstScan;
 
       const evalResult = evaluateShiftAttendance({
         firstScanTime: firstScan,
@@ -246,7 +260,8 @@ export default async function MyAttendancePage(props: PageProps) {
       });
 
       if (matchingLeave) {
-        weekdays[i]!.status = matchingLeave.status === "APPROVED" ? "APPROVED_LEAVE" : "PENDING_LEAVE";
+        weekdays[i]!.status =
+          matchingLeave.status === "APPROVED" ? "APPROVED_LEAVE" : "PENDING_LEAVE";
         weekdays[i]!.leaveTypeName = matchingLeave.leaveType.name;
       } else {
         // Check Holiday exemption
@@ -285,7 +300,11 @@ export default async function MyAttendancePage(props: PageProps) {
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
           <MyAttendanceRangeFilter currentRange={range} />
-          <Link href={"/leave-requests" as Route} className="back-link" style={{ textDecoration: "none" }}>
+          <Link
+            href={"/leave-requests" as Route}
+            className="back-link"
+            style={{ textDecoration: "none" }}
+          >
             🌴 Leave Portal
           </Link>
           <Link href="/" className="back-link">
@@ -308,9 +327,7 @@ export default async function MyAttendancePage(props: PageProps) {
       <section className="banner">
         <div className="banner-info">
           <span className="banner-title">{bannerTitle}</span>
-          <span className="banner-dates">
-            {formatDateRangeStr(startDate, endDate)}
-          </span>
+          <span className="banner-dates">{formatDateRangeStr(startDate, endDate)}</span>
         </div>
       </section>
 
@@ -322,7 +339,9 @@ export default async function MyAttendancePage(props: PageProps) {
         </div>
         <div className="stat-card">
           <span className="stat-label">Days Present</span>
-          <span className="stat-value">{daysPresent} / {weekdays.length}</span>
+          <span className="stat-value">
+            {daysPresent} / {weekdays.length}
+          </span>
         </div>
         <div className="stat-card">
           <span className="stat-label">Avg Scans / Active Day</span>

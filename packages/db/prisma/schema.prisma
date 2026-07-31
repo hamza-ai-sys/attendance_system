@@ -108,9 +108,17 @@ model Employee {
   roleId               String?
   shiftInTime          String?                   @default("09:00")
   shiftOutTime         String?                   @default("17:00")
-  timezone             String                    @default("Asia/Karachi")
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
+  timezone              String                    @default("Asia/Karachi")
+  phone                 String?
+  dateOfBirth           String?
+  gender                String?
+  maritalStatus         String?
+  currentAddress        String?
+  permanentAddress      String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
   role                 Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
   manager              Employee?                 @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
   directReports        Employee[]                @relation("EmployeeManager")

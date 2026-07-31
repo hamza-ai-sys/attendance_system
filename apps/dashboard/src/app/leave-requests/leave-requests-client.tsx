@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitLeaveRequest, cancelLeaveRequest } from "./actions";
+import { getPendingHRStatusText } from "../../lib/rbac";
 
 export interface LeaveBalanceItem {
   id: string;
@@ -52,7 +53,9 @@ export function LeaveRequestsClient({
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "cancelled">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "cancelled">(
+    "all"
+  );
 
   // Form state for live preview
   const [selectedTypeId, setSelectedTypeId] = useState(activeTypes[0]?.id || "");
@@ -103,56 +106,97 @@ export function LeaveRequestsClient({
       {/* 1. Leave Balances Summary Cards */}
       {balances.length === 0 ? (
         <div className="panel" style={{ cursor: "default", padding: "20px" }}>
-          <p className="muted">No active leave categories defined yet. HR can define custom leave structures in HR Leave Settings.</p>
+          <p className="muted">
+            No active leave categories defined yet. HR can define custom leave structures in HR
+            Leave Settings.
+          </p>
         </div>
       ) : (
-        <section className="stats-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+        <section
+          className="stats-grid"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
+        >
           {balances.map((b) => (
-          <div key={b.id} className="stat-card" style={{ cursor: "default", position: "relative" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="stat-label">{b.leaveTypeName}</span>
-              <span style={{
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                padding: "2px 6px",
-                borderRadius: "4px",
-                background: b.isPaid ? "rgba(96, 165, 250, 0.15)" : "rgba(248, 113, 113, 0.15)",
-                color: b.isPaid ? "#60a5fa" : "#f87171"
-              }}>
-                {b.isPaid ? "Paid" : "Unpaid"}
-              </span>
+            <div
+              key={b.id}
+              className="stat-card"
+              style={{ cursor: "default", position: "relative" }}
+            >
+              <div
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              >
+                <span className="stat-label">{b.leaveTypeName}</span>
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    background: b.isPaid ? "rgba(96, 165, 250, 0.15)" : "rgba(248, 113, 113, 0.15)",
+                    color: b.isPaid ? "#60a5fa" : "#f87171"
+                  }}
+                >
+                  {b.isPaid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "8px", margin: "8px 0" }}>
+                <span className="stat-value" style={{ color: "#4ade80", fontSize: "2rem" }}>
+                  {b.isPaid ? b.available.toFixed(1) : "∞"}
+                </span>
+                <span className="muted" style={{ fontSize: "0.85rem" }}>
+                  days available
+                </span>
+              </div>
+              <div
+                className="muted"
+                style={{
+                  fontSize: "0.8rem",
+                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  paddingTop: "8px"
+                }}
+              >
+                Accrued YTD: <strong>{b.accrued.toFixed(1)}</strong> | Used:{" "}
+                <strong>{b.used}</strong> | Carried: <strong>{b.carriedOver}</strong>
+              </div>
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", margin: "8px 0" }}>
-              <span className="stat-value" style={{ color: "#4ade80", fontSize: "2rem" }}>
-                {b.isPaid ? b.available.toFixed(1) : "∞"}
-              </span>
-              <span className="muted" style={{ fontSize: "0.85rem" }}>days available</span>
-            </div>
-            <div className="muted" style={{ fontSize: "0.8rem", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "8px" }}>
-              Accrued YTD: <strong>{b.accrued.toFixed(1)}</strong> | Used: <strong>{b.used}</strong> | Carried: <strong>{b.carriedOver}</strong>
-            </div>
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
       )}
 
       {/* 2. Header Action & My Requests Table */}
       <section className="panel" style={{ cursor: "default" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+            flexWrap: "wrap",
+            gap: "12px"
+          }}
+        >
           <div>
             <h2>My Leave Applications ({filteredRequests.length})</h2>
-            <p className="muted">Track your submitted time-off applications and approval stage status.</p>
+            <p className="muted">
+              Track your submitted time-off applications and approval stage status.
+            </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             {/* Status Filter Dropdown */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <label htmlFor="status-filter" className="muted" style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+              <label
+                htmlFor="status-filter"
+                className="muted"
+                style={{ fontSize: "0.85rem", fontWeight: 500 }}
+              >
                 Status:
               </label>
               <select
                 id="status-filter"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "approved" | "cancelled")}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as "all" | "pending" | "approved" | "cancelled")
+                }
                 style={{
                   background: "rgba(255, 255, 255, 0.08)",
                   color: "#f8fafc",
@@ -167,16 +211,27 @@ export function LeaveRequestsClient({
                   WebkitBackdropFilter: "blur(12px)"
                 }}
               >
-                <option value="all" style={{ background: "#1e1b4b", color: "#fff" }}>All ({myRequests.length})</option>
-                <option value="pending" style={{ background: "#1e1b4b", color: "#fff" }}>Pending Approval</option>
-                <option value="approved" style={{ background: "#1e1b4b", color: "#fff" }}>Approved</option>
-                <option value="cancelled" style={{ background: "#1e1b4b", color: "#fff" }}>Cancelled / Rejected</option>
+                <option value="all" style={{ background: "#1e1b4b", color: "#fff" }}>
+                  All ({myRequests.length})
+                </option>
+                <option value="pending" style={{ background: "#1e1b4b", color: "#fff" }}>
+                  Pending Approval
+                </option>
+                <option value="approved" style={{ background: "#1e1b4b", color: "#fff" }}>
+                  Approved
+                </option>
+                <option value="cancelled" style={{ background: "#1e1b4b", color: "#fff" }}>
+                  Cancelled / Rejected
+                </option>
               </select>
             </div>
 
             <button
               type="button"
-              onClick={() => { setErrorMsg(null); setShowModal(true); }}
+              onClick={() => {
+                setErrorMsg(null);
+                setShowModal(true);
+              }}
               style={{
                 background: "linear-gradient(135deg, #10b981, #059669)",
                 color: "#ffffff",
@@ -193,14 +248,25 @@ export function LeaveRequestsClient({
         </div>
 
         {myRequests.length === 0 ? (
-          <p className="muted" style={{ padding: "20px 0" }}>You have not submitted any leave requests yet.</p>
+          <p className="muted" style={{ padding: "20px 0" }}>
+            You have not submitted any leave requests yet.
+          </p>
         ) : filteredRequests.length === 0 ? (
-          <p className="muted" style={{ padding: "20px 0" }}>No leave requests found matching the selected status filter.</p>
+          <p className="muted" style={{ padding: "20px 0" }}>
+            No leave requests found matching the selected status filter.
+          </p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--muted)", fontSize: "0.85rem", textTransform: "uppercase" }}>
+                <tr
+                  style={{
+                    borderBottom: "1px solid var(--border)",
+                    color: "var(--muted)",
+                    fontSize: "0.85rem",
+                    textTransform: "uppercase"
+                  }}
+                >
                   <th style={{ padding: "12px 16px" }}>Leave Category</th>
                   <th style={{ padding: "12px 16px" }}>Date Range</th>
                   <th style={{ padding: "12px 16px" }}>Total Working Days</th>
@@ -212,9 +278,7 @@ export function LeaveRequestsClient({
               <tbody>
                 {filteredRequests.map((req) => (
                   <tr key={req.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <td style={{ padding: "14px 16px", fontWeight: 600 }}>
-                      {req.leaveTypeName}
-                    </td>
+                    <td style={{ padding: "14px 16px", fontWeight: 600 }}>{req.leaveTypeName}</td>
 
                     <td style={{ padding: "14px 16px" }}>
                       <span style={{ color: "#60a5fa", fontWeight: 600 }}>
@@ -223,14 +287,30 @@ export function LeaveRequestsClient({
                     </td>
 
                     <td style={{ padding: "14px 16px" }}>
-                      <div style={{ fontWeight: 600 }}>{req.totalDays} {req.totalDays === 1 ? "day" : "days"}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {req.totalDays} {req.totalDays === 1 ? "day" : "days"}
+                      </div>
                       {req.status === "APPROVED" && (req.unpaidDays ?? 0) > 0 && (
-                        <div style={{ color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, marginTop: "2px" }}>
+                        <div
+                          style={{
+                            color: "#fbbf24",
+                            fontSize: "0.78rem",
+                            fontWeight: 600,
+                            marginTop: "2px"
+                          }}
+                        >
                           ({req.paidDays} Paid / {req.unpaidDays} Unpaid LOP)
                         </div>
                       )}
                       {req.status === "APPROVED" && (req.unpaidDays ?? 0) === 0 && (
-                        <div style={{ color: "#4ade80", fontSize: "0.78rem", fontWeight: 600, marginTop: "2px" }}>
+                        <div
+                          style={{
+                            color: "#4ade80",
+                            fontSize: "0.78rem",
+                            fontWeight: 600,
+                            marginTop: "2px"
+                          }}
+                        >
                           (Fully Paid Leave)
                         </div>
                       )}
@@ -247,64 +327,75 @@ export function LeaveRequestsClient({
 
                     <td style={{ padding: "14px 16px" }}>
                       {req.status === "PENDING_MANAGER" && (
-                        <span style={{
-                          background: "rgba(251, 191, 36, 0.15)",
-                          color: "#fbbf24",
-                          border: "1px solid rgba(251, 191, 36, 0.3)",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.8rem",
-                          fontWeight: 600
-                        }}>
+                        <span
+                          style={{
+                            background: "rgba(251, 191, 36, 0.15)",
+                            color: "#fbbf24",
+                            border: "1px solid rgba(251, 191, 36, 0.3)",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}
+                        >
                           Pending Manager
                         </span>
                       )}
                       {req.status === "PENDING_HR" && (
-                        <span style={{
-                          background: "rgba(192, 132, 252, 0.15)",
-                          color: "#c084fc",
-                          border: "1px solid rgba(192, 132, 252, 0.3)",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.8rem",
-                          fontWeight: 600
-                        }}>
-                          {userRole === "hr" || userRole === "owner" ? "Pending Owner Approval" : "Pending HR Approval"}
+                        <span
+                          style={{
+                            background: "rgba(192, 132, 252, 0.15)",
+                            color: "#c084fc",
+                            border: "1px solid rgba(192, 132, 252, 0.3)",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}
+                        >
+                          {getPendingHRStatusText(userRole, userRole, true)}
                         </span>
                       )}
                       {req.status === "APPROVED" && (
-                        <span style={{
-                          background: "rgba(74, 222, 128, 0.15)",
-                          color: "#4ade80",
-                          border: "1px solid rgba(74, 222, 128, 0.3)",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.8rem",
-                          fontWeight: 600
-                        }}>
+                        <span
+                          style={{
+                            background: "rgba(74, 222, 128, 0.15)",
+                            color: "#4ade80",
+                            border: "1px solid rgba(74, 222, 128, 0.3)",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}
+                        >
                           Approved
                         </span>
                       )}
                       {req.status === "REJECTED" && (
-                        <span style={{
-                          background: "rgba(248, 113, 113, 0.15)",
-                          color: "#f87171",
-                          border: "1px solid rgba(248, 113, 113, 0.3)",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.8rem",
-                          fontWeight: 600
-                        }}>
+                        <span
+                          style={{
+                            background: "rgba(248, 113, 113, 0.15)",
+                            color: "#f87171",
+                            border: "1px solid rgba(248, 113, 113, 0.3)",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600
+                          }}
+                        >
                           Rejected
                         </span>
                       )}
                       {req.status === "CANCELLED" && (
-                        <span className="muted" style={{
-                          background: "rgba(255, 255, 255, 0.05)",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "0.8rem"
-                        }}>
+                        <span
+                          className="muted"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.05)",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "0.8rem"
+                          }}
+                        >
                           Cancelled
                         </span>
                       )}
@@ -339,43 +430,61 @@ export function LeaveRequestsClient({
 
       {/* 3. Leave Request Submission Modal */}
       {showModal && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.6)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 100
-        }}>
-          <div style={{
-            background: "var(--panel-bg, #1e293b)",
-            border: "1px solid var(--border, #334155)",
-            borderRadius: "12px",
-            padding: "28px",
-            maxWidth: "500px",
-            width: "100%",
-            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.5)"
-          }}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100
+          }}
+        >
+          <div
+            style={{
+              background: "var(--panel-bg, #1e293b)",
+              border: "1px solid var(--border, #334155)",
+              borderRadius: "12px",
+              padding: "28px",
+              maxWidth: "500px",
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.5)"
+            }}
+          >
             <h3 style={{ margin: "0 0 16px 0", fontSize: "1.3rem" }}>Submit Leave Application</h3>
 
             {errorMsg && (
-              <div style={{
-                background: "rgba(239,68,68,0.15)",
-                color: "#ef4444",
-                border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "6px",
-                padding: "10px 14px",
-                marginBottom: "16px",
-                fontSize: "0.85rem"
-              }}>
+              <div
+                style={{
+                  background: "rgba(239,68,68,0.15)",
+                  color: "#ef4444",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: "6px",
+                  padding: "10px 14px",
+                  marginBottom: "16px",
+                  fontSize: "0.85rem"
+                }}
+              >
                 {errorMsg}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+            >
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "4px", color: "var(--muted)" }}>Leave Category *</label>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    marginBottom: "4px",
+                    color: "var(--muted)"
+                  }}
+                >
+                  Leave Category *
+                </label>
                 <select
                   name="leaveTypeId"
                   value={selectedTypeId}
@@ -397,7 +506,10 @@ export function LeaveRequestsClient({
                   ))}
                 </select>
                 {selectedBalance && selectedBalance.isPaid && (
-                  <span className="muted" style={{ fontSize: "0.8rem", marginTop: "4px", display: "block" }}>
+                  <span
+                    className="muted"
+                    style={{ fontSize: "0.8rem", marginTop: "4px", display: "block" }}
+                  >
                     Available balance: <strong>{selectedBalance.available.toFixed(1)} days</strong>
                   </span>
                 )}
@@ -405,7 +517,16 @@ export function LeaveRequestsClient({
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "4px", color: "var(--muted)" }}>Start Date *</label>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.85rem",
+                      marginBottom: "4px",
+                      color: "var(--muted)"
+                    }}
+                  >
+                    Start Date *
+                  </label>
                   <input
                     type="date"
                     name="startDate"
@@ -424,7 +545,16 @@ export function LeaveRequestsClient({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "4px", color: "var(--muted)" }}>End Date *</label>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.85rem",
+                      marginBottom: "4px",
+                      color: "var(--muted)"
+                    }}
+                  >
+                    End Date *
+                  </label>
                   <input
                     type="date"
                     name="endDate"
@@ -444,20 +574,34 @@ export function LeaveRequestsClient({
               </div>
 
               {selectedBalance?.isPaid && startDate && endDate && (
-                <div style={{
-                  background: "rgba(96, 165, 250, 0.1)",
-                  border: "1px solid rgba(96, 165, 250, 0.25)",
-                  color: "#93c5fd",
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  fontSize: "0.82rem"
-                }}>
-                  ℹ️ <strong>Notice:</strong> If your requested duration exceeds your available paid balance ({selectedBalance.available.toFixed(1)} days), the remaining excess days will automatically be submitted for HR review as Unpaid Leave (Loss of Pay), or HR can choose to approve all days as Paid.
+                <div
+                  style={{
+                    background: "rgba(96, 165, 250, 0.1)",
+                    border: "1px solid rgba(96, 165, 250, 0.25)",
+                    color: "#93c5fd",
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    fontSize: "0.82rem"
+                  }}
+                >
+                  ℹ️ <strong>Notice:</strong> If your requested duration exceeds your available paid
+                  balance ({selectedBalance.available.toFixed(1)} days), the remaining excess days
+                  will automatically be submitted for HR review as Unpaid Leave (Loss of Pay), or HR
+                  can choose to approve all days as Paid.
                 </div>
               )}
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "4px", color: "var(--muted)" }}>Reason *</label>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    marginBottom: "4px",
+                    color: "var(--muted)"
+                  }}
+                >
+                  Reason *
+                </label>
                 <textarea
                   name="reason"
                   required
@@ -475,7 +619,14 @@ export function LeaveRequestsClient({
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "16px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  justifyContent: "flex-end",
+                  marginTop: "16px"
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
