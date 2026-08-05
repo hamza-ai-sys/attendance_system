@@ -11,15 +11,72 @@ export const dynamic = "force-dynamic";
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
-  { name: "My attendance", permission: "my_attendance", description: "View and manage your own daily attendance logs.", href: "/my-attendance" },
-  { name: "List all employees", permission: "enrollment", description: "View the complete list of all registered employees and staff details.", href: "/employees" },
-  { name: "Team attendance", permission: "team_attendance", description: "Monitor the attendance status of your entire team.", href: "/team-attendance" },
-  { name: "Manual requests", permission: "manual_reports", description: "Submit manual requests for missing punches or time-off.", href: "/manual-requests" },
-  { name: "Approvals", permission: "approvals", description: "Review and approve pending requests from employees.", href: "/approvals" },
-  { name: "Enrollment", permission: "enrollment", description: "Enroll new employees and manage access credentials.", href: "/enrollment" },
-  { name: "Reports", permission: "reports", description: "Generate detailed attendance reports for payroll and compliance." },
-  { name: "Workdays & Holidays", permission: "reports", description: "Configure weekly off-days and manage official company holidays.", href: "/holidays" },
-  { name: "Company Attendance", permission: "company_attendance", description: "Executive organization attendance metrics and real-time punch feeds.", href: "/company-attendance" }
+  {
+    name: "My attendance",
+    permission: "my_attendance",
+    description: "View and manage your own daily attendance logs.",
+    href: "/my-attendance"
+  },
+  {
+    name: "List all employees",
+    permission: "enrollment",
+    description: "View the complete list of all registered employees and staff details.",
+    href: "/employees"
+  },
+  {
+    name: "Team attendance",
+    permission: "team_attendance",
+    description: "Monitor the attendance status of your entire team.",
+    href: "/team-attendance"
+  },
+  {
+    name: "Manual requests",
+    permission: "manual_reports",
+    description: "Submit manual requests for missing punches or time-off.",
+    href: "/manual-requests"
+  },
+  {
+    name: "Approvals",
+    permission: "approvals",
+    description: "Review and approve pending requests from employees.",
+    href: "/approvals"
+  },
+  {
+    name: "Enrollment",
+    permission: "enrollment",
+    description: "Enroll new employees and manage access credentials.",
+    href: "/enrollment"
+  },
+  {
+    name: "Reports",
+    permission: "reports",
+    description: "Generate detailed attendance reports for payroll and compliance."
+  },
+  {
+    name: "Workdays & Holidays",
+    permission: "reports",
+    description: "Configure weekly off-days and manage official company holidays.",
+    href: "/holidays"
+  },
+  {
+    name: "Company Attendance",
+    permission: "company_attendance",
+    description: "Executive organization attendance metrics and real-time punch feeds.",
+    href: "/company-attendance"
+  },
+  {
+    name: "Jobs",
+    permission: "my_attendance",
+    description: "Browse open positions, apply, and (for HR) manage job postings.",
+    href: "/jobs"
+  },
+
+  {
+    name: "Announcements",
+    permission: "my_attendance",
+    description: "Company-wide notices and policy updates from HR.",
+    href: "/announcements"
+  }
 ];
 
 export default async function Home() {
@@ -31,17 +88,23 @@ export default async function Home() {
 
   const roleName = user.roleName?.toLowerCase() || "";
 
-  // Filter modules based on user role permissions & role fallback
-  const allowedModules = allModules.filter(m => {
+  // Filter modules based on user role permissions & role fallback (Jobs is visible to everyone)
+  const allowedModules = allModules.filter((m) => {
+    if (m.name === "Jobs" || m.name === "Announcements") {
+      return true;
+    }
     if (m.permission === "approvals") {
-      return hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+      return (
+        hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
+      );
     }
     return hasPermission(user, m.permission);
   });
 
   // Query live pending approvals count for users with approval privileges
   let pendingApprovalsCount = 0;
-  const canApprove = hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+  const canApprove =
+    hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
 
   if (canApprove) {
     if (roleName === "manager") {
@@ -58,6 +121,14 @@ export default async function Home() {
       });
     }
   }
+  const currentEmployee = await db.employee.findUnique({
+    where: { id: user.employeeId },
+    select: { lastAnnouncementsViewedAt: true }
+  });
+
+  const unreadAnnouncementsCount = await db.announcement.count({
+    where: { createdAt: { gt: currentEmployee?.lastAnnouncementsViewedAt ?? new Date(0) } }
+  });
 
   return (
     <main className="app-shell">
@@ -69,7 +140,9 @@ export default async function Home() {
           </p>
         </div>
         <form action={logout}>
-          <button type="submit" className="logout-btn">Sign Out</button>
+          <button type="submit" className="logout-btn">
+            Sign Out
+          </button>
         </form>
       </header>
 
@@ -79,22 +152,46 @@ export default async function Home() {
         )}
         {allowedModules.map((module) => {
           const isApprovals = module.permission === "approvals";
+          const isAnnouncements = module.name === "Announcements";
 
           const content = (
             <article className="panel" key={module.name}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start"
+                }}
+              >
                 <h2>{module.name}</h2>
                 {isApprovals && pendingApprovalsCount > 0 && (
-                  <span style={{
-                    background: "rgba(251, 191, 36, 0.2)",
-                    color: "#fbbf24",
-                    border: "1px solid rgba(251, 191, 36, 0.4)",
-                    padding: "4px 10px",
-                    borderRadius: "12px",
-                    fontSize: "0.8rem",
-                    fontWeight: 600
-                  }}>
+                  <span
+                    style={{
+                      background: "rgba(251, 191, 36, 0.2)",
+                      color: "#fbbf24",
+                      border: "1px solid rgba(251, 191, 36, 0.4)",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600
+                    }}
+                  >
                     {pendingApprovalsCount} Pending
+                  </span>
+                )}
+                {isAnnouncements && unreadAnnouncementsCount > 0 && (
+                  <span
+                    style={{
+                      background: "rgba(96, 165, 250, 0.2)",
+                      color: "#60a5fa",
+                      border: "1px solid rgba(96, 165, 250, 0.4)",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600
+                    }}
+                  >
+                    {unreadAnnouncementsCount} New
                   </span>
                 )}
               </div>

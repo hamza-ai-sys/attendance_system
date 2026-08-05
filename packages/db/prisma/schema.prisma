@@ -84,6 +84,19 @@ enum ReportExportStatus {
   FAILED
 }
 
+enum JobPostingStatus {
+  OPEN
+  CLOSED
+}
+
+enum JobApplicationStatus {
+  SUBMITTED
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
 model Employee {
   id                   String                    @id @default(cuid())
   email                String                    @unique
@@ -110,6 +123,9 @@ model Employee {
   reportExports        ReportExport[]
   scanEvents           ScanEvent[]
   shiftAssignments     EmployeeShiftAssignment[]
+  createdJobPostings   JobPosting[]              @relation("JobPostingCreatedBy")
+  createdAnnouncements Announcement[]            @relation("AnnouncementCreatedBy")
+  lastAnnouncementsViewedAt DateTime?
 
   @@index([managerId])
 }
@@ -346,4 +362,52 @@ model CompanySetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model JobPosting {
+  id             String            @id @default(cuid())
+  title          String
+  department     String?
+  location       String?
+  employmentType String?
+  description    String
+  status         JobPostingStatus  @default(OPEN)
+  createdById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      Employee          @relation("JobPostingCreatedBy", fields: [createdById], references: [id])
+  applications   JobApplication[]
+
+  @@index([status, createdAt])
+  @@index([createdById])
+}
+
+model JobApplication {
+  id           String                @id @default(cuid())
+  jobPostingId String
+  fullName     String
+  phone        String
+  email        String
+  cvFileName   String
+  cvFileType   String
+  cvFileSize   Int
+  cvFileData   Bytes
+  status       JobApplicationStatus  @default(SUBMITTED)
+  createdAt    DateTime              @default(now())
+  jobPosting   JobPosting            @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+
+  @@index([jobPostingId, createdAt])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   Employee @relation("AnnouncementCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdAt])
+  @@index([createdById])
 }

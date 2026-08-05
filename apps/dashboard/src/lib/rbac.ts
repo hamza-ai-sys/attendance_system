@@ -1,13 +1,15 @@
 import type { SessionUser } from "./session";
 
-export type Permission = 
+export type Permission =
   | "my_attendance"
   | "manual_reports"
   | "team_attendance"
   | "approvals"
   | "enrollment"
   | "reports"
-  | "company_attendance";
+  | "company_attendance"
+  | "jobs_manage"
+  | "announcements_manage";
 
 export function hasPermission(user: SessionUser | null, permission: Permission): boolean {
   if (!user) return false;
