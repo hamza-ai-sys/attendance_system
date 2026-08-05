@@ -35,10 +35,10 @@ From the repo root:
 
 ```bash
 pnpm install
-cp .env.example .env
-cp apps/dashboard/.env.example apps/dashboard/.env
-cp apps/device-gateway/.env.example apps/device-gateway/.env
-pnpm docker:db:up
+cp .env.dev.example .env
+cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
+pnpm docker:dev:db:up
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
@@ -55,12 +55,26 @@ Default local URLs:
 
 ## Development Workflows
 
+The Compose files are independent so environment-specific defaults and data cannot leak
+between them:
+
+| File                      | Purpose                                      | Data lifecycle                 |
+| ------------------------- | -------------------------------------------- | ------------------------------ |
+| `docker-compose.dev.yml`  | Local PostgreSQL or the complete local stack | Persistent development volume  |
+| `docker-compose.e2e.yml`  | PostgreSQL for host-run Playwright tests     | Temporary in-memory filesystem |
+| `docker-compose.prod.yml` | Complete VPS production stack                | Persistent production volume   |
+
+The E2E file intentionally contains only PostgreSQL. The E2E runner starts the dashboard
+directly from the working tree so tests avoid rebuilding a Docker image after every source
+change. Development and production contain the complete service set because they support
+running the deployed application topology.
+
 ### Recommended: Database In Docker, Apps Local
 
 Use this for daily feature development:
 
 ```bash
-pnpm docker:db:up
+pnpm docker:dev:db:up
 pnpm dev
 ```
 
@@ -75,11 +89,16 @@ Why this workflow:
 
 Use this when checking container behavior:
 
+The application containers use their built production start commands so this workflow
+matches deployment behavior; it is not a hot-reload workflow. “Development” here refers to
+the local credentials, ports, and database volume.
+
 ```bash
-pnpm docker:up
+pnpm docker:dev:db:up
 pnpm db:migrate
 pnpm db:seed
-pnpm docker:logs
+pnpm docker:dev:up
+pnpm docker:dev:logs
 ```
 
 Do not run `pnpm dev` while the full Docker stack is up unless you stop the app containers
@@ -89,7 +108,7 @@ or change ports. The Docker stack already starts `dashboard`, `device-gateway`, 
 Stop Docker services with:
 
 ```bash
-pnpm docker:down
+pnpm docker:dev:down
 ```
 
 ## Common Commands
@@ -100,10 +119,10 @@ pnpm docker:down
 | `pnpm dev:dashboard`        | Run only the dashboard.                                       |
 | `pnpm dev:device-gateway`   | Run only the device gateway.                                  |
 | `pnpm dev:worker`           | Run only the worker.                                          |
-| `pnpm docker:db:up`         | Start only PostgreSQL in Docker.                              |
-| `pnpm docker:up`            | Start PostgreSQL and all app services in Docker.              |
-| `pnpm docker:logs`          | Follow Docker logs.                                           |
-| `pnpm docker:down`          | Stop the local Docker stack.                                  |
+| `pnpm docker:dev:db:up`     | Start only development PostgreSQL in Docker.                  |
+| `pnpm docker:dev:up`        | Start PostgreSQL and all app services for local development.  |
+| `pnpm docker:dev:logs`      | Follow development container logs.                            |
+| `pnpm docker:dev:down`      | Stop the local development stack.                             |
 | `pnpm db:clear`             | Delete all development data while preserving the schema.      |
 | `pnpm db:migrate`           | Create/apply local Prisma migrations.                         |
 | `pnpm db:migrate:deploy`    | Apply committed migrations in production/shared environments. |
@@ -177,12 +196,12 @@ pnpm firmware:build
 
 ## Environment Files
 
-Use `.env.example` for local development:
+Use the `.env.dev.example` templates for local development:
 
 ```bash
-cp .env.example .env
-cp apps/dashboard/.env.example apps/dashboard/.env
-cp apps/device-gateway/.env.example apps/device-gateway/.env
+cp .env.dev.example .env
+cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
 ```
 
 Rules:
@@ -193,8 +212,8 @@ Rules:
 - Do not create package-level `.env` files.
 - Runtime packages receive configuration from their importing app. Prisma CLI configuration
   and the seed script may load the root `.env` because they are executable tooling.
-- Never commit `.env`, `.env.production`, firmware `config.h`, database dumps, or real keys.
-- `.env.production.example` is only a template for VPS deployment.
+- Never commit `.env`, `.env.prod`, firmware `config.h`, database dumps, or real keys.
+- `.env.prod.example` is only a template for VPS deployment.
 - The bundled seed is development-only and must not be run in production.
 
 Important shared local env values:
@@ -414,9 +433,9 @@ Add code to a shared package only when at least two apps need it.
 
 ## Troubleshooting
 
-### `docker:up` does not return
+### `docker:dev:up` does not return
 
-`pnpm docker:up` should run in detached mode. If a raw `docker compose up` command is used,
+`pnpm docker:dev:up` should run in detached mode. If a raw `docker compose up` command is used,
 it will stay open and stream logs. Use another terminal or stop it with `Ctrl+C`.
 
 ### Port already in use
@@ -424,10 +443,10 @@ it will stay open and stream logs. Use another terminal or stop it with `Ctrl+C`
 You may be running both workflows at once. Stop Docker services:
 
 ```bash
-pnpm docker:down
+pnpm docker:dev:down
 ```
 
-Then choose either `pnpm docker:db:up` plus `pnpm dev`, or `pnpm docker:up`.
+Then choose either `pnpm docker:dev:db:up` plus `pnpm dev`, or `pnpm docker:dev:up`.
 
 ### Docker daemon is not running
 
@@ -444,7 +463,7 @@ extension is showing stale errors.
 Create `.env` from the example file:
 
 ```bash
-cp .env.example .env
+cp .env.dev.example .env
 ```
 
 Then rerun the command from the repo root.

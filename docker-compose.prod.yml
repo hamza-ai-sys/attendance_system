@@ -1,22 +1,88 @@
+# Standalone production stack. It deliberately does not inherit development
+# defaults, credentials, or volumes.
 services:
   postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+    ports:
+      - "${POSTGRES_BIND:-127.0.0.1:5432}:5432"
+    volumes:
+      - postgres-data-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   device-gateway:
+    build:
+      context: .
+      dockerfile: apps/device-gateway/Dockerfile
+    init: true
+    restart: unless-stopped
     environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       DEVICE_SIGNATURE_MAX_AGE_SECONDS: ${DEVICE_SIGNATURE_MAX_AGE_SECONDS:-300}
       NODE_ENV: production
       PORT: 4001
+    ports:
+      - "${DEVICE_GATEWAY_BIND:-127.0.0.1:4001}:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:4001/healthz'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"'
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    init: true
+    restart: unless-stopped
     environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       NODE_ENV: production
       PORT: 3000
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+    ports:
+      - "${DASHBOARD_BIND:-127.0.0.1:3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:3000/healthz'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"'
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    init: true
+    restart: unless-stopped
     environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data-prod:
+    name: ${POSTGRES_VOLUME_NAME:?POSTGRES_VOLUME_NAME is required}

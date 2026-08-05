@@ -1,11 +1,15 @@
 import { spawn } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
 import process from "node:process";
 import { setTimeout } from "node:timers/promises";
+import { URL } from "node:url";
 
 const postgresPort = process.env.E2E_POSTGRES_PORT ?? "55432";
 const dashboardPort = process.env.E2E_DASHBOARD_PORT ?? "3100";
 const composeArgs = ["compose", "-f", "docker-compose.e2e.yml", "-p", "attendance-e2e"];
 const databaseUrl = `postgresql://attendance_e2e:attendance_e2e_password@127.0.0.1:${postgresPort}/attendance_e2e?schema=public`;
+const nextEnvPath = new URL("../apps/dashboard/next-env.d.ts", import.meta.url);
+const nextEnvBeforeTests = await readFile(nextEnvPath, "utf8");
 
 const e2eEnv = {
   ...process.env,
@@ -67,6 +71,21 @@ async function waitForDatabase() {
   }
 }
 
+async function restoreNextGeneratedTypesReference() {
+  const nextEnvAfterTests = await readFile(nextEnvPath, "utf8");
+  const expectedDevelopmentContents = nextEnvBeforeTests.replace(
+    'import "./.next/types/routes.d.ts";',
+    'import "./.next/dev/types/routes.d.ts";'
+  );
+
+  if (
+    nextEnvAfterTests !== nextEnvBeforeTests &&
+    nextEnvAfterTests === expectedDevelopmentContents
+  ) {
+    await writeFile(nextEnvPath, nextEnvBeforeTests);
+  }
+}
+
 let databaseStarted = false;
 
 try {
@@ -78,7 +97,11 @@ try {
   await run("pnpm", ["--filter", "@attendance/db", "seed:e2e"]);
   await run("pnpm", ["exec", "playwright", "test", "--config", "e2e/playwright.config.ts"]);
 } finally {
-  if (databaseStarted) {
-    await run("docker", [...composeArgs, "down", "--volumes", "--remove-orphans"]);
+  try {
+    if (databaseStarted) {
+      await run("docker", [...composeArgs, "down", "--volumes", "--remove-orphans"]);
+    }
+  } finally {
+    await restoreNextGeneratedTypesReference();
   }
 }

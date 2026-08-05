@@ -29,7 +29,7 @@ function getRequiredEnv(name: "DATABASE_URL" | "DEV_DEVICE_SECRET") {
 
   if (!value) {
     throw new Error(
-      `${name} is required to seed the database. Create .env from .env.example or set ${name}.`
+      `${name} is required to seed the database. Create .env from .env.dev.example or set ${name}.`
     );
   }
 

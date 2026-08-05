@@ -19,10 +19,10 @@ See `docs/development/getting-started.md` for the full development guide.
 
 ```bash
 pnpm install
-cp .env.example .env
-cp apps/dashboard/.env.example apps/dashboard/.env
-cp apps/device-gateway/.env.example apps/device-gateway/.env
-pnpm docker:db:up
+cp .env.dev.example .env
+cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
+pnpm docker:dev:db:up
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
@@ -35,12 +35,13 @@ contains only settings owned by that app, such as its port.
 ## Run The Whole Stack In Docker
 
 ```bash
-pnpm docker:up
+pnpm docker:dev:db:up
 pnpm db:migrate
 pnpm db:seed
+pnpm docker:dev:up
 ```
 
-When using `pnpm docker:up`, do not also run `pnpm dev` unless you stop the app containers
+When using `pnpm docker:dev:up`, do not also run `pnpm dev` unless you stop the app containers
 or change ports. The Docker stack already starts `dashboard`, `device-gateway`, and
 `worker`.
 
@@ -55,8 +56,8 @@ pnpm test
 pnpm build
 pnpm format
 pnpm db:studio
-pnpm docker:db:up
-pnpm docker:logs
+pnpm docker:dev:db:up
+pnpm docker:dev:logs
 pnpm docker:prod:config
 pnpm firmware:build
 pnpm firmware:test
@@ -65,14 +66,15 @@ pnpm firmware:monitor
 pnpm firmware:clean
 ```
 
-`pnpm docker:up` starts all Docker services in detached mode. Use `pnpm docker:logs` to
-watch container output, and `pnpm docker:down` to stop the local stack.
+`pnpm docker:dev:up` starts all development Docker services in detached mode. Use
+`pnpm docker:dev:logs` to watch container output, and `pnpm docker:dev:down` to stop the
+local stack.
 
 ## Deployment
 
 The production target is Docker Compose on an Ubuntu VPS behind nginx.
 
-- Use `.env.production.example` as the template for `.env.production`.
+- Use `.env.prod.example` as the template for `.env.prod`.
 - Validate production Compose with `pnpm docker:prod:config`.
 - Apply database migrations with `pnpm db:migrate:deploy`.
 - Use `infra/nginx/attendance.conf` as the nginx starting point.

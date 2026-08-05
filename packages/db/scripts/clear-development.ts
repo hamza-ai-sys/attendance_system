@@ -17,7 +17,7 @@ function getDatabaseUrl() {
 
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is required to clear the database. Create .env from .env.example or set DATABASE_URL."
+      "DATABASE_URL is required to clear the database. Create .env from .env.dev.example or set DATABASE_URL."
     );
   }
 
