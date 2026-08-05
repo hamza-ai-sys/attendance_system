@@ -10,7 +10,7 @@
     { "directory": "packages/db", "changeProcessCWD": true },
     { "directory": "packages/shared", "changeProcessCWD": true }
   ],
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
   }
