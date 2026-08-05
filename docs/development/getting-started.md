@@ -112,6 +112,8 @@ pnpm docker:down
 | `pnpm lint`                 | Run ESLint through Turbo.                                     |
 | `pnpm typecheck`            | Run TypeScript checks through Turbo.                          |
 | `pnpm test`                 | Run all TypeScript tests and generate coverage.               |
+| `pnpm e2e`                  | Run dashboard E2E tests with a fresh isolated database.       |
+| `pnpm e2e:install`          | Install the Chromium browser used by Playwright.              |
 | `pnpm build`                | Build all packages/apps.                                      |
 | `pnpm format`               | Format the repo with Prettier.                                |
 | `pnpm firmware:build`       | Build the ESP32 firmware.                                     |
@@ -139,6 +141,27 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+```
+
+## Dashboard E2E Tests
+
+Install the Playwright browser once, then run the E2E suite:
+
+```bash
+pnpm e2e:install
+pnpm e2e
+```
+
+The E2E runner starts PostgreSQL from `docker-compose.e2e.yml` on port `55432`, applies
+committed migrations, loads the deterministic E2E seed, starts the dashboard on port
+`3100`, and runs Playwright. It removes the container and its temporary database when the
+suite finishes, including after test failures. The normal development database and its
+named volume are not used or modified.
+
+Override the default ports when they are already occupied:
+
+```bash
+E2E_POSTGRES_PORT=55433 E2E_DASHBOARD_PORT=3101 pnpm e2e
 ```
 
 `pnpm test` prints a consolidated coverage summary and writes the browsable HTML report to
@@ -197,6 +220,12 @@ Prisma configuration lives at:
 ```text
 packages/db/prisma.config.ts
 ```
+
+Executable database data scripts live under `packages/db/scripts`:
+
+- `seed-development.ts` creates development accounts, sample attendance data, and Shaheer's scans.
+- `seed-e2e.ts` creates the minimal deterministic fixtures used by Playwright.
+- `clear-development.ts` removes all application data while preserving the schema and migrations.
 
 This repo uses Prisma 7 style configuration:
 

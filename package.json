@@ -10,11 +10,11 @@
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean",
-    "db:clear": "pnpm --filter @attendance/db clear",
+    "db:clear": "pnpm --filter @attendance/db clear:dev",
     "db:generate": "pnpm --filter @attendance/db generate",
     "db:migrate": "pnpm --filter @attendance/db migrate:dev",
     "db:migrate:deploy": "pnpm --filter @attendance/db migrate:deploy",
-    "db:seed": "pnpm --filter @attendance/db seed",
+    "db:seed": "pnpm --filter @attendance/db seed:dev",
     "db:studio": "pnpm --filter @attendance/db studio",
     "dev": "turbo run dev --parallel",
     "dev:dashboard": "pnpm --filter @attendance/dashboard dev",
@@ -25,6 +25,8 @@
     "docker:logs": "docker compose logs -f",
     "docker:prod:config": "docker compose --env-file .env.production -f docker-compose.yml -f docker-compose.prod.yml config",
     "docker:up": "docker compose up -d --build",
+    "e2e": "node e2e/run.mjs",
+    "e2e:install": "playwright install chromium",
     "firmware:build": "pio run -d apps/firmware",
     "firmware:clean": "pio run -d apps/firmware -t clean",
     "firmware:intellisense": "pio run -d apps/firmware -t compiledb",
@@ -38,10 +40,11 @@
     "postinstall": "pnpm --filter @attendance/db generate",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck && tsc -p e2e/tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.7.0",

@@ -49,18 +49,45 @@ async function main() {
     // 1. Setup RBAC Roles and Permissions
     const rolesData = [
       { name: "employee", perms: ["my_attendance", "manual_reports"] },
-      { name: "manager", perms: ["my_attendance", "manual_reports", "team_attendance", "approvals"] },
-      { name: "hr", perms: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance", "approvals"] },
-      { name: "owner", perms: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance", "approvals"] }
+      {
+        name: "manager",
+        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals"]
+      },
+      {
+        name: "hr",
+        perms: [
+          "my_attendance",
+          "manual_reports",
+          "enrollment",
+          "reports",
+          "company_attendance",
+          "approvals"
+        ]
+      },
+      {
+        name: "owner",
+        perms: [
+          "my_attendance",
+          "manual_reports",
+          "enrollment",
+          "reports",
+          "company_attendance",
+          "approvals"
+        ]
+      }
     ];
 
-    for (const p of [...new Set(rolesData.flatMap(r => r.perms))]) {
+    for (const p of [...new Set(rolesData.flatMap((r) => r.perms))]) {
       await tx.permission.upsert({ create: { name: p }, update: {}, where: { name: p } });
     }
 
     const roles: Record<string, { id: string }> = {};
     for (const r of rolesData) {
-      roles[r.name] = await tx.role.upsert({ create: { name: r.name }, update: {}, where: { name: r.name } });
+      roles[r.name] = await tx.role.upsert({
+        create: { name: r.name },
+        update: {},
+        where: { name: r.name }
+      });
       for (const p of r.perms) {
         const perm = await tx.permission.findUnique({ where: { name: p } });
         if (perm) {
@@ -98,7 +125,7 @@ async function main() {
       update: {},
       where: { email: "hr@test.com" }
     });
-    
+
     const manager = await tx.employee.upsert({
       create: {
         email: "manager@test.com",
@@ -110,7 +137,7 @@ async function main() {
       update: {},
       where: { email: "manager@test.com" }
     });
-    
+
     const employee = await tx.employee.upsert({
       create: {
         email: "employee@test.com",
@@ -121,6 +148,22 @@ async function main() {
       },
       update: {},
       where: { email: "employee@test.com" }
+    });
+
+    const shaheer = await tx.employee.upsert({
+      create: {
+        email: "shaheer@test.com",
+        employeeCode: "EMP-07",
+        fullName: "Shaheer",
+        roleId: roles["employee"]!.id,
+        managerId: manager.id,
+        passwordHash: defaultPasswordHash,
+        shiftInTime: "09:00",
+        shiftOutTime: "18:00",
+        timezone: "Asia/Karachi"
+      },
+      update: {},
+      where: { email: "shaheer@test.com" }
     });
 
     // 3. Setup Dev Device
@@ -150,13 +193,24 @@ async function main() {
 
     const employeeSchedules = [
       {
+        emp: shaheer,
+        scannerTemplateId: 107,
+        schedule: [
+          { dayOffset: 0, times: ["08:55:00", "18:10:00"] },
+          { dayOffset: 1, times: ["09:02:00", "17:55:00"] },
+          { dayOffset: 2, times: ["08:58:00", "18:05:00"] },
+          { dayOffset: 3, times: ["08:55:00", "18:10:00"] },
+          { dayOffset: 4, times: ["09:18:00", "14:30:00"] }
+        ]
+      },
+      {
         emp: employee,
         schedule: [
           { dayOffset: 0, times: ["08:58:00", "13:05:00", "17:32:00"] }, // Monday
-          { dayOffset: 1, times: ["09:02:00", "17:15:00"] },             // Tuesday
+          { dayOffset: 1, times: ["09:02:00", "17:15:00"] }, // Tuesday
           { dayOffset: 2, times: ["08:55:00", "13:00:00", "17:45:00"] }, // Wednesday
-          { dayOffset: 3, times: ["09:10:00", "17:00:00"] },             // Thursday
-          { dayOffset: 4, times: ["08:50:00", "16:45:00"] }              // Friday
+          { dayOffset: 3, times: ["09:10:00", "17:00:00"] }, // Thursday
+          { dayOffset: 4, times: ["08:50:00", "16:45:00"] } // Friday
         ]
       },
       {
@@ -164,29 +218,29 @@ async function main() {
         schedule: [
           { dayOffset: 0, times: ["08:30:00", "13:15:00", "18:05:00"] }, // Monday
           { dayOffset: 1, times: ["08:42:00", "12:45:00", "18:12:00"] }, // Tuesday
-          { dayOffset: 2, times: ["08:35:00", "17:55:00"] },             // Wednesday
+          { dayOffset: 2, times: ["08:35:00", "17:55:00"] }, // Wednesday
           { dayOffset: 3, times: ["08:40:00", "13:10:00", "18:30:00"] }, // Thursday
-          { dayOffset: 4, times: ["08:25:00", "17:30:00"] }              // Friday
+          { dayOffset: 4, times: ["08:25:00", "17:30:00"] } // Friday
         ]
       },
       {
         emp: hr,
         schedule: [
-          { dayOffset: 0, times: ["09:15:00", "17:45:00"] },             // Monday
+          { dayOffset: 0, times: ["09:15:00", "17:45:00"] }, // Monday
           { dayOffset: 1, times: ["09:00:00", "13:30:00", "17:30:00"] }, // Tuesday
-          { dayOffset: 2, times: ["09:10:00", "17:40:00"] },             // Wednesday
+          { dayOffset: 2, times: ["09:10:00", "17:40:00"] }, // Wednesday
           { dayOffset: 3, times: ["08:55:00", "13:20:00", "17:50:00"] }, // Thursday
-          { dayOffset: 4, times: ["09:05:00", "17:00:00"] }              // Friday
+          { dayOffset: 4, times: ["09:05:00", "17:00:00"] } // Friday
         ]
       },
       {
         emp: owner,
         schedule: [
           { dayOffset: 0, times: ["08:15:00", "12:00:00", "14:30:00", "19:10:00"] }, // Monday (4 scans)
-          { dayOffset: 1, times: ["08:20:00", "18:45:00"] },                          // Tuesday
-          { dayOffset: 2, times: ["08:10:00", "13:00:00", "19:30:00"] },              // Wednesday
-          { dayOffset: 3, times: ["08:25:00", "18:50:00"] },                          // Thursday
-          { dayOffset: 4, times: ["08:05:00", "16:30:00"] }                           // Friday
+          { dayOffset: 1, times: ["08:20:00", "18:45:00"] }, // Tuesday
+          { dayOffset: 2, times: ["08:10:00", "13:00:00", "19:30:00"] }, // Wednesday
+          { dayOffset: 3, times: ["08:25:00", "18:50:00"] }, // Thursday
+          { dayOffset: 4, times: ["08:05:00", "16:30:00"] } // Friday
         ]
       }
     ];
@@ -209,7 +263,7 @@ async function main() {
             data: {
               deviceId: device.id,
               employeeId: item.emp.id,
-              scannerTemplateId: 1,
+              scannerTemplateId: item.scannerTemplateId ?? 1,
               serverReceivedAt: scanTimestamp,
               createdAt: scanTimestamp
             }
@@ -302,7 +356,7 @@ async function main() {
     }
 
     const currentYear = new Date().getFullYear();
-    const allEmps = [owner, hr, manager, employee];
+    const allEmps = [owner, hr, manager, employee, shaheer];
 
     for (const emp of allEmps) {
       for (const lt of defaultLeaveTypes) {
