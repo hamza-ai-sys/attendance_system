@@ -106,9 +106,13 @@ export default async function ApplicationDetailPage({
         <p className="muted" style={{ fontSize: "0.8rem", marginTop: "8px" }}>
           Applied {formatDateTime(application.createdAt)}
         </p>
-        href={`/jobs/${id}/applications/${application.id}/cv`}
-        className="back-link" style={{ display: "inline-flex", marginTop: "12px" }}
-        <a>Download CV</a>
+        <a
+          href={`/jobs/${id}/applications/${application.id}/cv`}
+          className="back-link"
+          style={{ display: "inline-flex", marginTop: "12px" }}
+        >
+          Download CV
+        </a>
       </section>
 
       {steps.length === 0 ? (

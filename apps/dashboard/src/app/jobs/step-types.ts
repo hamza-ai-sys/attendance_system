@@ -27,8 +27,8 @@ export const INTERVIEW_SLOT_MINUTES = 30;
 
 export function generateDaySlots(dailyStartTime: string, dailyEndTime: string): string[] {
   const slots: string[] = [];
-  const [startHour, startMinute] = dailyStartTime.split(":").map(Number);
-  const [endHour, endMinute] = dailyEndTime.split(":").map(Number);
+  const [startHour = 0, startMinute = 0] = dailyStartTime.split(":").map(Number);
+  const [endHour = 0, endMinute = 0] = dailyEndTime.split(":").map(Number);
 
   let cursor = startHour * 60 + startMinute;
   const end = endHour * 60 + endMinute;
