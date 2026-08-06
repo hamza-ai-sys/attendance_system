@@ -49,14 +49,9 @@ async function main() {
     // 1. Setup RBAC Roles and Permissions
     const rolesData = [
       { name: "employee", perms: ["my_attendance", "manual_reports"] },
-<<<<<<< HEAD
-      { name: "manager", perms: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"] },
-      { name: "hr", perms: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance", "approvals", "my_team"] },
-      { name: "owner", perms: ["my_attendance", "manual_reports", "enrollment", "reports", "company_attendance", "approvals", "my_team"] }
-=======
       {
         name: "manager",
-        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals"]
+        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"]
       },
       {
         name: "hr",
@@ -67,6 +62,7 @@ async function main() {
           "reports",
           "company_attendance",
           "approvals",
+          "my_team",
           "jobs_manage",
           "announcements_manage"
         ]
@@ -80,11 +76,11 @@ async function main() {
           "reports",
           "company_attendance",
           "approvals",
+          "my_team",
           "jobs_manage",
           "announcements_manage"
         ]
       }
->>>>>>> main
     ];
 
     for (const p of [...new Set(rolesData.flatMap((r) => r.perms))]) {
