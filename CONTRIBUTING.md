@@ -61,3 +61,13 @@ pnpm firmware:build
 - `apps/dashboard` owns human-facing workflows.
 - `apps/worker` owns background work.
 - Shared code belongs in `packages/*` only when at least two services need it.
+# Dashboard component size limits
+
+Dashboard React modules are limited to 250 effective lines. Ordinary functions are limited to 50
+effective lines, while named React components are limited to 100. Blank lines and comment-only
+lines do not count. The limits are enforced by ESLint during `pnpm lint`.
+
+When a component reaches the limit, extract cohesive UI sections, modals, stateful workflows, or
+shared types into nearby modules. Do not disable the rule to make a new component pass; a local
+disable should be reserved for exceptional generated or declarative code and explained in the
+same file.

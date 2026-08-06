@@ -20,6 +20,7 @@
     "dev:dashboard": "pnpm --filter @attendance/dashboard dev",
     "dev:device-gateway": "pnpm --filter @attendance/device-gateway dev",
     "dev:worker": "pnpm --filter @attendance/worker dev",
+    "docker:dev:db:stop": "docker compose -f docker-compose.dev.yml stop postgres",
     "docker:dev:db:up": "docker compose -f docker-compose.dev.yml up -d postgres",
     "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
     "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",

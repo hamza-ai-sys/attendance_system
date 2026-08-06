@@ -15,10 +15,12 @@ if (existsSync(rootEnvPath)) {
 }
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: getDatabaseUrl() })
+  adapter: new PrismaPg({ connectionString: getDatabaseUrl() }),
+  transactionOptions: { timeout: 30_000 }
 });
 const devDeviceId = "esp32-dev-001";
 const devDeviceSecret = getRequiredEnv("DEV_DEVICE_SECRET");
+const seededScanPayload = { source: "development-seed" } as const;
 
 function hashDeviceSecret(secret: string) {
   return createHash("sha256").update(secret, "utf8").digest("hex");
@@ -41,8 +43,8 @@ function getDatabaseUrl() {
 }
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("The bundled seed creates development-only accounts and devices.");
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("The development seed may only run when NODE_ENV=development.");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -94,16 +96,19 @@ async function main() {
         update: {},
         where: { name: r.name }
       });
-      for (const p of r.perms) {
-        const perm = await tx.permission.findUnique({ where: { name: p } });
-        if (perm) {
-          await tx.rolePermission.upsert({
-            create: { roleId: roles[r.name]!.id, permissionId: perm.id },
-            update: {},
-            where: { roleId_permissionId: { roleId: roles[r.name]!.id, permissionId: perm.id } }
-          });
-        }
-      }
+
+      const permissions = await tx.permission.findMany({
+        select: { id: true },
+        where: { name: { in: r.perms } }
+      });
+
+      await tx.rolePermission.deleteMany({ where: { roleId: roles[r.name]!.id } });
+      await tx.rolePermission.createMany({
+        data: permissions.map((permission) => ({
+          permissionId: permission.id,
+          roleId: roles[r.name]!.id
+        }))
+      });
     }
 
     // 2. Setup Employees with generic password123
@@ -116,7 +121,12 @@ async function main() {
         roleId: roles["owner"]!.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        fullName: "Company Owner",
+        passwordHash: defaultPasswordHash,
+        roleId: roles["owner"]!.id,
+        status: "ACTIVE"
+      },
       where: { email: "owner@test.com" }
     });
 
@@ -129,6 +139,10 @@ async function main() {
         passwordHash: defaultPasswordHash
       },
       update: {
+        fullName: "HR Manager",
+        passwordHash: defaultPasswordHash,
+        roleId: roles["hr"]!.id,
+        status: "ACTIVE",
         supervisorId: owner.id
       },
       where: { email: "hr@test.com" }
@@ -143,6 +157,10 @@ async function main() {
         passwordHash: defaultPasswordHash
       },
       update: {
+        fullName: "Team Manager",
+        passwordHash: defaultPasswordHash,
+        roleId: roles["manager"]!.id,
+        status: "ACTIVE",
         supervisorId: owner.id
       },
       where: { email: "manager@test.com" }
@@ -157,6 +175,10 @@ async function main() {
         passwordHash: defaultPasswordHash
       },
       update: {
+        fullName: "Regular Employee",
+        passwordHash: defaultPasswordHash,
+        roleId: roles["employee"]!.id,
+        status: "ACTIVE",
         supervisorId: manager.id
       },
       where: { email: "employee@test.com" }
@@ -168,13 +190,23 @@ async function main() {
         employeeCode: "EMP-07",
         fullName: "Shaheer",
         roleId: roles["employee"]!.id,
-        managerId: manager.id,
+        supervisorId: manager.id,
         passwordHash: defaultPasswordHash,
         shiftInTime: "09:00",
         shiftOutTime: "18:00",
         timezone: "Asia/Karachi"
       },
-      update: {},
+      update: {
+        employeeCode: "EMP-07",
+        fullName: "Shaheer",
+        passwordHash: defaultPasswordHash,
+        roleId: roles["employee"]!.id,
+        shiftInTime: "09:00",
+        shiftOutTime: "18:00",
+        status: "ACTIVE",
+        supervisorId: manager.id,
+        timezone: "Asia/Karachi"
+      },
       where: { email: "shaheer@test.com" }
     });
 
@@ -217,6 +249,7 @@ async function main() {
       },
       {
         emp: employee,
+        scannerTemplateId: 101,
         schedule: [
           { dayOffset: 0, times: ["08:58:00", "13:05:00", "17:32:00"] }, // Monday
           { dayOffset: 1, times: ["09:02:00", "17:15:00"] }, // Tuesday
@@ -227,6 +260,7 @@ async function main() {
       },
       {
         emp: manager,
+        scannerTemplateId: 102,
         schedule: [
           { dayOffset: 0, times: ["08:30:00", "13:15:00", "18:05:00"] }, // Monday
           { dayOffset: 1, times: ["08:42:00", "12:45:00", "18:12:00"] }, // Tuesday
@@ -237,6 +271,7 @@ async function main() {
       },
       {
         emp: hr,
+        scannerTemplateId: 103,
         schedule: [
           { dayOffset: 0, times: ["09:15:00", "17:45:00"] }, // Monday
           { dayOffset: 1, times: ["09:00:00", "13:30:00", "17:30:00"] }, // Tuesday
@@ -247,6 +282,7 @@ async function main() {
       },
       {
         emp: owner,
+        scannerTemplateId: 104,
         schedule: [
           { dayOffset: 0, times: ["08:15:00", "12:00:00", "14:30:00", "19:10:00"] }, // Monday (4 scans)
           { dayOffset: 1, times: ["08:20:00", "18:45:00"] }, // Tuesday
@@ -258,10 +294,35 @@ async function main() {
     ];
 
     for (const item of employeeSchedules) {
-      await tx.scanEvent.deleteMany({
-        where: { employeeId: item.emp.id }
+      await tx.fingerprintEnrollment.upsert({
+        create: {
+          deviceId: device.id,
+          employeeId: item.emp.id,
+          scannerTemplateId: item.scannerTemplateId
+        },
+        update: {
+          revokedAt: null,
+          scannerTemplateId: item.scannerTemplateId,
+          status: "ACTIVE"
+        },
+        where: {
+          employeeId_deviceId: {
+            deviceId: device.id,
+            employeeId: item.emp.id
+          }
+        }
       });
+    }
 
+    await tx.scanEvent.deleteMany({
+      where: {
+        deviceId: device.id,
+        rawPayload: { equals: seededScanPayload }
+      }
+    });
+
+    const seededScans = [];
+    for (const item of employeeSchedules) {
       for (const dayEntry of item.schedule) {
         const scanDay = new Date(lastWeekMonday);
         scanDay.setDate(lastWeekMonday.getDate() + dayEntry.dayOffset);
@@ -271,18 +332,19 @@ async function main() {
           const scanTimestamp = new Date(scanDay);
           scanTimestamp.setHours(hours!, minutes!, seconds!, 0);
 
-          await tx.scanEvent.create({
-            data: {
-              deviceId: device.id,
-              employeeId: item.emp.id,
-              scannerTemplateId: item.scannerTemplateId ?? 1,
-              serverReceivedAt: scanTimestamp,
-              createdAt: scanTimestamp
-            }
+          seededScans.push({
+            createdAt: scanTimestamp,
+            deviceId: device.id,
+            employeeId: item.emp.id,
+            rawPayload: seededScanPayload,
+            scannerTemplateId: item.scannerTemplateId,
+            serverReceivedAt: scanTimestamp
           });
         }
       }
     }
+
+    await tx.scanEvent.createMany({ data: seededScans });
 
     // 5. Seed Default Company Settings & Sample Holiday
     await tx.companySetting.upsert({
@@ -298,13 +360,24 @@ async function main() {
     holidayDate.setDate(holidayDate.getDate() + 2); // 2 days from now
     holidayDate.setHours(0, 0, 0, 0);
 
+    await tx.holiday.deleteMany({
+      where: {
+        description: "Company-wide annual off-day",
+        name: "Official Company Holiday",
+        NOT: { date: holidayDate }
+      }
+    });
+
     await tx.holiday.upsert({
       create: {
         name: "Official Company Holiday",
         date: holidayDate,
         description: "Company-wide annual off-day"
       },
-      update: {},
+      update: {
+        description: "Company-wide annual off-day",
+        name: "Official Company Holiday"
+      },
       where: { date: holidayDate }
     });
 
@@ -357,10 +430,14 @@ async function main() {
       const created = await tx.leaveTypeConfig.upsert({
         create: lt,
         update: {
-          name: lt.name,
-          description: lt.description,
+          accrualFrequency: lt.accrualFrequency,
+          allowCarryForward: lt.allowCarryForward,
           defaultAllocation: lt.defaultAllocation,
-          accrualFrequency: lt.accrualFrequency
+          description: lt.description,
+          isActive: true,
+          isPaid: lt.isPaid,
+          maxCarryForwardDays: lt.maxCarryForwardDays,
+          name: lt.name
         },
         where: { code: lt.code }
       });
@@ -385,7 +462,10 @@ async function main() {
             used: 0,
             carriedOver: 0
           },
-          update: {},
+          update: {
+            accrued,
+            allocated: lt.defaultAllocation
+          },
           where: {
             employeeId_year_leaveTypeId: {
               employeeId: emp.id,
@@ -400,11 +480,10 @@ async function main() {
 }
 
 main()
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
   .finally(async () => {
     await prisma.$disconnect();
-  })
-  .catch(async (error) => {
-    console.error(error);
-    await prisma.$disconnect();
-    process.exit(1);
   });

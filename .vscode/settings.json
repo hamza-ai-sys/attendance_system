@@ -13,5 +13,8 @@
   "js/ts.tsdk.path": "node_modules/typescript/lib",
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "yaml.schemas": {
+    "https://www.artillery.io/schema.json": []
   }
 }

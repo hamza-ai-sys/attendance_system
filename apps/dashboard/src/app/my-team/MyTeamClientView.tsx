@@ -3,42 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { addEmployeeNote, submitPerformanceEvaluation } from "../team-attendance/actions";
+import { TeamPerformanceEvaluationModal } from "../../components/team-performance-evaluation-modal";
+import type {
+  ActivePerformanceTemplate,
+  PerformanceTemplateField,
+  TeamMemberSummary
+} from "../../components/team-performance-evaluation-modal";
+import { addEmployeeNote } from "../team-attendance/actions";
 
-export interface TeamMember {
-  id: string;
-  fullName: string;
-  email: string;
-  employeeCode: string | null;
-  roleName: string;
-}
-
-export interface TemplateField {
-  id: string;
-  label: string;
-  type: "rating" | "text" | "number" | "select";
-  options?: string[];
-  required?: boolean;
-}
-
-export interface ActiveTemplate {
-  id: string;
-  title: string;
-  description?: string | null;
-  fields: TemplateField[];
-  startDate: string;
-  endDate: string;
-}
-
-export interface NoteItem {
-  id: string;
-  content: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  createdAt: string;
-  authorName: string;
-  authorRole: string;
-  isOwn: boolean;
-}
+export type TeamMember = TeamMemberSummary;
+export type TemplateField = PerformanceTemplateField;
+export type ActiveTemplate = ActivePerformanceTemplate;
 
 interface MyTeamClientViewProps {
   members: TeamMember[];
@@ -55,10 +30,6 @@ export function MyTeamClientView({ members, activeTemplate }: MyTeamClientViewPr
 
   // Modal state for performance evaluation
   const [selectedEvalEmployee, setSelectedEvalEmployee] = useState<TeamMember | null>(null);
-  const [evalResponses, setEvalResponses] = useState<Record<string, string | number>>({});
-  const [evalComments, setEvalComments] = useState("");
-  const [submittingEval, setSubmittingEval] = useState(false);
-  const [evalStatusMsg, setEvalStatusMsg] = useState<string | null>(null);
 
   // Open note modal
   const handleOpenNotes = (member: TeamMember) => {
@@ -91,35 +62,6 @@ export function MyTeamClientView({ members, activeTemplate }: MyTeamClientViewPr
   // Open performance evaluation modal
   const handleOpenEval = (member: TeamMember) => {
     setSelectedEvalEmployee(member);
-    setEvalResponses({});
-    setEvalComments("");
-    setEvalStatusMsg(null);
-  };
-
-  const handleSubmitEvaluation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedEvalEmployee || !activeTemplate) return;
-
-    setSubmittingEval(true);
-    setEvalStatusMsg(null);
-
-    try {
-      await submitPerformanceEvaluation({
-        templateId: activeTemplate.id,
-        employeeId: selectedEvalEmployee.id,
-        responses: evalResponses,
-        comments: evalComments
-      });
-      setEvalStatusMsg("Evaluation submitted successfully!");
-      setTimeout(() => {
-        setSelectedEvalEmployee(null);
-      }, 1200);
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to submit evaluation";
-      setEvalStatusMsg(`Error: ${errorMsg}`);
-    } finally {
-      setSubmittingEval(false);
-    }
   };
 
   return (
@@ -353,203 +295,12 @@ export function MyTeamClientView({ members, activeTemplate }: MyTeamClientViewPr
         </div>
       )}
 
-      {/* 2. PERFORMANCE EVALUATION MODAL */}
       {selectedEvalEmployee && activeTemplate && (
-        <div className="modal-overlay" onClick={() => setSelectedEvalEmployee(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "580px", padding: "24px", gap: "16px" }}>
-            <div className="modal-header" style={{ paddingBottom: "12px" }}>
-              <h2 style={{ fontSize: "1.2rem", margin: 0, color: "#f8fafc" }}>
-                Performance Evaluation: <span style={{ color: "#c084fc" }}>{selectedEvalEmployee.fullName}</span>
-              </h2>
-              <button type="button" className="close-btn" onClick={() => setSelectedEvalEmployee(null)}>
-                ✕
-              </button>
-            </div>
-
-            {evalStatusMsg && (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.9rem",
-                  background: evalStatusMsg.startsWith("Error") ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)",
-                  color: evalStatusMsg.startsWith("Error") ? "#fca5a5" : "#6ee7b7",
-                  border: evalStatusMsg.startsWith("Error") ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)"
-                }}
-              >
-                {evalStatusMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitEvaluation} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {activeTemplate.fields.map((field) => {
-                const currentRating = (evalResponses[field.id] as number) || 0;
-                const isRated = currentRating > 0;
-
-                return (
-                  <div key={field.id}>
-                    {field.type === "rating" ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "4px 0"
-                        }}
-                      >
-                        <label style={{ fontSize: "0.95rem", color: "#f1f5f9", fontWeight: 600, margin: 0 }}>
-                          {field.label} {field.required && <span style={{ color: "#ef4444" }}>*</span>}
-                        </label>
-
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            {[1, 2, 3, 4, 5].map((star) => {
-                              const isSelected = star <= currentRating;
-                              return (
-                                <button
-                                  key={star}
-                                  type="button"
-                                  onClick={() => setEvalResponses({ ...evalResponses, [field.id]: star })}
-                                  title={`Rate ${star} out of 5`}
-                                  style={{
-                                    background: "none",
-                                    border: "none",
-                                    fontSize: "1.5rem",
-                                    color: isSelected ? "#f59e0b" : "#475569",
-                                    cursor: "pointer",
-                                    padding: "0 2px",
-                                    transition: "transform 0.15s ease, color 0.15s ease",
-                                    transform: isSelected ? "scale(1.15)" : "scale(1.0)"
-                                  }}
-                                >
-                                  ★
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <span
-                            style={{
-                              fontSize: "0.85rem",
-                              fontWeight: 700,
-                              color: isRated ? "#fbbf24" : "#64748b",
-                              minWidth: "36px",
-                              textAlign: "right"
-                            }}
-                          >
-                            {currentRating} / 5
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <label style={{ fontSize: "0.95rem", color: "#f1f5f9", fontWeight: 600 }}>
-                          {field.label} {field.required && <span style={{ color: "#ef4444" }}>*</span>}
-                        </label>
-
-                        {field.type === "text" && (
-                          <textarea
-                            rows={2}
-                            value={(evalResponses[field.id] as string) || ""}
-                            onChange={(e) => setEvalResponses({ ...evalResponses, [field.id]: e.target.value })}
-                            required={field.required}
-                            placeholder={`Enter details for ${field.label}...`}
-                            style={{
-                              background: "rgba(15, 23, 42, 0.6)",
-                              border: "1px solid var(--border)",
-                              borderRadius: "10px",
-                              padding: "10px",
-                              color: "#fff",
-                              fontSize: "0.9rem"
-                            }}
-                          />
-                        )}
-
-                        {field.type === "number" && (
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={(evalResponses[field.id] as number) || ""}
-                            onChange={(e) => setEvalResponses({ ...evalResponses, [field.id]: Number(e.target.value) })}
-                            required={field.required}
-                            placeholder="Score (0-100)"
-                            style={{
-                              background: "rgba(15, 23, 42, 0.6)",
-                              border: "1px solid var(--border)",
-                              borderRadius: "10px",
-                              padding: "10px",
-                              color: "#fff",
-                              fontSize: "0.9rem"
-                            }}
-                          />
-                        )}
-
-                        {field.type === "select" && (
-                          <select
-                            value={(evalResponses[field.id] as string) || ""}
-                            onChange={(e) => setEvalResponses({ ...evalResponses, [field.id]: e.target.value })}
-                            required={field.required}
-                            style={{
-                              background: "rgba(15, 23, 42, 0.6)",
-                              border: "1px solid var(--border)",
-                              borderRadius: "10px",
-                              padding: "10px",
-                              color: "#fff",
-                              fontSize: "0.9rem"
-                            }}
-                          >
-                            <option value="">Select option...</option>
-                            {field.options?.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "0.95rem", color: "#f1f5f9", fontWeight: 600 }}>Overall Evaluation Comments</label>
-                <textarea
-                  rows={3}
-                  value={evalComments}
-                  onChange={(e) => setEvalComments(e.target.value)}
-                  placeholder="Provide final evaluation summary & constructive feedback..."
-                  style={{
-                    background: "rgba(15, 23, 42, 0.6)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "10px",
-                    padding: "10px",
-                    color: "#fff",
-                    fontSize: "0.9rem"
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submittingEval}
-                style={{
-                  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "12px 20px",
-                  fontSize: "0.95rem",
-                  fontWeight: 600,
-                  cursor: submittingEval ? "not-allowed" : "pointer",
-                  marginTop: "6px"
-                }}
-              >
-                {submittingEval ? "Submitting..." : "Submit Performance Evaluation"}
-              </button>
-            </form>
-          </div>
-        </div>
+        <TeamPerformanceEvaluationModal
+          employee={selectedEvalEmployee}
+          template={activeTemplate}
+          onClose={() => setSelectedEvalEmployee(null)}
+        />
       )}
     </div>
   );
