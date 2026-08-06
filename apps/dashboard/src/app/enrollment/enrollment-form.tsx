@@ -113,8 +113,8 @@ export function EnrollmentForm({ roles, managers }: EnrollmentFormProps) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="managerId">Reports To Manager</label>
-            <select id="managerId" name="managerId" className="form-control" defaultValue="">
+            <label htmlFor="supervisorId">Reports To (Supervisor / Lead)</label>
+            <select id="supervisorId" name="supervisorId" className="form-control" defaultValue="">
               <option value="">None / Top Level</option>
               {managers.map((manager) => (
                 <option key={manager.id} value={manager.id}>

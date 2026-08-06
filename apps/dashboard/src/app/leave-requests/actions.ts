@@ -96,7 +96,7 @@ export async function submitLeaveRequest(formData: FormData) {
 
     // Regular employees with a direct manager start at PENDING_MANAGER (Stage 1)
     // Managers, HR staff, and employees without a direct manager start at PENDING_HR (Stage 2 / Owner)
-    const initialStatus = isRegularEmployee && employeeRecord?.managerId ? "PENDING_MANAGER" : "PENDING_HR";
+    const initialStatus = isRegularEmployee && employeeRecord?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
 
     const leaveReq = await db.leaveRequest.create({
       data: {
@@ -114,12 +114,12 @@ export async function submitLeaveRequest(formData: FormData) {
     });
 
     // Create Approval Steps
-    if (initialStatus === "PENDING_MANAGER" && employeeRecord?.managerId) {
+    if (initialStatus === "PENDING_MANAGER" && employeeRecord?.supervisorId) {
       await db.leaveApprovalStep.create({
         data: {
           leaveRequestId: leaveReq.id,
           sequence: 1,
-          approverEmployeeId: employeeRecord.managerId,
+          approverEmployeeId: employeeRecord.supervisorId,
           approverKind: "MANAGER",
           status: "PENDING"
         }

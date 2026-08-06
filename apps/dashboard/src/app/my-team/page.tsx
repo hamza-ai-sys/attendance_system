@@ -1,5 +1,5 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission, hasAccess } from "../../lib/rbac";
+import { hasPermission } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
@@ -19,20 +19,17 @@ export default async function MyTeamPage() {
     redirect("/login");
   }
 
-  const roleName = user.roleName?.toLowerCase() || "";
-  const canAccess =
-    hasAccess(user, ["my_team", "team_attendance", "company_attendance"]) ||
-    ["manager", "hr", "owner", "admin"].includes(roleName);
+  const isBasicEmployee =
+    user.roleName?.toLowerCase() === "employee" && !hasPermission(user, "my_team");
 
-  if (!canAccess) {
+  if (isBasicEmployee) {
     return <UnauthorizedView featureName="My Team" />;
   }
 
-  const isSuperUser =
-    hasPermission(user, "company_attendance") || roleName === "owner" || roleName === "hr";
+  const isSuperUser = hasPermission(user, "company_attendance");
 
   let teamEmployees = await db.employee.findMany({
-    where: isSuperUser ? {} : { managerId: user.employeeId },
+    where: isSuperUser ? {} : { supervisorId: user.employeeId },
     include: {
       role: true
     },

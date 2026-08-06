@@ -100,7 +100,7 @@ export default async function Home() {
 
   const roleName = user.roleName?.toLowerCase() || "";
 
-  // Filter modules based on user role permissions & role fallback
+  // Filter modules based on user role permissions
   const allowedModules = allModules.filter((m) => {
     if (roleName === "owner") {
       // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
@@ -112,14 +112,12 @@ export default async function Home() {
         return false;
       }
     }
-    if (m.permission === "approvals") {
+    if (m.href === "/my-team") {
       return (
-        hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
-      );
-    }
-    if (m.permission === "team_attendance" || m.permission === "my_team") {
-      return (
-        hasPermission(user, m.permission) || ["manager", "hr", "owner", "admin"].includes(roleName)
+        hasPermission(user, "my_team") ||
+        hasPermission(user, "company_attendance") ||
+        hasPermission(user, "team_attendance") ||
+        ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
     return hasPermission(user, m.permission);
@@ -127,22 +125,21 @@ export default async function Home() {
 
   // Query live pending approvals count for users with approval privileges
   let pendingApprovalsCount = 0;
-  const canApprove =
-    hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+  const canApprove = hasPermission(user, "approvals");
 
   if (canApprove) {
     if (roleName === "manager") {
       const attCount = await db.manualAttendanceRequest.count({
         where: {
           status: "PENDING_MANAGER",
-          employee: { managerId: user.employeeId },
+          employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });
       const leaveCount = await db.leaveRequest.count({
         where: {
           status: "PENDING_MANAGER",
-          employee: { managerId: user.employeeId },
+          employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });

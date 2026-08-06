@@ -44,10 +44,10 @@ export default async function TeamAttendancePage() {
   const isSuperUser = hasPermission(user, "company_attendance");
 
   let teamEmployees = await db.employee.findMany({
-    where: isSuperUser ? {} : { managerId: user.employeeId },
+    where: isSuperUser ? {} : { supervisorId: user.employeeId },
     include: {
       role: true,
-      manager: true
+      supervisor: true
     },
     orderBy: { fullName: "asc" }
   });
@@ -56,7 +56,7 @@ export default async function TeamAttendancePage() {
     teamEmployees = await db.employee.findMany({
       include: {
         role: true,
-        manager: true
+        supervisor: true
       },
       orderBy: { fullName: "asc" }
     });
@@ -160,7 +160,7 @@ export default async function TeamAttendancePage() {
       fullName: emp.fullName,
       email: emp.email,
       roleName: emp.role?.name || "employee",
-      managerName: emp.manager?.fullName || "None",
+      managerName: emp.supervisor?.fullName || "None",
       scanCount,
       firstInStr,
       lastOutStr,

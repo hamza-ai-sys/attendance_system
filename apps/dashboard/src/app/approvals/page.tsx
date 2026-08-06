@@ -74,7 +74,7 @@ export default async function ApprovalsPage() {
   let attWhereClause: Prisma.ManualAttendanceRequestWhereInput = {};
   if (user.roleName === "manager") {
     attWhereClause = {
-      employee: { managerId: user.employeeId },
+      employee: { supervisorId: user.employeeId },
       employeeId: { not: user.employeeId }
     };
   } else if (user.roleName === "hr" || user.roleName === "owner" || user.roleName === "admin") {
@@ -84,7 +84,7 @@ export default async function ApprovalsPage() {
   const attendanceRequests = await db.manualAttendanceRequest.findMany({
     where: attWhereClause,
     include: {
-      employee: { include: { role: true, manager: true } },
+      employee: { include: { role: true, supervisor: true } },
       createdBy: { include: { role: true } }
     },
     orderBy: { createdAt: "desc" }
@@ -94,7 +94,7 @@ export default async function ApprovalsPage() {
   let leaveWhereClause: Prisma.LeaveRequestWhereInput = {};
   if (user.roleName === "manager") {
     leaveWhereClause = {
-      employee: { managerId: user.employeeId },
+      employee: { supervisorId: user.employeeId },
       employeeId: { not: user.employeeId }
     };
   } else if (user.roleName === "hr" || user.roleName === "owner" || user.roleName === "admin") {

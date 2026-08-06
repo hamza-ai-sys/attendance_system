@@ -37,7 +37,7 @@ export default async function EnrollmentPage() {
   const enrolledEmployees = await db.employee.findMany({
     include: {
       role: true,
-      manager: true
+      supervisor: true
     },
     orderBy: { createdAt: "desc" }
   });
@@ -48,7 +48,7 @@ export default async function EnrollmentPage() {
     email: emp.email,
     employeeCode: emp.employeeCode,
     roleName: emp.role?.name || "employee",
-    managerName: emp.manager?.fullName || "None",
+    managerName: emp.supervisor?.fullName || "None",
     timezone: emp.timezone,
     status: emp.status,
     createdAtStr: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(emp.createdAt)

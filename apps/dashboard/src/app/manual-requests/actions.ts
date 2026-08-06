@@ -50,7 +50,7 @@ export async function submitManualRequest(prevState: RequestState, formData: For
 
   const isRegularEmployee = !employee?.role || employee.role.name === "employee";
   // Regular employees start at PENDING_MANAGER (Stage 1), managers/HR start at PENDING_HR (Stage 2)
-  const initialStatus = isRegularEmployee && employee?.managerId ? "PENDING_MANAGER" : "PENDING_HR";
+  const initialStatus = isRegularEmployee && employee?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
 
   const punchLabel = punchType === "CHECK_OUT" ? "Check-Out" : "Check-In";
   const formattedReason = `[${punchLabel}] ${reason}`;

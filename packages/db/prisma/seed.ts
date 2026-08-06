@@ -92,10 +92,12 @@ async function main() {
         email: "hr@test.com",
         fullName: "HR Manager",
         roleId: roles["hr"]!.id,
-        managerId: owner.id,
+        supervisorId: owner.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: owner.id
+      },
       where: { email: "hr@test.com" }
     });
     
@@ -104,10 +106,12 @@ async function main() {
         email: "manager@test.com",
         fullName: "Team Manager",
         roleId: roles["manager"]!.id,
-        managerId: owner.id,
+        supervisorId: owner.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: owner.id
+      },
       where: { email: "manager@test.com" }
     });
     
@@ -116,10 +120,12 @@ async function main() {
         email: "employee@test.com",
         fullName: "Regular Employee",
         roleId: roles["employee"]!.id,
-        managerId: manager.id,
+        supervisorId: manager.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: manager.id
+      },
       where: { email: "employee@test.com" }
     });
 

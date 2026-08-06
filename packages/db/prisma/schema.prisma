@@ -109,7 +109,7 @@ model Employee {
   fullName             String
   passwordHash         String
   status               EmployeeStatus            @default(ACTIVE)
-  managerId            String?
+  supervisorId         String?                   @map("managerId")
   roleId               String?
   shiftInTime          String?                   @default("09:00")
   shiftOutTime         String?                   @default("17:00")
@@ -125,8 +125,8 @@ model Employee {
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
   role                 Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  manager              Employee?                 @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
-  directReports        Employee[]                @relation("EmployeeManager")
+  supervisor           Employee?                 @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports        Employee[]                @relation("EmployeeSupervisor")
   approvalSteps        ApprovalStep[]            @relation("ApprovalStepApprover")
   auditLogs            AuditLog[]                @relation("AuditLogActor")
   fingerprintRecords   FingerprintEnrollment[]
@@ -147,7 +147,7 @@ model Employee {
   receivedEvaluations  PerformanceEvaluation[]   @relation("PerformanceTargetEmployee")
   submittedEvaluations PerformanceEvaluation[]   @relation("PerformanceEvaluator")
 
-  @@index([managerId])
+  @@index([supervisorId])
 }
 
 model Device {
