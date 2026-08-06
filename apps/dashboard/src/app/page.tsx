@@ -100,7 +100,7 @@ export default async function Home() {
 
   const roleName = user.roleName?.toLowerCase() || "";
 
-  // Filter modules based on user role permissions & role fallback (Jobs is visible to everyone)
+  // Filter modules based on user role permissions & role fallback (Jobs and Announcements are visible to everyone)
   const allowedModules = allModules.filter((m) => {
     if (m.name === "Jobs" || m.name === "Announcements") {
       return true;
@@ -115,12 +115,14 @@ export default async function Home() {
       ) {
         return false;
       }
+    }
 
     if (m.permission === "approvals") {
       return (
         hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
+
     return hasPermission(user, m.permission);
   });
 
@@ -175,7 +177,11 @@ export default async function Home() {
           </p>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <Link href={"/personal-records" as Route} className="back-link" style={{ textDecoration: "none" }}>
+          <Link
+            href={"/personal-records" as Route}
+            className="back-link"
+            style={{ textDecoration: "none" }}
+          >
             👤 My Profile
           </Link>
           <form action={logout}>
