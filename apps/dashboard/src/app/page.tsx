@@ -44,7 +44,7 @@ const allModules: { name: string; permission: Permission; description: string; h
   },
   {
     name: "My Team",
-    permission: "team_attendance",
+    permission: "my_team",
     description: "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
     href: "/my-team"
   },

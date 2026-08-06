@@ -1,10 +1,11 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasPermission, hasAccess } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { evaluateShiftAttendance } from "@attendance/attendance-core";
 import { logout } from "../login/actions";
+import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
 
@@ -35,21 +36,12 @@ export default async function TeamAttendancePage() {
     redirect("/login");
   }
 
-  const roleName = user.roleName?.toLowerCase() || "";
-
-  if (!hasPermission(user, "team_attendance") && !["manager", "hr", "owner", "admin"].includes(roleName)) {
-    return (
-      <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: You do not have permission to access Team Attendance.</p>
-        </div>
-        <Link href="/" className="back-link">← Back to Dashboard</Link>
-      </main>
-    );
+  if (!hasAccess(user, ["team_attendance", "company_attendance"])) {
+    return <UnauthorizedView featureName="Team Attendance" />;
   }
 
   // Determine team scope
-  const isSuperUser = hasPermission(user, "company_attendance") || roleName === "owner" || roleName === "hr";
+  const isSuperUser = hasPermission(user, "company_attendance");
 
   let teamEmployees = await db.employee.findMany({
     where: isSuperUser ? {} : { managerId: user.employeeId },

@@ -1,10 +1,12 @@
 import { getCurrentUser } from "../../lib/session";
+import { hasAccess } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { logout } from "../login/actions";
 import { PerformanceClientView } from "./PerformanceClientView";
 import type { FieldDefinition } from "./actions";
+import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
 
@@ -50,20 +52,8 @@ export default async function PerformancePage() {
     redirect("/login");
   }
 
-  const roleName = user.roleName?.toLowerCase() || "";
-  const isAuthorized = ["hr", "owner", "admin"].includes(roleName);
-
-  if (!isAuthorized) {
-    return (
-      <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: Performance Tracking & Analysis is restricted to HR and Organization Leaders.</p>
-        </div>
-        <Link href="/" className="back-link">
-          ← Back to Dashboard
-        </Link>
-      </main>
-    );
+  if (!hasAccess(user, ["reports", "company_attendance"])) {
+    return <UnauthorizedView featureName="Performance Tracking & Analysis" />;
   }
 
   // Fetch performance templates
