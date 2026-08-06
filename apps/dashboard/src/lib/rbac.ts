@@ -7,7 +7,9 @@ export type Permission =
   | "approvals"
   | "enrollment"
   | "reports"
-  | "company_attendance";
+  | "company_attendance"
+  | "jobs_manage"
+  | "announcements_manage";
 
 export function hasPermission(user: SessionUser | null, permission: Permission): boolean {
   if (!user) return false;

@@ -75,6 +75,19 @@ const allModules: { name: string; permission: Permission; description: string; h
     permission: "company_attendance",
     description: "Executive organization attendance metrics and real-time punch feeds.",
     href: "/company-attendance"
+  },
+  {
+    name: "Jobs",
+    permission: "my_attendance",
+    description: "Browse open positions, apply, and (for HR) manage job postings.",
+    href: "/jobs"
+  },
+
+  {
+    name: "Announcements",
+    permission: "my_attendance",
+    description: "Company-wide notices and policy updates from HR.",
+    href: "/announcements"
   }
 ];
 
@@ -87,8 +100,12 @@ export default async function Home() {
 
   const roleName = user.roleName?.toLowerCase() || "";
 
-  // Filter modules based on user role permissions & role fallback
+  // Filter modules based on user role permissions & role fallback (Jobs and Announcements are visible to everyone)
   const allowedModules = allModules.filter((m) => {
+    if (m.name === "Jobs" || m.name === "Announcements") {
+      return true;
+    }
+
     if (roleName === "owner") {
       // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
       if (
@@ -99,11 +116,13 @@ export default async function Home() {
         return false;
       }
     }
+
     if (m.permission === "approvals") {
       return (
         hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
+
     return hasPermission(user, m.permission);
   });
 
@@ -139,6 +158,14 @@ export default async function Home() {
       pendingApprovalsCount = attCount + leaveCount;
     }
   }
+  const currentEmployee = await db.employee.findUnique({
+    where: { id: user.employeeId },
+    select: { lastAnnouncementsViewedAt: true }
+  });
+
+  const unreadAnnouncementsCount = await db.announcement.count({
+    where: { createdAt: { gt: currentEmployee?.lastAnnouncementsViewedAt ?? new Date(0) } }
+  });
 
   return (
     <main className="app-shell">
@@ -150,7 +177,11 @@ export default async function Home() {
           </p>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <Link href={"/personal-records" as Route} className="back-link" style={{ textDecoration: "none" }}>
+          <Link
+            href={"/personal-records" as Route}
+            className="back-link"
+            style={{ textDecoration: "none" }}
+          >
             👤 My Profile
           </Link>
           <form action={logout}>
@@ -167,6 +198,7 @@ export default async function Home() {
         )}
         {allowedModules.map((module) => {
           const isApprovals = module.permission === "approvals";
+          const isAnnouncements = module.name === "Announcements";
 
           const content = (
             <article className="panel" key={module.name}>
@@ -191,6 +223,21 @@ export default async function Home() {
                     }}
                   >
                     {pendingApprovalsCount} Pending
+                  </span>
+                )}
+                {isAnnouncements && unreadAnnouncementsCount > 0 && (
+                  <span
+                    style={{
+                      background: "rgba(96, 165, 250, 0.2)",
+                      color: "#60a5fa",
+                      border: "1px solid rgba(96, 165, 250, 0.4)",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "0.8rem",
+                      fontWeight: 600
+                    }}
+                  >
+                    {unreadAnnouncementsCount} New
                   </span>
                 )}
               </div>
