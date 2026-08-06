@@ -6,6 +6,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum NoteVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 enum AccrualFrequency {
   MONTHLY
   ANNUALLY
@@ -97,6 +102,12 @@ enum ReportExportStatus {
   FAILED
 }
 
+enum JobPostingStatus {
+  OPEN
+  CLOSED
+}
+
+
 model Employee {
   id                   String                    @id @default(cuid())
   email                String                    @unique
@@ -104,7 +115,7 @@ model Employee {
   fullName             String
   passwordHash         String
   status               EmployeeStatus            @default(ACTIVE)
-  managerId            String?
+  supervisorId         String?                   @map("managerId")
   roleId               String?
   shiftInTime          String?                   @default("09:00")
   shiftOutTime         String?                   @default("17:00")
@@ -120,8 +131,8 @@ model Employee {
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
   role                 Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  manager              Employee?                 @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
-  directReports        Employee[]                @relation("EmployeeManager")
+  supervisor           Employee?                 @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  directReports        Employee[]                @relation("EmployeeSupervisor")
   approvalSteps        ApprovalStep[]            @relation("ApprovalStepApprover")
   auditLogs            AuditLog[]                @relation("AuditLogActor")
   fingerprintRecords   FingerprintEnrollment[]
@@ -133,11 +144,20 @@ model Employee {
   reportExports        ReportExport[]
   scanEvents           ScanEvent[]
   shiftAssignments     EmployeeShiftAssignment[]
+  createdJobPostings   JobPosting[]              @relation("JobPostingCreatedBy")
+  createdAnnouncements Announcement[]            @relation("AnnouncementCreatedBy")
+  interviewStepAssignments JobPostingStep[]      @relation("InterviewStepInterviewer")
+  lastAnnouncementsViewedAt DateTime?
   leaveRequests        LeaveRequest[]            @relation("LeaveRequestEmployee")
   leaveApprovalSteps   LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
   leaveBalances        LeaveBalance[]
+  targetNotes          EmployeeNote[]            @relation("NoteTargetEmployee")
+  authoredNotes        EmployeeNote[]            @relation("NoteAuthor")
+  createdTemplates     PerformanceTemplate[]     @relation("PerformanceTemplateCreator")
+  receivedEvaluations  PerformanceEvaluation[]   @relation("PerformanceTargetEmployee")
+  submittedEvaluations PerformanceEvaluation[]   @relation("PerformanceEvaluator")
 
-  @@index([managerId])
+  @@index([supervisorId])
 }
 
 model Device {
@@ -374,6 +394,122 @@ model CompanySetting {
   updatedAt DateTime @updatedAt
 }
 
+model JobPosting {
+  id             String            @id @default(cuid())
+  title          String
+  department     String?
+  location       String?
+  employmentType String?
+  description    String
+  status         JobPostingStatus  @default(OPEN)
+  createdById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      Employee          @relation("JobPostingCreatedBy", fields: [createdById], references: [id])
+  applications   JobApplication[]
+  steps          JobPostingStep[]
+
+  @@index([status, createdAt])
+  @@index([createdById])
+}
+
+model JobApplication {
+  id           String                @id @default(cuid())
+  jobPostingId String
+  fullName     String
+  phone        String
+  email        String
+  cvFileName   String
+  cvFileType   String
+  cvFileSize   Int
+  cvFileData   Bytes
+  status       JobApplicationStatus  @default(SUBMITTED)
+  createdAt    DateTime              @default(now())
+  jobPosting   JobPosting            @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  stepResponses JobApplicationStepResponse[]
+
+  @@index([jobPostingId, createdAt])
+}
+
+enum JobApplicationStatus {
+  SUBMITTED
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum JobStepType {
+  EMAIL_CV
+  QUESTIONNAIRE
+  INTERVIEW
+}
+
+enum InterviewMode {
+  ONLINE
+  PHYSICAL
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   Employee @relation("AnnouncementCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdAt])
+  @@index([createdById])
+}
+
+model JobPostingStep {
+  id            String         @id @default(cuid())
+  jobPostingId  String
+  type          JobStepType
+  order         Int
+  config        Json?
+
+  // Interview-specific fields (only set when type = INTERVIEW)
+  interviewMode     InterviewMode?
+  interviewerId     String?
+  location          String?
+  availabilityStart DateTime?
+  availabilityEnd   DateTime?
+  dailyStartTime    String?
+  dailyEndTime      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobPosting  JobPosting                    @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  interviewer Employee?                     @relation("InterviewStepInterviewer", fields: [interviewerId], references: [id])
+  responses   JobApplicationStepResponse[]
+
+  @@index([jobPostingId, order])
+  @@index([interviewerId])
+}
+
+model JobApplicationStepResponse {
+  id            String      @id @default(cuid())
+  applicationId String
+  stepId        String
+  type          JobStepType
+  answer        Json?
+
+  // Interview-specific fields (only set when type = INTERVIEW)
+  interviewerId String?
+  scheduledAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  step        JobPostingStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, stepId])
+  @@unique([interviewerId, scheduledAt])
+  @@index([stepId, scheduledAt])
+}
 model LeaveTypeConfig {
   id                  String           @id @default(cuid())
   code                String           @unique
@@ -447,5 +583,54 @@ model LeaveBalance {
 
   @@unique([employeeId, year, leaveTypeId])
   @@index([employeeId, year])
+}
+
+model EmployeeNote {
+  id         String         @id @default(cuid())
+  employeeId String
+  authorId   String
+  content    String
+  visibility NoteVisibility @default(PRIVATE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  employee   Employee       @relation("NoteTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  author     Employee       @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, visibility])
+  @@index([authorId])
+}
+
+model PerformanceTemplate {
+  id          String                  @id @default(cuid())
+  title       String
+  description String?
+  fields      Json
+  startDate   DateTime
+  endDate     DateTime
+  createdById String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  createdBy   Employee                @relation("PerformanceTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  evaluations PerformanceEvaluation[]
+
+  @@index([startDate, endDate])
+}
+
+model PerformanceEvaluation {
+  id           String              @id @default(cuid())
+  templateId   String
+  employeeId   String
+  evaluatorId  String
+  responses    Json
+  overallScore Float?
+  comments     String?
+  submittedAt  DateTime            @default(now())
+  template     PerformanceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  employee     Employee            @relation("PerformanceTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  evaluator    Employee            @relation("PerformanceEvaluator", fields: [evaluatorId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, employeeId, evaluatorId])
+  @@index([employeeId])
+  @@index([evaluatorId])
 }
 

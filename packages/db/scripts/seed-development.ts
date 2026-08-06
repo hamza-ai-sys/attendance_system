@@ -51,7 +51,7 @@ async function main() {
       { name: "employee", perms: ["my_attendance", "manual_reports"] },
       {
         name: "manager",
-        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals"]
+        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"]
       },
       {
         name: "hr",
@@ -61,7 +61,10 @@ async function main() {
           "enrollment",
           "reports",
           "company_attendance",
-          "approvals"
+          "approvals",
+          "my_team",
+          "jobs_manage",
+          "announcements_manage"
         ]
       },
       {
@@ -72,7 +75,10 @@ async function main() {
           "enrollment",
           "reports",
           "company_attendance",
-          "approvals"
+          "approvals",
+          "my_team",
+          "jobs_manage",
+          "announcements_manage"
         ]
       }
     ];
@@ -119,10 +125,12 @@ async function main() {
         email: "hr@test.com",
         fullName: "HR Manager",
         roleId: roles["hr"]!.id,
-        managerId: owner.id,
+        supervisorId: owner.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: owner.id
+      },
       where: { email: "hr@test.com" }
     });
 
@@ -131,10 +139,12 @@ async function main() {
         email: "manager@test.com",
         fullName: "Team Manager",
         roleId: roles["manager"]!.id,
-        managerId: owner.id,
+        supervisorId: owner.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: owner.id
+      },
       where: { email: "manager@test.com" }
     });
 
@@ -143,10 +153,12 @@ async function main() {
         email: "employee@test.com",
         fullName: "Regular Employee",
         roleId: roles["employee"]!.id,
-        managerId: manager.id,
+        supervisorId: manager.id,
         passwordHash: defaultPasswordHash
       },
-      update: {},
+      update: {
+        supervisorId: manager.id
+      },
       where: { email: "employee@test.com" }
     });
 

@@ -1,13 +1,15 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasPermission, hasAccess } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { evaluateShiftAttendance } from "@attendance/attendance-core";
 import { logout } from "../login/actions";
+import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
 
+// Force Next.js server cache re-evaluation for Prisma Client models
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 function formatTime(date: Date): string {
@@ -34,25 +36,18 @@ export default async function TeamAttendancePage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user, "team_attendance")) {
-    return (
-      <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: You do not have permission to access Team Attendance.</p>
-        </div>
-        <Link href="/" className="back-link">← Back to Dashboard</Link>
-      </main>
-    );
+  if (!hasAccess(user, ["team_attendance", "company_attendance"])) {
+    return <UnauthorizedView featureName="Team Attendance" />;
   }
 
   // Determine team scope
-  const isSuperUser = hasPermission(user, "company_attendance") || user.roleName === "owner" || user.roleName === "hr";
+  const isSuperUser = hasPermission(user, "company_attendance");
 
   let teamEmployees = await db.employee.findMany({
-    where: isSuperUser ? {} : { managerId: user.employeeId },
+    where: isSuperUser ? {} : { supervisorId: user.employeeId },
     include: {
       role: true,
-      manager: true
+      supervisor: true
     },
     orderBy: { fullName: "asc" }
   });
@@ -61,7 +56,7 @@ export default async function TeamAttendancePage() {
     teamEmployees = await db.employee.findMany({
       include: {
         role: true,
-        manager: true
+        supervisor: true
       },
       orderBy: { fullName: "asc" }
     });
@@ -148,7 +143,6 @@ export default async function TeamAttendancePage() {
         presentCount++;
       }
     } else {
-      // 0 Scans: Check Holiday or Weekend exemptions
       if (todayHoliday) {
         status = "HOLIDAY";
         exemptCount++;
@@ -166,7 +160,7 @@ export default async function TeamAttendancePage() {
       fullName: emp.fullName,
       email: emp.email,
       roleName: emp.role?.name || "employee",
-      managerName: emp.manager?.fullName || "None",
+      managerName: emp.supervisor?.fullName || "None",
       scanCount,
       firstInStr,
       lastOutStr,
@@ -218,7 +212,7 @@ export default async function TeamAttendancePage() {
       </section>
 
       {/* Team Member Status Table */}
-      <section className="panel" style={{ cursor: "default", display: "block" }}>
+      <section className="panel" style={{ cursor: "default", display: "block", marginTop: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h2>Team Attendance Details</h2>
           <span className="muted" style={{ fontSize: "0.9rem" }}>Total: {teamRows.length} members</span>

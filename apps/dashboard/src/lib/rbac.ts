@@ -7,7 +7,10 @@ export type Permission =
   | "approvals"
   | "enrollment"
   | "reports"
-  | "company_attendance";
+  | "company_attendance"
+  | "my_team"
+  | "jobs_manage"
+  | "announcements_manage";
 
 export function hasPermission(user: SessionUser | null, permission: Permission): boolean {
   if (!user) return false;
@@ -23,6 +26,12 @@ export function hasPermission(user: SessionUser | null, permission: Permission):
 export function hasAnyPermission(user: SessionUser | null, permissions: Permission[]): boolean {
   if (!user) return false;
   return permissions.some((p) => hasPermission(user, p));
+}
+
+export function hasAccess(user: SessionUser | null, permissions: Permission | Permission[]): boolean {
+  if (!user) return false;
+  const list = Array.isArray(permissions) ? permissions : [permissions];
+  return list.some((p) => hasPermission(user, p));
 }
 
 export function hasAllPermissions(user: SessionUser | null, permissions: Permission[]): boolean {
