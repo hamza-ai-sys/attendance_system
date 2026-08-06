@@ -116,6 +116,7 @@ describe("rbac", () => {
       expect(hasPermission(ownerUser, "approvals")).toBe(true);
       expect(hasPermission(ownerUser, "enrollment")).toBe(true);
       expect(hasPermission(ownerUser, "reports")).toBe(true);
+      expect(hasPermission(ownerUser, "my_team")).toBe(true);
     });
   });
 

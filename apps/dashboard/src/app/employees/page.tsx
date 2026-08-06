@@ -1,10 +1,11 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasAccess } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { logout } from "../login/actions";
 import { EmployeeDirectory, type EmployeeRecord } from "../enrollment/employee-directory";
+import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
 
@@ -18,22 +19,15 @@ export default async function EmployeesListPage() {
   }
 
   // HR or Owner permission check
-  if (!hasPermission(user, "enrollment")) {
-    return (
-      <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: You do not have permission to view the employee list.</p>
-        </div>
-        <Link href="/" className="back-link">← Back to Dashboard</Link>
-      </main>
-    );
+  if (!hasAccess(user, ["enrollment", "company_attendance"])) {
+    return <UnauthorizedView featureName="Employee Directory" />;
   }
 
   // Fetch all registered employees from database
   const enrolledEmployees = await db.employee.findMany({
     include: {
       role: true,
-      manager: true
+      supervisor: true
     },
     orderBy: { fullName: "asc" }
   });
@@ -44,7 +38,7 @@ export default async function EmployeesListPage() {
     email: emp.email,
     employeeCode: emp.employeeCode,
     roleName: emp.role?.name || "employee",
-    managerName: emp.manager?.fullName || "None",
+    managerName: emp.supervisor?.fullName || "None",
     timezone: emp.timezone,
     status: emp.status,
     createdAtStr: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(emp.createdAt)

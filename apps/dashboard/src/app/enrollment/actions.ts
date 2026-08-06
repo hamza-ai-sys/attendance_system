@@ -25,7 +25,7 @@ export async function createEmployee(prevState: EnrollmentState, formData: FormD
   const employeeCode = (formData.get("employeeCode") as string)?.trim();
   const password = formData.get("password") as string;
   const roleId = formData.get("roleId") as string;
-  const managerId = formData.get("managerId") as string;
+  const supervisorId = (formData.get("supervisorId") as string || formData.get("managerId") as string) as string;
   const shiftInTime = (formData.get("shiftInTime") as string)?.trim() || "09:00";
   const shiftOutTime = (formData.get("shiftOutTime") as string)?.trim() || "17:00";
   const timezone = (formData.get("timezone") as string)?.trim() || "Asia/Karachi";
@@ -77,7 +77,7 @@ export async function createEmployee(prevState: EnrollmentState, formData: FormD
       employeeCode: employeeCode || null,
       passwordHash,
       roleId: roleId || null,
-      managerId: managerId || null,
+      supervisorId: supervisorId || null,
       shiftInTime,
       shiftOutTime,
       timezone,

@@ -1,11 +1,12 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasAccess } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { logout } from "../login/actions";
 import { EnrollmentForm } from "./enrollment-form";
 import { EmployeeDirectory, type EmployeeRecord } from "./employee-directory";
+import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,8 @@ export default async function EnrollmentPage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user, "enrollment")) {
-    return (
-      <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: Only HR staff and Owners have access to Employee Enrollment.</p>
-        </div>
-        <Link href="/" className="back-link">← Back to Dashboard</Link>
-      </main>
-    );
+  if (!hasAccess(user, ["enrollment", "company_attendance"])) {
+    return <UnauthorizedView featureName="Employee Enrollment" />;
   }
 
   // Fetch roles and potential managers for the form dropdowns
@@ -43,7 +37,7 @@ export default async function EnrollmentPage() {
   const enrolledEmployees = await db.employee.findMany({
     include: {
       role: true,
-      manager: true
+      supervisor: true
     },
     orderBy: { createdAt: "desc" }
   });
@@ -54,7 +48,7 @@ export default async function EnrollmentPage() {
     email: emp.email,
     employeeCode: emp.employeeCode,
     roleName: emp.role?.name || "employee",
-    managerName: emp.manager?.fullName || "None",
+    managerName: emp.supervisor?.fullName || "None",
     timezone: emp.timezone,
     status: emp.status,
     createdAtStr: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(emp.createdAt)

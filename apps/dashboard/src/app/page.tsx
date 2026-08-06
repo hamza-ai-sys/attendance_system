@@ -8,6 +8,7 @@ import type { Route } from "next";
 
 export const dynamic = "force-dynamic";
 
+// Force Next.js server cache re-evaluation for Prisma Client models
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
@@ -40,6 +41,18 @@ const allModules: { name: string; permission: Permission; description: string; h
     permission: "team_attendance",
     description: "Monitor the attendance status of your entire team.",
     href: "/team-attendance"
+  },
+  {
+    name: "My Team",
+    permission: "my_team",
+    description: "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
+    href: "/my-team"
+  },
+  {
+    name: "Performance Tracking & Analysis",
+    permission: "reports",
+    description: "HR performance evaluation builder, manager scheduling, and organizational performance analytics.",
+    href: "/performance"
   },
   {
     name: "Manual requests",
@@ -119,7 +132,10 @@ export default async function Home() {
 
     if (m.permission === "approvals") {
       return (
-        hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
+        hasPermission(user, "my_team") ||
+        hasPermission(user, "company_attendance") ||
+        hasPermission(user, "team_attendance") ||
+        ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
 
@@ -128,22 +144,21 @@ export default async function Home() {
 
   // Query live pending approvals count for users with approval privileges
   let pendingApprovalsCount = 0;
-  const canApprove =
-    hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName);
+  const canApprove = hasPermission(user, "approvals");
 
   if (canApprove) {
     if (roleName === "manager") {
       const attCount = await db.manualAttendanceRequest.count({
         where: {
           status: "PENDING_MANAGER",
-          employee: { managerId: user.employeeId },
+          employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });
       const leaveCount = await db.leaveRequest.count({
         where: {
           status: "PENDING_MANAGER",
-          employee: { managerId: user.employeeId },
+          employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });
