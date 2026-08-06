@@ -1,23 +1,14 @@
 "use server";
 
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasAnyPermission } from "../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 function isAuthorized(user: Awaited<ReturnType<typeof getCurrentUser>>) {
-  if (!user) return false;
-  const role = user.roleName?.toLowerCase();
-  return (
-    hasPermission(user, "company_attendance") ||
-    hasPermission(user, "reports") ||
-    hasPermission(user, "enrollment") ||
-    role === "owner" ||
-    role === "hr" ||
-    role === "admin"
-  );
+  return hasAnyPermission(user, ["company_attendance", "reports", "enrollment"]);
 }
 
 export async function updateWeeklyOffDays(formData: FormData) {
@@ -31,7 +22,9 @@ export async function updateWeeklyOffDays(formData: FormData) {
 
   if (offDaysType === "custom") {
     const rawDays = formData.getAll("customDays");
-    offDays = rawDays.map((d) => parseInt(d as string, 10)).filter((n) => !isNaN(n) && n >= 0 && n <= 6);
+    offDays = rawDays
+      .map((d) => parseInt(d as string, 10))
+      .filter((n) => !isNaN(n) && n >= 0 && n <= 6);
   } else if (offDaysType === "sat_sun") {
     offDays = [0, 6];
   } else if (offDaysType === "fri_sat") {

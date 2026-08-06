@@ -272,6 +272,95 @@ async function main() {
       update: {},
       where: { date: holidayDate }
     });
+
+    // 6. Seed Default HR Leave Types & Employee Balances
+    const defaultLeaveTypes = [
+      {
+        code: "ANNUAL",
+        name: "Annual Leave",
+        description: "Paid annual vacation days",
+        accrualFrequency: "MONTHLY" as const,
+        defaultAllocation: 14,
+        allowCarryForward: true,
+        maxCarryForwardDays: 5,
+        isPaid: true
+      },
+      {
+        code: "SICK",
+        name: "Sick Leave",
+        description: "Paid medical & health leave",
+        accrualFrequency: "MONTHLY" as const,
+        defaultAllocation: 8,
+        allowCarryForward: false,
+        maxCarryForwardDays: 0,
+        isPaid: true
+      },
+      {
+        code: "CASUAL",
+        name: "Casual Leave",
+        description: "Short notice casual time off",
+        accrualFrequency: "MONTHLY" as const,
+        defaultAllocation: 10,
+        allowCarryForward: false,
+        maxCarryForwardDays: 0,
+        isPaid: true
+      },
+      {
+        code: "UNPAID",
+        name: "Unpaid Leave",
+        description: "Leave without pay (LOP)",
+        accrualFrequency: "ANNUALLY" as const,
+        defaultAllocation: 0,
+        allowCarryForward: false,
+        maxCarryForwardDays: 0,
+        isPaid: false
+      }
+    ];
+
+    const seededLeaveTypes: Record<string, { id: string }> = {};
+    for (const lt of defaultLeaveTypes) {
+      const created = await tx.leaveTypeConfig.upsert({
+        create: lt,
+        update: {
+          name: lt.name,
+          description: lt.description,
+          defaultAllocation: lt.defaultAllocation,
+          accrualFrequency: lt.accrualFrequency
+        },
+        where: { code: lt.code }
+      });
+      seededLeaveTypes[lt.code] = created;
+    }
+
+    const currentYear = new Date().getFullYear();
+    const allEmps = [owner, hr, manager, employee];
+
+    for (const emp of allEmps) {
+      for (const lt of defaultLeaveTypes) {
+        const typeConfig = seededLeaveTypes[lt.code]!;
+        const accrued = lt.defaultAllocation;
+
+        await tx.leaveBalance.upsert({
+          create: {
+            employeeId: emp.id,
+            year: currentYear,
+            leaveTypeId: typeConfig.id,
+            allocated: lt.defaultAllocation,
+            accrued,
+            used: 0,
+            carriedOver: 0
+          },
+          update: {},
+          where: {
+            employeeId_year_leaveTypeId: {
+              employeeId: emp.id,
+              year: currentYear,
+              leaveTypeId: typeConfig.id
+            }
+          }
+        });
+      }
+    }
   });
 }
 

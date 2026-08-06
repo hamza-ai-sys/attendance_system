@@ -1,5 +1,5 @@
 import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { hasPermission, getPendingHRStatusText } from "../../lib/rbac";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
@@ -33,10 +33,32 @@ export default async function ManualRequestsPage() {
   if (!hasPermission(user, "manual_reports")) {
     return (
       <main className="app-shell">
-        <div className="banner" style={{ borderColor: "#ef4444" }}>
-          <p>Unauthorized: You do not have permission to access Manual Requests.</p>
+        <header className="topbar">
+          <div>
+            <Link href="/" className="back-link">
+              ← Back to Dashboard
+            </Link>
+            <h1 style={{ color: "#ef4444", background: "none" }}>Access Restricted</h1>
+          </div>
+          <form action={logout}>
+            <button type="submit" className="logout-btn">
+              Sign Out
+            </button>
+          </form>
+        </header>
+        <div
+          className="panel"
+          style={{ cursor: "default", borderLeft: "4px solid #ef4444", padding: "24px" }}
+        >
+          <h2>Owner Notice</h2>
+          <p className="muted" style={{ marginTop: "8px" }}>
+            Company Owners cannot submit manual attendance requests. Use the{" "}
+            <Link href="/approvals" style={{ color: "#60a5fa" }}>
+              Approvals portal
+            </Link>{" "}
+            to review team punch requests.
+          </p>
         </div>
-        <Link href="/" className="back-link">← Back to Dashboard</Link>
       </main>
     );
   }
@@ -44,10 +66,7 @@ export default async function ManualRequestsPage() {
   // Strictly filter requests to ONLY show requests submitted by the authenticated user
   const requests = await db.manualAttendanceRequest.findMany({
     where: {
-      OR: [
-        { employeeId: user.employeeId },
-        { createdByEmployeeId: user.employeeId }
-      ]
+      OR: [{ employeeId: user.employeeId }, { createdByEmployeeId: user.employeeId }]
     },
     include: {
       employee: {
@@ -88,7 +107,9 @@ export default async function ManualRequestsPage() {
       <section className="form-panel" style={{ gap: "16px" }}>
         <div>
           <h2>My Submitted Requests ({requests.length})</h2>
-          <p className="muted">Track the status of manual punch adjustment requests you have submitted.</p>
+          <p className="muted">
+            Track the status of manual punch adjustment requests you have submitted.
+          </p>
         </div>
 
         <div className="attendance-table-container">
@@ -120,7 +141,7 @@ export default async function ManualRequestsPage() {
                       border: "1px solid rgba(251, 191, 36, 0.3)"
                     };
                   } else if (req.status === "PENDING_HR") {
-                    statusText = "Stage 2: Awaiting HR";
+                    statusText = getPendingHRStatusText(user.roleName, req.employee?.role?.name);
                     statusBadgeStyle = {
                       background: "rgba(192, 132, 252, 0.15)",
                       color: "#c084fc",
@@ -189,7 +210,10 @@ export default async function ManualRequestsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "24px", color: "var(--muted)" }}>
+                  <td
+                    colSpan={5}
+                    style={{ textAlign: "center", padding: "24px", color: "var(--muted)" }}
+                  >
                     You have not submitted any manual requests yet.
                   </td>
                 </tr>

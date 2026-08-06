@@ -18,6 +18,18 @@ const allModules: { name: string; permission: Permission; description: string; h
     href: "/my-attendance"
   },
   {
+    name: "Apply for Leave",
+    permission: "my_attendance",
+    description: "Submit leave applications, track leave balances, and view approval status.",
+    href: "/leave-requests"
+  },
+  {
+    name: "Leave",
+    permission: "reports",
+    description: "Configure HR leave categories, quotas, and monthly/annual accrual rules.",
+    href: "/leave-settings"
+  },
+  {
     name: "List all employees",
     permission: "enrollment",
     description: "View the complete list of all registered employees and staff details.",
@@ -93,6 +105,17 @@ export default async function Home() {
     if (m.name === "Jobs" || m.name === "Announcements") {
       return true;
     }
+
+    if (roleName === "owner") {
+      // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
+      if (
+        m.href === "/leave-requests" ||
+        m.href === "/manual-requests" ||
+        m.href === "/my-attendance"
+      ) {
+        return false;
+      }
+
     if (m.permission === "approvals") {
       return (
         hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
@@ -108,17 +131,29 @@ export default async function Home() {
 
   if (canApprove) {
     if (roleName === "manager") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_MANAGER" }
+      const attCount = await db.manualAttendanceRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
-    } else if (roleName === "hr") {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
-        where: { status: "PENDING_HR" }
+      const leaveCount = await db.leaveRequest.count({
+        where: {
+          status: "PENDING_MANAGER",
+          employee: { managerId: user.employeeId },
+          employeeId: { not: user.employeeId }
+        }
       });
+      pendingApprovalsCount = attCount + leaveCount;
     } else {
-      pendingApprovalsCount = await db.manualAttendanceRequest.count({
+      const attCount = await db.manualAttendanceRequest.count({
         where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
       });
+      const leaveCount = await db.leaveRequest.count({
+        where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
+      });
+      pendingApprovalsCount = attCount + leaveCount;
     }
   }
   const currentEmployee = await db.employee.findUnique({
@@ -139,11 +174,16 @@ export default async function Home() {
             Welcome back, <strong>{user.fullName}</strong> ({user.roleName})
           </p>
         </div>
-        <form action={logout}>
-          <button type="submit" className="logout-btn">
-            Sign Out
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <Link href={"/personal-records" as Route} className="back-link" style={{ textDecoration: "none" }}>
+            👤 My Profile
+          </Link>
+          <form action={logout}>
+            <button type="submit" className="logout-btn">
+              Sign Out
+            </button>
+          </form>
+        </div>
       </header>
 
       <section className="panel-grid" aria-label="Dashboard modules">
