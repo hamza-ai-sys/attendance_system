@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import { functionSizeRule } from "./eslint-rules/function-size.mjs";
 
 export default [
   {
@@ -35,6 +36,34 @@ export default [
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_"
+        }
+      ]
+    }
+  },
+  {
+    files: ["apps/dashboard/src/**/*.tsx"],
+    plugins: {
+      local: {
+        rules: {
+          "function-size": functionSizeRule
+        }
+      }
+    },
+    rules: {
+      // UI modules should remain easy to review and split along component boundaries.
+      "max-lines": [
+        "error",
+        {
+          max: 250,
+          skipBlankLines: true,
+          skipComments: true
+        }
+      ],
+      "local/function-size": [
+        "error",
+        {
+          functionMax: 50,
+          componentMax: 100
         }
       ]
     }

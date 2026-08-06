@@ -120,6 +120,7 @@ pnpm docker:dev:down
 | `pnpm dev:device-gateway`   | Run only the device gateway.                                  |
 | `pnpm dev:worker`           | Run only the worker.                                          |
 | `pnpm docker:dev:db:up`     | Start only development PostgreSQL in Docker.                  |
+| `pnpm docker:dev:db:stop`   | Stop only development PostgreSQL without deleting its data.   |
 | `pnpm docker:dev:up`        | Start PostgreSQL and all app services for local development.  |
 | `pnpm docker:dev:logs`      | Follow development container logs.                            |
 | `pnpm docker:dev:down`      | Stop the local development stack.                             |
