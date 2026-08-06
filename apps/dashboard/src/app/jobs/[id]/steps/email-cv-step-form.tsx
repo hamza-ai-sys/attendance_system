@@ -20,7 +20,6 @@ export function EmailCvStepForm({
       formRef.current?.reset();
       onAdded();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success]);
 
   return (

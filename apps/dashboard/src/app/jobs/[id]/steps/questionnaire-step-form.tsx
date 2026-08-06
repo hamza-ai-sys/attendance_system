@@ -33,7 +33,6 @@ export function QuestionnaireStepForm({
       setQuestions([blankQuestion()]);
       onAdded();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success]);
 
   function updateQuestion(id: string, patch: Partial<JobStepQuestion>) {

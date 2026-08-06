@@ -24,7 +24,6 @@ export function InterviewStepForm({
       setMode("ONLINE");
       onAdded();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success]);
 
   const todayStr = new Date().toISOString().slice(0, 10);

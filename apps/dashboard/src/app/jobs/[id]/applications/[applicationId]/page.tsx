@@ -37,14 +37,21 @@ export default async function ApplicationDetailPage({
       <main className="app-shell">
         <header className="topbar">
           <div>
-            <Link href="/jobs" className="back-link">← Jobs</Link>
+            <Link href="/jobs" className="back-link">
+              ← Jobs
+            </Link>
             <h1 style={{ color: "#ef4444", background: "none" }}>403 Access Restricted</h1>
           </div>
           <form action={logout}>
-            <button type="submit" className="logout-btn">Sign Out</button>
+            <button type="submit" className="logout-btn">
+              Sign Out
+            </button>
           </form>
         </header>
-        <div className="panel" style={{ cursor: "default", borderLeft: "4px solid #ef4444", padding: "24px" }}>
+        <div
+          className="panel"
+          style={{ cursor: "default", borderLeft: "4px solid #ef4444", padding: "24px" }}
+        >
           <h2>HR Privilege Required</h2>
         </div>
       </main>
@@ -79,12 +86,16 @@ export default async function ApplicationDetailPage({
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <Link href={`/jobs/${id}/applications`} className="back-link">← Responses</Link>
+          <Link href={`/jobs/${id}/applications`} className="back-link">
+            ← Responses
+          </Link>
           <h1>{application.fullName}</h1>
           <p className="muted">Applied for {application.jobPosting.title}</p>
         </div>
         <form action={logout}>
-          <button type="submit" className="logout-btn">Sign Out</button>
+          <button type="submit" className="logout-btn">
+            Sign Out
+          </button>
         </form>
       </header>
 
@@ -95,13 +106,9 @@ export default async function ApplicationDetailPage({
         <p className="muted" style={{ fontSize: "0.8rem", marginTop: "8px" }}>
           Applied {formatDateTime(application.createdAt)}
         </p>
-        
-          href={`/jobs/${id}/applications/${application.id}/cv`}
-          className="back-link"
-          style={{ display: "inline-flex", marginTop: "12px" }}
-        >
-          Download CV
-        </a>
+        href={`/jobs/${id}/applications/${application.id}/cv`}
+        className="back-link" style={{ display: "inline-flex", marginTop: "12px" }}
+        <a>Download CV</a>
       </section>
 
       {steps.length === 0 ? (
@@ -122,7 +129,9 @@ export default async function ApplicationDetailPage({
                       Target address: {(step.config as EmailCvStepConfig | null)?.email}
                     </p>
                     <p style={{ marginTop: "8px" }}>
-                      {response ? "✅ Candidate confirmed they sent their CV." : "⚠️ Not confirmed."}
+                      {response
+                        ? "✅ Candidate confirmed they sent their CV."
+                        : "⚠️ Not confirmed."}
                     </p>
                   </>
                 )}
@@ -130,17 +139,30 @@ export default async function ApplicationDetailPage({
                 {step.type === "QUESTIONNAIRE" && (
                   <>
                     <h3>Step {index + 1}: Questionnaire</h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
-                      {((step.config as QuestionnaireStepConfig | null)?.questions ?? []).map((question) => {
-                        const answer = response?.answer as { answers?: { questionId: string; value: string[] }[] } | null;
-                        const found = answer?.answers?.find((a) => a.questionId === question.id);
-                        return (
-                          <div key={question.id}>
-                            <p style={{ fontWeight: 600 }}>{question.prompt}</p>
-                            <p className="muted">{found?.value?.join(", ") || "No answer recorded"}</p>
-                          </div>
-                        );
-                      })}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "12px",
+                        marginTop: "10px"
+                      }}
+                    >
+                      {((step.config as QuestionnaireStepConfig | null)?.questions ?? []).map(
+                        (question) => {
+                          const answer = response?.answer as {
+                            answers?: { questionId: string; value: string[] }[];
+                          } | null;
+                          const found = answer?.answers?.find((a) => a.questionId === question.id);
+                          return (
+                            <div key={question.id}>
+                              <p style={{ fontWeight: 600 }}>{question.prompt}</p>
+                              <p className="muted">
+                                {found?.value?.join(", ") || "No answer recorded"}
+                              </p>
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                   </>
                 )}
@@ -149,7 +171,9 @@ export default async function ApplicationDetailPage({
                   <>
                     <h3>Step {index + 1}: Interview</h3>
                     <p className="muted" style={{ marginTop: "6px" }}>
-                      {step.interviewMode === "ONLINE" ? "Online" : `Physical — ${step.location ?? "TBD"}`}
+                      {step.interviewMode === "ONLINE"
+                        ? "Online"
+                        : `Physical — ${step.location ?? "TBD"}`}
                       {step.interviewer ? ` with ${step.interviewer.fullName}` : ""}
                     </p>
                     <p style={{ marginTop: "8px" }}>
