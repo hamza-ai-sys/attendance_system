@@ -102,6 +102,12 @@ enum ReportExportStatus {
   FAILED
 }
 
+enum JobPostingStatus {
+  OPEN
+  CLOSED
+}
+
+
 model Employee {
   id                   String                    @id @default(cuid())
   email                String                    @unique
@@ -138,6 +144,10 @@ model Employee {
   reportExports        ReportExport[]
   scanEvents           ScanEvent[]
   shiftAssignments     EmployeeShiftAssignment[]
+  createdJobPostings   JobPosting[]              @relation("JobPostingCreatedBy")
+  createdAnnouncements Announcement[]            @relation("AnnouncementCreatedBy")
+  interviewStepAssignments JobPostingStep[]      @relation("InterviewStepInterviewer")
+  lastAnnouncementsViewedAt DateTime?
   leaveRequests        LeaveRequest[]            @relation("LeaveRequestEmployee")
   leaveApprovalSteps   LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
   leaveBalances        LeaveBalance[]
@@ -384,6 +394,122 @@ model CompanySetting {
   updatedAt DateTime @updatedAt
 }
 
+model JobPosting {
+  id             String            @id @default(cuid())
+  title          String
+  department     String?
+  location       String?
+  employmentType String?
+  description    String
+  status         JobPostingStatus  @default(OPEN)
+  createdById    String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      Employee          @relation("JobPostingCreatedBy", fields: [createdById], references: [id])
+  applications   JobApplication[]
+  steps          JobPostingStep[]
+
+  @@index([status, createdAt])
+  @@index([createdById])
+}
+
+model JobApplication {
+  id           String                @id @default(cuid())
+  jobPostingId String
+  fullName     String
+  phone        String
+  email        String
+  cvFileName   String
+  cvFileType   String
+  cvFileSize   Int
+  cvFileData   Bytes
+  status       JobApplicationStatus  @default(SUBMITTED)
+  createdAt    DateTime              @default(now())
+  jobPosting   JobPosting            @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  stepResponses JobApplicationStepResponse[]
+
+  @@index([jobPostingId, createdAt])
+}
+
+enum JobApplicationStatus {
+  SUBMITTED
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum JobStepType {
+  EMAIL_CV
+  QUESTIONNAIRE
+  INTERVIEW
+}
+
+enum InterviewMode {
+  ONLINE
+  PHYSICAL
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   Employee @relation("AnnouncementCreatedBy", fields: [createdById], references: [id])
+
+  @@index([createdAt])
+  @@index([createdById])
+}
+
+model JobPostingStep {
+  id            String         @id @default(cuid())
+  jobPostingId  String
+  type          JobStepType
+  order         Int
+  config        Json?
+
+  // Interview-specific fields (only set when type = INTERVIEW)
+  interviewMode     InterviewMode?
+  interviewerId     String?
+  location          String?
+  availabilityStart DateTime?
+  availabilityEnd   DateTime?
+  dailyStartTime    String?
+  dailyEndTime      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobPosting  JobPosting                    @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  interviewer Employee?                     @relation("InterviewStepInterviewer", fields: [interviewerId], references: [id])
+  responses   JobApplicationStepResponse[]
+
+  @@index([jobPostingId, order])
+  @@index([interviewerId])
+}
+
+model JobApplicationStepResponse {
+  id            String      @id @default(cuid())
+  applicationId String
+  stepId        String
+  type          JobStepType
+  answer        Json?
+
+  // Interview-specific fields (only set when type = INTERVIEW)
+  interviewerId String?
+  scheduledAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  step        JobPostingStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, stepId])
+  @@unique([interviewerId, scheduledAt])
+  @@index([stepId, scheduledAt])
+}
 model LeaveTypeConfig {
   id                  String           @id @default(cuid())
   code                String           @unique

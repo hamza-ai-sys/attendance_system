@@ -8,7 +8,12 @@ export type Permission =
   | "enrollment"
   | "reports"
   | "company_attendance"
+<<<<<<< HEAD
   | "my_team";
+=======
+  | "jobs_manage"
+  | "announcements_manage";
+>>>>>>> main
 
 export function hasPermission(user: SessionUser | null, permission: Permission): boolean {
   if (!user) return false;
