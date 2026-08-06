@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createPrismaClient } from "@attendance/db";
 import { getCurrentUser } from "../../../../lib/session";
@@ -144,7 +145,13 @@ export default async function JobApplicationsPage({ params }: { params: Promise<
                 {job.applications.map((application) => (
                   <tr key={application.id}>
                     <td>
-                      <strong>{application.fullName}</strong>
+                      <Link
+                        href={`/jobs/${job.id}/applications/${application.id}` as Route}
+                        className="back-link"
+                        style={{ display: "inline-flex" }}
+                      >
+                        {application.fullName}
+                      </Link>
                     </td>
                     <td>
                       <div>{application.email}</div>

@@ -25,7 +25,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   const job = await db.jobPosting.findUnique({
     where: { id },
-    include: { createdBy: { select: { fullName: true } } }
+    include: {
+      createdBy: { select: { fullName: true } },
+      steps: {
+        orderBy: { order: "asc" },
+        include: { interviewer: { select: { fullName: true } } }
+      }
+    }
   });
 
   if (!job) {
@@ -105,7 +111,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       </section>
 
       {job.status === "OPEN" ? (
-        <ApplyForm jobPostingId={job.id} />
+        <ApplyForm jobPostingId={job.id} steps={job.steps} />
       ) : (
         <section className="panel" style={{ cursor: "default" }}>
           <p className="muted">This position is closed and is no longer accepting applications.</p>

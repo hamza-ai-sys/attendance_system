@@ -2,10 +2,24 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { submitApplication, type ApplicationState } from "../actions";
+import { EmailCvApplyStep } from "./apply-steps/email-cv-apply-step";
+import { QuestionnaireApplyStep } from "./apply-steps/questionnaire-apply-step";
+import { InterviewApplyStep } from "./apply-steps/interview-apply-step";
 
 const initialState: ApplicationState = {};
 
-export function ApplyForm({ jobPostingId }: { jobPostingId: string }) {
+type ApplyStep = {
+  id: string;
+  type: string;
+  config: unknown;
+  interviewMode: string | null;
+  location: string | null;
+  availabilityStart: Date | null;
+  availabilityEnd: Date | null;
+  interviewer: { fullName: string } | null;
+};
+
+export function ApplyForm({ jobPostingId, steps }: { jobPostingId: string; steps: ApplyStep[] }) {
   const [state, formAction, isPending] = useActionState(submitApplication, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -19,7 +33,9 @@ export function ApplyForm({ jobPostingId }: { jobPostingId: string }) {
     <div className="form-panel">
       <div>
         <h2>Apply for this Position</h2>
-        <p className="muted">Fill in your details and attach your CV to submit your application.</p>
+        <p className="muted">
+          Fill in your details and complete every step below to submit your application.
+        </p>
       </div>
 
       {state.error && (
@@ -95,6 +111,23 @@ export function ApplyForm({ jobPostingId }: { jobPostingId: string }) {
             </span>
           </div>
         </div>
+
+        {steps.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
+            {steps.map((step, index) => {
+              if (step.type === "EMAIL_CV") {
+                return <EmailCvApplyStep key={step.id} step={step} index={index} />;
+              }
+              if (step.type === "QUESTIONNAIRE") {
+                return <QuestionnaireApplyStep key={step.id} step={step} index={index} />;
+              }
+              if (step.type === "INTERVIEW") {
+                return <InterviewApplyStep key={step.id} step={step} index={index} />;
+              }
+              return null;
+            })}
+          </div>
+        )}
 
         <div style={{ marginTop: "4px" }}>
           <button type="submit" className="btn-primary" disabled={isPending}>

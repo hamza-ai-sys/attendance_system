@@ -3,6 +3,7 @@
 import { getCurrentUser } from "../../lib/session";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { isHr } from "./permissions";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
@@ -42,7 +43,7 @@ export async function createJobPosting(
     return { error: "Job description is required." };
   }
 
-  await db.jobPosting.create({
+  const job = await db.jobPosting.create({
     data: {
       title,
       department: department || null,
@@ -56,7 +57,7 @@ export async function createJobPosting(
   revalidatePath("/jobs");
   revalidatePath("/");
 
-  return { success: `Job posting "${title}" has been published.` };
+  redirect(`/jobs/${job.id}/steps`);
 }
 
 export async function setJobPostingStatus(formData: FormData) {
@@ -138,7 +139,10 @@ export async function submitApplication(
     return { error: "CV file must be smaller than 5MB." };
   }
 
-  const job = await db.jobPosting.findUnique({ where: { id: jobPostingId } });
+  const job = await db.jobPosting.findUnique({
+    where: { id: jobPostingId },
+    include: { steps: { orderBy: { order: "asc" } } }
+  });
 
   if (!job) {
     return { error: "This job posting no longer exists." };
@@ -148,20 +152,104 @@ export async function submitApplication(
     return { error: "This job posting is no longer accepting applications." };
   }
 
+  // Validate and build a response row for every step attached to this job.
+  const stepResponses: {
+    stepId: string;
+    type: "EMAIL_CV" | "QUESTIONNAIRE" | "INTERVIEW";
+    answer?: object;
+    interviewerId?: string;
+    scheduledAt?: Date;
+  }[] = [];
+
+  for (const step of job.steps) {
+    if (step.type === "EMAIL_CV") {
+      const acknowledged = formData.get(`ack_${step.id}`);
+      if (!acknowledged) {
+        return { error: "Please confirm every required step before submitting." };
+      }
+      stepResponses.push({ stepId: step.id, type: "EMAIL_CV", answer: { acknowledged: true } });
+    } else if (step.type === "QUESTIONNAIRE") {
+      const config = step.config as {
+        questions: { id: string; prompt: string; type: string }[];
+      } | null;
+      const questions = config?.questions ?? [];
+      const answers: { questionId: string; value: string[] }[] = [];
+
+      for (const question of questions) {
+        const values = formData
+          .getAll(`q_${step.id}_${question.id}`)
+          .map((v) => String(v).trim())
+          .filter(Boolean);
+        if (values.length === 0) {
+          return { error: `Please answer: "${question.prompt}"` };
+        }
+        answers.push({ questionId: question.id, value: values });
+      }
+
+      stepResponses.push({ stepId: step.id, type: "QUESTIONNAIRE", answer: { answers } });
+    } else if (step.type === "INTERVIEW") {
+      const dateStr = formData.get(`interview_${step.id}_date`) as string;
+      const timeStr = formData.get(`interview_${step.id}_time`) as string;
+
+      if (!dateStr || !timeStr) {
+        return { error: "Please choose an interview date and time." };
+      }
+
+      const scheduledAt = new Date(`${dateStr}T${timeStr}:00`);
+
+      if (Number.isNaN(scheduledAt.getTime())) {
+        return { error: "Please choose a valid interview date and time." };
+      }
+
+      stepResponses.push({
+        stepId: step.id,
+        type: "INTERVIEW",
+        interviewerId: step.interviewerId ?? undefined,
+        scheduledAt
+      });
+    }
+  }
+
   const buffer = Buffer.from(await cv.arrayBuffer());
 
-  await db.jobApplication.create({
-    data: {
-      jobPostingId,
-      fullName,
-      phone,
-      email,
-      cvFileName: cv.name || "cv",
-      cvFileType: cv.type || "application/octet-stream",
-      cvFileSize: cv.size,
-      cvFileData: buffer
+  try {
+    await db.$transaction(async (tx) => {
+      const application = await tx.jobApplication.create({
+        data: {
+          jobPostingId,
+          fullName,
+          phone,
+          email,
+          cvFileName: cv.name || "cv",
+          cvFileType: cv.type || "application/octet-stream",
+          cvFileSize: cv.size,
+          cvFileData: buffer
+        }
+      });
+
+      for (const response of stepResponses) {
+        await tx.jobApplicationStepResponse.create({
+          data: {
+            applicationId: application.id,
+            stepId: response.stepId,
+            type: response.type,
+            answer: response.answer ? JSON.parse(JSON.stringify(response.answer)) : undefined,
+            interviewerId: response.interviewerId,
+            scheduledAt: response.scheduledAt
+          }
+        });
+      }
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === "P2002") {
+      return {
+        error:
+          "One of the interview slots you selected was just booked by someone else. Please go back and choose a different time."
+      };
     }
-  });
+    return { error: "Something went wrong while submitting your application. Please try again." };
+  }
 
   revalidatePath(`/jobs/${jobPostingId}/applications`);
 
