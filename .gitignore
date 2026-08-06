@@ -1,13 +1,14 @@
 .DS_Store
 .env
 .env.*
-!.env.example
 !.env.*.example
 
 node_modules/
 .pnpm-store/
 .turbo/
 coverage/
+playwright-report/
+test-results/
 dist/
 build/
 

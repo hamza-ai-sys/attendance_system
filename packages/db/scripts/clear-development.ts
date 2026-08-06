@@ -17,7 +17,7 @@ function getDatabaseUrl() {
 
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is required to clear the database. Create .env from .env.example or set DATABASE_URL."
+      "DATABASE_URL is required to clear the database. Create .env from .env.dev.example or set DATABASE_URL."
     );
   }
 
@@ -35,22 +35,28 @@ async function main() {
 
   try {
     const deletedRows = await prisma.$transaction(async (tx) => {
-      const results = await Promise.all([
-        tx.approvalStep.deleteMany(),
-        tx.notification.deleteMany(),
-        tx.reportExport.deleteMany(),
-        tx.fingerprintEnrollment.deleteMany(),
-        tx.enrollmentSession.deleteMany(),
-        tx.employeeShiftAssignment.deleteMany()
-      ]);
+      const results: { count: number }[] = [];
 
+      // Delete dependent records before the records they reference.
+      results.push(await tx.approvalStep.deleteMany());
+      results.push(await tx.leaveApprovalStep.deleteMany());
+      results.push(await tx.notification.deleteMany());
+      results.push(await tx.reportExport.deleteMany());
+      results.push(await tx.fingerprintEnrollment.deleteMany());
+      results.push(await tx.enrollmentSession.deleteMany());
+      results.push(await tx.employeeShiftAssignment.deleteMany());
       results.push(await tx.manualAttendanceRequest.deleteMany());
+      results.push(await tx.leaveRequest.deleteMany());
+      results.push(await tx.leaveBalance.deleteMany());
       results.push(await tx.scanEvent.deleteMany());
       results.push(await tx.auditLog.deleteMany());
       results.push(await tx.jobRun.deleteMany());
+      results.push(await tx.holiday.deleteMany());
+      results.push(await tx.companySetting.deleteMany());
       results.push(await tx.employee.deleteMany());
       results.push(await tx.device.deleteMany());
       results.push(await tx.shift.deleteMany());
+      results.push(await tx.leaveTypeConfig.deleteMany());
       results.push(await tx.rolePermission.deleteMany());
       results.push(await tx.role.deleteMany());
       results.push(await tx.permission.deleteMany());

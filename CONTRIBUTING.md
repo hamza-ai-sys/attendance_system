@@ -7,14 +7,14 @@ is PostgreSQL in Docker with the apps running locally:
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm docker:db:up
+cp .env.dev.example .env
+pnpm docker:dev:db:up
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
 ```
 
-Use `pnpm docker:up` only when you intentionally want the whole stack running in Docker.
+Use `pnpm docker:dev:up` only when you intentionally want the whole stack running in Docker.
 Do not run `pnpm dev` at the same time as the full Docker stack unless you have changed
 ports or stopped the app containers.
 
@@ -52,7 +52,7 @@ pnpm firmware:build
 - Do not create package-level `.env` files.
 - Runtime packages receive configuration from their importing app. Prisma CLI configuration
   and the seed script are executable tooling and may load the root `.env`.
-- Do not commit `.env`, `.env.production`, firmware `config.h`, database dumps, or real keys.
+- Do not commit `.env`, `.env.prod`, firmware `config.h`, database dumps, or real keys.
 - The bundled seed is development-only and must not be run in production.
 
 ## Service Boundaries

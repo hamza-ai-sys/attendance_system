@@ -8,13 +8,14 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clear": "tsx prisma/clear.ts",
+    "clear:dev": "tsx scripts/clear-development.ts",
     "clean": "rm -rf dist coverage src/generated",
     "generate": "prisma generate",
     "lint": "eslint .",
     "migrate:deploy": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts",
+    "seed:dev": "tsx scripts/seed-development.ts",
+    "seed:e2e": "tsx scripts/seed-e2e.ts",
     "studio": "prisma studio",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"

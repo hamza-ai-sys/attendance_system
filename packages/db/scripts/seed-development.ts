@@ -29,7 +29,7 @@ function getRequiredEnv(name: "DATABASE_URL" | "DEV_DEVICE_SECRET") {
 
   if (!value) {
     throw new Error(
-      `${name} is required to seed the database. Create .env from .env.example or set ${name}.`
+      `${name} is required to seed the database. Create .env from .env.dev.example or set ${name}.`
     );
   }
 
@@ -162,6 +162,22 @@ async function main() {
       where: { email: "employee@test.com" }
     });
 
+    const shaheer = await tx.employee.upsert({
+      create: {
+        email: "shaheer@test.com",
+        employeeCode: "EMP-07",
+        fullName: "Shaheer",
+        roleId: roles["employee"]!.id,
+        managerId: manager.id,
+        passwordHash: defaultPasswordHash,
+        shiftInTime: "09:00",
+        shiftOutTime: "18:00",
+        timezone: "Asia/Karachi"
+      },
+      update: {},
+      where: { email: "shaheer@test.com" }
+    });
+
     // 3. Setup Dev Device
     const device = await tx.device.upsert({
       create: {
@@ -188,6 +204,17 @@ async function main() {
     lastWeekMonday.setHours(0, 0, 0, 0);
 
     const employeeSchedules = [
+      {
+        emp: shaheer,
+        scannerTemplateId: 107,
+        schedule: [
+          { dayOffset: 0, times: ["08:55:00", "18:10:00"] },
+          { dayOffset: 1, times: ["09:02:00", "17:55:00"] },
+          { dayOffset: 2, times: ["08:58:00", "18:05:00"] },
+          { dayOffset: 3, times: ["08:55:00", "18:10:00"] },
+          { dayOffset: 4, times: ["09:18:00", "14:30:00"] }
+        ]
+      },
       {
         emp: employee,
         schedule: [
@@ -248,7 +275,7 @@ async function main() {
             data: {
               deviceId: device.id,
               employeeId: item.emp.id,
-              scannerTemplateId: 1,
+              scannerTemplateId: item.scannerTemplateId ?? 1,
               serverReceivedAt: scanTimestamp,
               createdAt: scanTimestamp
             }
@@ -341,7 +368,7 @@ async function main() {
     }
 
     const currentYear = new Date().getFullYear();
-    const allEmps = [owner, hr, manager, employee];
+    const allEmps = [owner, hr, manager, employee, shaheer];
 
     for (const emp of allEmps) {
       for (const lt of defaultLeaveTypes) {

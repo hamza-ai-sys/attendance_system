@@ -44,7 +44,10 @@ jobs:
           SESSION_SECRET: ci-only-session-secret-never-use-in-production
 
       - name: Docker Compose config
-        run: docker compose config
+        run: docker compose -p attendance-dev -f docker-compose.dev.yml config
 
       - name: Production Docker Compose config
-        run: docker compose --env-file .env.production.example -f docker-compose.yml -f docker-compose.prod.yml config
+        run: docker compose -p attendance-prod --env-file .env.prod.example -f docker-compose.prod.yml config
+
+      - name: E2E Docker Compose config
+        run: docker compose -p attendance-e2e -f docker-compose.e2e.yml config

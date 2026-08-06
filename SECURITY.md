@@ -4,13 +4,14 @@
 
 Never commit real secrets. This includes:
 
-- `.env` and `.env.production`
+- `.env` and `.env.prod`
 - Firmware `config.h`
 - Device secrets
 - Database backups
 - SMTP credentials
 
-Use `.env.example`, `.env.production.example`, and `apps/firmware/include/config.example.h`
+Use `.env.dev.example`, `.env.prod.example`, the app-level `.env.dev.example` templates,
+and `apps/firmware/include/config.example.h`
 for documented placeholders only.
 
 ## Device Requests

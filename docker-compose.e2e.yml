@@ -1,0 +1,18 @@
+# Playwright starts the dashboard from source on the host. This stack only
+# supplies a disposable PostgreSQL instance and never uses a named volume.
+services:
+  postgres-e2e:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: attendance_e2e
+      POSTGRES_PASSWORD: attendance_e2e_password
+      POSTGRES_DB: attendance_e2e
+    ports:
+      - "127.0.0.1:${E2E_POSTGRES_PORT:-55432}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U attendance_e2e -d attendance_e2e"]
+      interval: 1s
+      timeout: 5s
+      retries: 30

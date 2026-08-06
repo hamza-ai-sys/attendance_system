@@ -16,9 +16,9 @@ Use this checklist when a new engineer joins the project.
 
 - [ ] Read `README.md`.
 - [ ] Read `docs/development/getting-started.md`.
-- [ ] Create root and app env files from their `.env.example` templates.
+- [ ] Create root and app `.env` files from their `.env.dev.example` templates.
 - [ ] Run `pnpm install`.
-- [ ] Run `pnpm docker:db:up`.
+- [ ] Run `pnpm docker:dev:db:up`.
 - [ ] Run `pnpm db:migrate`.
 - [ ] Run `pnpm db:seed`.
 - [ ] Run `pnpm dev`.
