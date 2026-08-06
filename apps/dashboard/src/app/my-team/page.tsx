@@ -19,11 +19,17 @@ export default async function MyTeamPage() {
     redirect("/login");
   }
 
-  if (!hasAccess(user, ["my_team", "company_attendance"])) {
+  const roleName = user.roleName?.toLowerCase() || "";
+  const canAccess =
+    hasAccess(user, ["my_team", "team_attendance", "company_attendance"]) ||
+    ["manager", "hr", "owner", "admin"].includes(roleName);
+
+  if (!canAccess) {
     return <UnauthorizedView featureName="My Team" />;
   }
 
-  const isSuperUser = hasPermission(user, "company_attendance");
+  const isSuperUser =
+    hasPermission(user, "company_attendance") || roleName === "owner" || roleName === "hr";
 
   let teamEmployees = await db.employee.findMany({
     where: isSuperUser ? {} : { managerId: user.employeeId },

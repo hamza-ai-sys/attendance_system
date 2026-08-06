@@ -117,9 +117,9 @@ export default async function Home() {
         hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
-    if (m.permission === "team_attendance") {
+    if (m.permission === "team_attendance" || m.permission === "my_team") {
       return (
-        hasPermission(user, "team_attendance") || ["manager", "hr", "owner", "admin"].includes(roleName)
+        hasPermission(user, m.permission) || ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
     return hasPermission(user, m.permission);
