@@ -113,11 +113,7 @@ export default async function Home() {
 
   const roleName = user.roleName?.toLowerCase() || "";
 
-<<<<<<< HEAD
-  // Filter modules based on user role permissions
-=======
   // Filter modules based on user role permissions & role fallback (Jobs and Announcements are visible to everyone)
->>>>>>> main
   const allowedModules = allModules.filter((m) => {
     if (m.name === "Jobs" || m.name === "Announcements") {
       return true;
@@ -133,12 +129,8 @@ export default async function Home() {
         return false;
       }
     }
-<<<<<<< HEAD
-    if (m.href === "/my-team") {
-=======
 
     if (m.permission === "approvals") {
->>>>>>> main
       return (
         hasPermission(user, "my_team") ||
         hasPermission(user, "company_attendance") ||
