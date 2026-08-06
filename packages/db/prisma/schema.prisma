@@ -6,6 +6,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum NoteVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 enum AccrualFrequency {
   MONTHLY
   ANNUALLY
@@ -136,6 +141,11 @@ model Employee {
   leaveRequests        LeaveRequest[]            @relation("LeaveRequestEmployee")
   leaveApprovalSteps   LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
   leaveBalances        LeaveBalance[]
+  targetNotes          EmployeeNote[]            @relation("NoteTargetEmployee")
+  authoredNotes        EmployeeNote[]            @relation("NoteAuthor")
+  createdTemplates     PerformanceTemplate[]     @relation("PerformanceTemplateCreator")
+  receivedEvaluations  PerformanceEvaluation[]   @relation("PerformanceTargetEmployee")
+  submittedEvaluations PerformanceEvaluation[]   @relation("PerformanceEvaluator")
 
   @@index([managerId])
 }
@@ -447,5 +457,54 @@ model LeaveBalance {
 
   @@unique([employeeId, year, leaveTypeId])
   @@index([employeeId, year])
+}
+
+model EmployeeNote {
+  id         String         @id @default(cuid())
+  employeeId String
+  authorId   String
+  content    String
+  visibility NoteVisibility @default(PRIVATE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  employee   Employee       @relation("NoteTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  author     Employee       @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, visibility])
+  @@index([authorId])
+}
+
+model PerformanceTemplate {
+  id          String                  @id @default(cuid())
+  title       String
+  description String?
+  fields      Json
+  startDate   DateTime
+  endDate     DateTime
+  createdById String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  createdBy   Employee                @relation("PerformanceTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  evaluations PerformanceEvaluation[]
+
+  @@index([startDate, endDate])
+}
+
+model PerformanceEvaluation {
+  id           String              @id @default(cuid())
+  templateId   String
+  employeeId   String
+  evaluatorId  String
+  responses    Json
+  overallScore Float?
+  comments     String?
+  submittedAt  DateTime            @default(now())
+  template     PerformanceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  employee     Employee            @relation("PerformanceTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  evaluator    Employee            @relation("PerformanceEvaluator", fields: [evaluatorId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, employeeId, evaluatorId])
+  @@index([employeeId])
+  @@index([evaluatorId])
 }
 

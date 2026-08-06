@@ -8,6 +8,7 @@ import { logout } from "../login/actions";
 
 export const dynamic = "force-dynamic";
 
+// Force Next.js server cache re-evaluation for Prisma Client models
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 function formatTime(date: Date): string {
@@ -34,7 +35,9 @@ export default async function TeamAttendancePage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user, "team_attendance")) {
+  const roleName = user.roleName?.toLowerCase() || "";
+
+  if (!hasPermission(user, "team_attendance") && !["manager", "hr", "owner", "admin"].includes(roleName)) {
     return (
       <main className="app-shell">
         <div className="banner" style={{ borderColor: "#ef4444" }}>
@@ -46,7 +49,7 @@ export default async function TeamAttendancePage() {
   }
 
   // Determine team scope
-  const isSuperUser = hasPermission(user, "company_attendance") || user.roleName === "owner" || user.roleName === "hr";
+  const isSuperUser = hasPermission(user, "company_attendance") || roleName === "owner" || roleName === "hr";
 
   let teamEmployees = await db.employee.findMany({
     where: isSuperUser ? {} : { managerId: user.employeeId },
@@ -148,7 +151,6 @@ export default async function TeamAttendancePage() {
         presentCount++;
       }
     } else {
-      // 0 Scans: Check Holiday or Weekend exemptions
       if (todayHoliday) {
         status = "HOLIDAY";
         exemptCount++;
@@ -218,7 +220,7 @@ export default async function TeamAttendancePage() {
       </section>
 
       {/* Team Member Status Table */}
-      <section className="panel" style={{ cursor: "default", display: "block" }}>
+      <section className="panel" style={{ cursor: "default", display: "block", marginTop: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h2>Team Attendance Details</h2>
           <span className="muted" style={{ fontSize: "0.9rem" }}>Total: {teamRows.length} members</span>

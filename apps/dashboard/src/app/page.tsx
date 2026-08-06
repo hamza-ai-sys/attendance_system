@@ -8,6 +8,7 @@ import type { Route } from "next";
 
 export const dynamic = "force-dynamic";
 
+// Force Next.js server cache re-evaluation for Prisma Client models
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
@@ -40,6 +41,18 @@ const allModules: { name: string; permission: Permission; description: string; h
     permission: "team_attendance",
     description: "Monitor the attendance status of your entire team.",
     href: "/team-attendance"
+  },
+  {
+    name: "My Team",
+    permission: "team_attendance",
+    description: "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
+    href: "/my-team"
+  },
+  {
+    name: "Performance Tracking & Analysis",
+    permission: "reports",
+    description: "HR performance evaluation builder, manager scheduling, and organizational performance analytics.",
+    href: "/performance"
   },
   {
     name: "Manual requests",
@@ -102,6 +115,11 @@ export default async function Home() {
     if (m.permission === "approvals") {
       return (
         hasPermission(user, "approvals") || ["manager", "hr", "owner", "admin"].includes(roleName)
+      );
+    }
+    if (m.permission === "team_attendance") {
+      return (
+        hasPermission(user, "team_attendance") || ["manager", "hr", "owner", "admin"].includes(roleName)
       );
     }
     return hasPermission(user, m.permission);
