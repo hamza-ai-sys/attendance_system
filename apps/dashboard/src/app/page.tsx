@@ -45,13 +45,15 @@ const allModules: { name: string; permission: Permission; description: string; h
   {
     name: "My Team",
     permission: "my_team",
-    description: "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
+    description:
+      "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
     href: "/my-team"
   },
   {
     name: "Performance Tracking & Analysis",
     permission: "reports",
-    description: "HR performance evaluation builder, manager scheduling, and organizational performance analytics.",
+    description:
+      "HR performance evaluation builder, manager scheduling, and organizational performance analytics.",
     href: "/performance"
   },
   {

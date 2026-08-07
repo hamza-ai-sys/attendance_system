@@ -33,7 +33,7 @@ export default async function EmployeeNotesHistoryPage({ searchParams }: NotesPa
     where: { id: employeeId },
     include: {
       role: true,
-      manager: true
+      supervisor: true
     }
   });
 
@@ -64,7 +64,8 @@ export default async function EmployeeNotesHistoryPage({ searchParams }: NotesPa
           </div>
           <h1>Notes History: {employee.fullName}</h1>
           <p className="muted">
-            Viewing previous notes for <strong>{employee.fullName}</strong> ({employee.role?.name || "Employee"})
+            Viewing previous notes for <strong>{employee.fullName}</strong> (
+            {employee.role?.name || "Employee"})
           </p>
         </div>
         <form action={logout}>
@@ -120,7 +121,9 @@ export default async function EmployeeNotesHistoryPage({ searchParams }: NotesPa
 
         {notes.length === 0 ? (
           <div style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>
-            <p style={{ fontSize: "1rem", margin: 0 }}>No previous notes recorded for {employee.fullName} yet.</p>
+            <p style={{ fontSize: "1rem", margin: 0 }}>
+              No previous notes recorded for {employee.fullName} yet.
+            </p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -139,13 +142,18 @@ export default async function EmployeeNotesHistoryPage({ searchParams }: NotesPa
                 }}
               >
                 {/* Note Header Line */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <span className={`note-badge ${note.visibility.toLowerCase()}`}>
                       {note.visibility === "PRIVATE" ? "🔒 Personal Note" : "🌐 Public Note"}
                     </span>
                     <strong style={{ fontSize: "1rem", color: "#f8fafc" }}>
-                      {note.authorName} <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 400 }}>({note.authorRole})</span>
+                      {note.authorName}{" "}
+                      <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 400 }}>
+                        ({note.authorRole})
+                      </span>
                     </strong>
                   </div>
 

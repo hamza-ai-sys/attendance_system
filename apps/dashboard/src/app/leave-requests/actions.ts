@@ -41,7 +41,9 @@ export async function submitLeaveRequest(formData: FormData) {
   // 1. Fetch holidays and off-days for business day calculation
   const holidays = await db.holiday.findMany({ select: { date: true } });
   const offDaysSetting = await db.companySetting.findUnique({ where: { key: "weekly_off_days" } });
-  const offDaysArray = Array.isArray(offDaysSetting?.value) ? (offDaysSetting.value as number[]) : [0];
+  const offDaysArray = Array.isArray(offDaysSetting?.value)
+    ? (offDaysSetting.value as number[])
+    : [0];
 
   const totalWorkingDays = calculateWorkingDays(
     startDate,
@@ -76,7 +78,9 @@ export async function submitLeaveRequest(formData: FormData) {
   let estUnpaidDays: number;
 
   if (leaveType.isPaid) {
-    const available = balance ? calculateAvailableBalance(balance.accrued, balance.carriedOver, balance.used) : 0;
+    const available = balance
+      ? calculateAvailableBalance(balance.accrued, balance.carriedOver, balance.used)
+      : 0;
     estPaidDays = Math.min(totalWorkingDays, Math.max(0, available));
     estUnpaidDays = totalWorkingDays - estPaidDays;
   } else {
@@ -88,7 +92,7 @@ export async function submitLeaveRequest(formData: FormData) {
     // 3. Determine initial approval status and steps based on applicant role
     const employeeRecord = await db.employee.findUnique({
       where: { id: user.employeeId },
-      include: { manager: true, role: true }
+      include: { supervisor: true, role: true }
     });
 
     const roleName = employeeRecord?.role?.name?.toLowerCase() || "employee";
@@ -96,7 +100,8 @@ export async function submitLeaveRequest(formData: FormData) {
 
     // Regular employees with a direct manager start at PENDING_MANAGER (Stage 1)
     // Managers, HR staff, and employees without a direct manager start at PENDING_HR (Stage 2 / Owner)
-    const initialStatus = isRegularEmployee && employeeRecord?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
+    const initialStatus =
+      isRegularEmployee && employeeRecord?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
 
     const leaveReq = await db.leaveRequest.create({
       data: {
@@ -134,7 +139,10 @@ export async function submitLeaveRequest(formData: FormData) {
       });
 
       // For HR staff applications, the approver is the Company Owner
-      const approverId = roleName === "hr" ? (ownerEmployee?.id || user.employeeId) : (hrEmployee?.id || ownerEmployee?.id || user.employeeId);
+      const approverId =
+        roleName === "hr"
+          ? ownerEmployee?.id || user.employeeId
+          : hrEmployee?.id || ownerEmployee?.id || user.employeeId;
 
       await db.leaveApprovalStep.create({
         data: {
