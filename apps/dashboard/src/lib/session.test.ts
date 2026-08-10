@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  cookies: vi.fn()
+  cookies: vi.fn(),
+  redirect: vi.fn()
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
+vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 
-import { getCurrentUser } from "./session.js";
+import { getCurrentUser, requireCurrentUser } from "./session.js";
 import { signSessionToken } from "./session-token.js";
 
 const user = {
@@ -72,4 +74,34 @@ describe("getCurrentUser", () => {
       expect(mocks.cookies).not.toHaveBeenCalled();
     }
   );
+});
+
+describe("requireCurrentUser", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("redirects to login when the session cookie is missing", async () => {
+    vi.stubEnv("SESSION_SECRET", "test-session-secret");
+    mocks.cookies.mockResolvedValue({ get: vi.fn().mockReturnValue(undefined) });
+    mocks.redirect.mockImplementation(() => {
+      throw new Error("NEXT_REDIRECT");
+    });
+
+    await expect(requireCurrentUser()).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("returns the signed-in user", async () => {
+    vi.stubEnv("SESSION_SECRET", "test-session-secret");
+    const token = signSessionToken(
+      { ...user, exp: Math.floor(Date.now() / 1000) + 60 },
+      "test-session-secret"
+    );
+    mocks.cookies.mockResolvedValue({ get: vi.fn().mockReturnValue({ value: token }) });
+
+    await expect(requireCurrentUser()).resolves.toEqual(user);
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
 });
