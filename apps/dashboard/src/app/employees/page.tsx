@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { logout } from "../login/actions";
-import { EmployeeDirectory, type EmployeeRecord } from "../enrollment/employee-directory";
+import { EmployeeDirectory, type EmployeeRecord } from "./employee-directory";
 import { UnauthorizedView } from "../../components/UnauthorizedView";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +54,7 @@ export default async function EmployeesListPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <Link href="/enrollment" className="back-link" style={{ borderColor: "rgba(139, 92, 246, 0.4)", color: "#c084fc" }}>
+          <Link href="/employees/new" className="back-link" style={{ borderColor: "rgba(139, 92, 246, 0.4)", color: "#c084fc" }}>
             + Enroll New Employee
           </Link>
           <Link href="/" className="back-link">

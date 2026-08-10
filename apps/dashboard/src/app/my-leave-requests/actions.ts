@@ -1,4 +1,3 @@
-"use me";
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -155,9 +154,9 @@ export async function submitLeaveRequest(formData: FormData) {
       });
     }
 
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     revalidatePath("/my-attendance");
-    revalidatePath("/approvals");
+    revalidatePath("/employee-leave-requests");
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to submit leave request.";
@@ -187,7 +186,7 @@ export async function cancelLeaveRequest(requestId: string) {
       data: { status: "CANCELLED" }
     });
 
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
   } catch (err) {

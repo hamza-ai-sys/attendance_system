@@ -1,14 +1,15 @@
 "use client";
 
 import { useActionState, useRef, useEffect } from "react";
-import { submitManualRequest, type RequestState } from "./actions";
+import { submitManualRequest } from "./actions";
+import type { AttendanceCorrectionRequestState } from "./types";
 
 interface ManualRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const initialState: RequestState = {};
+const initialState: AttendanceCorrectionRequestState = {};
 
 export function ManualRequestModal({ isOpen, onClose }: ManualRequestModalProps) {
   const [state, formAction, isPending] = useActionState(submitManualRequest, initialState);
@@ -52,10 +53,20 @@ export function ManualRequestModal({ isOpen, onClose }: ManualRequestModalProps)
           </div>
         )}
 
-        <form ref={formRef} action={formAction} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form
+          ref={formRef}
+          action={formAction}
+          style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+        >
           <div className="form-group">
             <label htmlFor="punchType">Punch Type *</label>
-            <select id="punchType" name="punchType" className="form-control" defaultValue="CHECK_IN" required>
+            <select
+              id="punchType"
+              name="punchType"
+              className="form-control"
+              defaultValue="CHECK_IN"
+              required
+            >
               <option value="CHECK_IN">Check-In (In Punch)</option>
               <option value="CHECK_OUT">Check-Out (Out Punch)</option>
             </select>
@@ -63,13 +74,7 @@ export function ManualRequestModal({ isOpen, onClose }: ManualRequestModalProps)
 
           <div className="form-group">
             <label htmlFor="date">Date *</label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              className="form-control"
-              required
-            />
+            <input id="date" name="date" type="date" className="form-control" required />
           </div>
 
           <div className="form-group">
@@ -96,20 +101,13 @@ export function ManualRequestModal({ isOpen, onClose }: ManualRequestModalProps)
             />
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "12px" }}>
-            <button
-              type="button"
-              className="logout-btn"
-              onClick={onClose}
-              disabled={isPending}
-            >
+          <div
+            style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "12px" }}
+          >
+            <button type="button" className="logout-btn" onClick={onClose} disabled={isPending}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={isPending}
-            >
+            <button type="submit" className="btn-primary" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit Request"}
             </button>
           </div>

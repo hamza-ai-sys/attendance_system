@@ -44,7 +44,7 @@ export async function updatePersonalRecords(
       }
     });
 
-    revalidatePath("/personal-records");
+    revalidatePath("/my-profile");
     return { success: "Personal records updated successfully!" };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "Failed to update personal records.";

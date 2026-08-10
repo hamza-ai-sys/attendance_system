@@ -1,7 +1,7 @@
 "use server";
 
-import { getCurrentUser } from "../../lib/session";
-import { hasPermission } from "../../lib/rbac";
+import { getCurrentUser } from "../../../lib/session";
+import { hasPermission } from "../../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { hashSync } from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -85,7 +85,7 @@ export async function createEmployee(prevState: EnrollmentState, formData: FormD
     }
   });
 
-  revalidatePath("/enrollment");
+  revalidatePath("/employees");
 
   return {
     success: `New employee "${fullName}" (${email}) enrolled successfully!`

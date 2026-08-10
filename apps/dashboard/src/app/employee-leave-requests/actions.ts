@@ -41,7 +41,9 @@ async function applyLeaveBalanceDeduction(
           }
         }
       });
-      const availablePaid = balance ? calculateAvailableBalance(balance.accrued, balance.carriedOver, balance.used) : 0;
+      const availablePaid = balance
+        ? calculateAvailableBalance(balance.accrued, balance.carriedOver, balance.used)
+        : 0;
       paidToDeduct = Math.min(leaveReq.totalDays, Math.max(0, availablePaid));
       unpaidToDeduct = leaveReq.totalDays - paidToDeduct;
     }
@@ -144,7 +146,10 @@ async function applyLeaveBalanceDeduction(
   });
 }
 
-export async function approveLeaveRequestAction(requestId: string, overrideAllPaid: boolean = false) {
+export async function approveLeaveRequestAction(
+  requestId: string,
+  overrideAllPaid: boolean = false
+) {
   const user = await getCurrentUser();
   if (!user) {
     return { error: "Unauthorized. Please sign in." };
@@ -173,7 +178,10 @@ export async function approveLeaveRequestAction(requestId: string, overrideAllPa
 
     // RULE: HR staff requests can ONLY be approved by the Company Owner
     if (isHRRequest && user.roleName !== "owner") {
-      return { error: "Unauthorized: Leave requests for HR staff can ONLY be approved by the Company Owner." };
+      return {
+        error:
+          "Unauthorized: Leave requests for HR staff can ONLY be approved by the Company Owner."
+      };
     }
 
     if (leaveReq.status === "APPROVED" || leaveReq.status === "REJECTED") {
@@ -228,7 +236,8 @@ export async function approveLeaveRequestAction(requestId: string, overrideAllPa
         return { error: "HR or Owner role required for Stage 2 approval." };
       }
 
-      const step2 = leaveReq.approvalSteps.find((s) => s.sequence === 2) || leaveReq.approvalSteps[0];
+      const step2 =
+        leaveReq.approvalSteps.find((s) => s.sequence === 2) || leaveReq.approvalSteps[0];
       if (step2) {
         await db.leaveApprovalStep.update({
           where: { id: step2.id },
@@ -244,8 +253,8 @@ export async function approveLeaveRequestAction(requestId: string, overrideAllPa
       await applyLeaveBalanceDeduction(leaveReq, currentYear, overrideAllPaid);
     }
 
-    revalidatePath("/approvals");
-    revalidatePath("/leave-requests");
+    revalidatePath("/employee-leave-requests");
+    revalidatePath("/my-leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
   } catch (err) {
@@ -278,7 +287,10 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
     const isHRRequest = requesterRole === "hr";
 
     if (isHRRequest && user.roleName !== "owner") {
-      return { error: "Unauthorized: Leave requests for HR staff can ONLY be rejected by the Company Owner." };
+      return {
+        error:
+          "Unauthorized: Leave requests for HR staff can ONLY be rejected by the Company Owner."
+      };
     }
 
     await db.leaveRequest.update({
@@ -289,8 +301,8 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
       }
     });
 
-    revalidatePath("/approvals");
-    revalidatePath("/leave-requests");
+    revalidatePath("/employee-leave-requests");
+    revalidatePath("/my-leave-requests");
     revalidatePath("/my-attendance");
     return { success: true };
   } catch (err) {

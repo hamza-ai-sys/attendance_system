@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { TaggedScan } from "@attendance/attendance-core";
-import { ManualRequestModal } from "../manual-requests/manual-request-modal";
+import { ManualRequestModal } from "../my-attendance-correction-requests/manual-request-modal";
 
 export type DisplayScan = TaggedScan<{
   id: string;

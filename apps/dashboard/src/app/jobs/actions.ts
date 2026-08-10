@@ -57,7 +57,7 @@ export async function createJobPosting(
   revalidatePath("/jobs");
   revalidatePath("/");
 
-  redirect(`/jobs/${job.id}/steps`);
+  redirect(`/jobs/${job.id}/application-steps`);
 }
 
 export async function setJobPostingStatus(formData: FormData) {

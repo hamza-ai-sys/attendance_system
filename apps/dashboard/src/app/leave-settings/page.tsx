@@ -59,7 +59,7 @@ export default async function LeaveSettingsPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <Link href={"/leave-requests" as Route} className="back-link" style={{ textDecoration: "none" }}>
+          <Link href={"/my-leave-requests" as Route} className="back-link" style={{ textDecoration: "none" }}>
             🌴 Employee Leave Portal
           </Link>
           <form action={logout}>

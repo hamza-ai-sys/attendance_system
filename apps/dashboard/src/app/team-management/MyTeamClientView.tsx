@@ -184,7 +184,7 @@ export function MyTeamClientView({ members, activeTemplate }: MyTeamClientViewPr
 
                   {/* 2. Previous Notes History Link Icon Button (Opens New Page) */}
                   <Link
-                    href={`/my-team/notes?employeeId=${member.id}` as Route}
+                    href={`/team-management/${member.id}/notes` as Route}
                     className="prominent-history-icon-btn"
                     title="Open Previous Notes History Page"
                     aria-label="Open Previous Notes History Page"
@@ -284,7 +284,7 @@ export function MyTeamClientView({ members, activeTemplate }: MyTeamClientViewPr
             {/* Link to Open Full Previous Notes History Page */}
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <Link
-                href={`/my-team/notes?employeeId=${selectedNoteEmployee.id}` as Route}
+                href={`/team-management/${selectedNoteEmployee.id}/notes` as Route}
                 className="back-link"
                 style={{ textDecoration: "none", fontSize: "0.8rem", padding: "6px 12px", color: "#60a5fa", borderColor: "rgba(59, 130, 246, 0.4)" }}
               >

@@ -4,15 +4,14 @@ import { getCurrentUser } from "../../lib/session";
 import { hasPermission } from "../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
+import type { AttendanceCorrectionRequestState } from "./types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
-export type RequestState = {
-  error?: string;
-  success?: string;
-};
-
-export async function submitManualRequest(prevState: RequestState, formData: FormData): Promise<RequestState> {
+export async function submitManualRequest(
+  _prevState: AttendanceCorrectionRequestState,
+  formData: FormData
+): Promise<AttendanceCorrectionRequestState> {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -50,7 +49,8 @@ export async function submitManualRequest(prevState: RequestState, formData: For
 
   const isRegularEmployee = !employee?.role || employee.role.name === "employee";
   // Regular employees start at PENDING_MANAGER (Stage 1), managers/HR start at PENDING_HR (Stage 2)
-  const initialStatus = isRegularEmployee && employee?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
+  const initialStatus =
+    isRegularEmployee && employee?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
 
   const punchLabel = punchType === "CHECK_OUT" ? "Check-Out" : "Check-In";
   const formattedReason = `[${punchLabel}] ${reason}`;
@@ -66,16 +66,19 @@ export async function submitManualRequest(prevState: RequestState, formData: For
     }
   });
 
-  revalidatePath("/manual-requests");
+  revalidatePath("/my-attendance-correction-requests");
   revalidatePath("/my-attendance");
 
-  const stageLabel = initialStatus === "PENDING_MANAGER" ? "Sent to Manager for 1st approval." : "Sent to HR for approval.";
+  const stageLabel =
+    initialStatus === "PENDING_MANAGER"
+      ? "Sent to Manager for 1st approval."
+      : "Sent to HR for approval.";
   return {
     success: `Manual ${punchLabel} request submitted successfully! ${stageLabel}`
   };
 }
 
-export async function approveRequest(requestId: string): Promise<RequestState> {
+export async function approveRequest(requestId: string): Promise<AttendanceCorrectionRequestState> {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -108,12 +111,15 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
 
   const requesterRole = request.employee.role?.name || request.createdBy?.role?.name;
   const isHRRequest = requesterRole === "hr";
-  const isSelf = user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
+  const isSelf =
+    user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
 
   // RULE 1: HR requests can ONLY be approved by the Owner (HR cannot self-approve or approve fellow HR)
   if (isHRRequest) {
     if (user.roleName !== "owner") {
-      return { error: "Unauthorized: Requests for HR staff can ONLY be approved by the Company Owner." };
+      return {
+        error: "Unauthorized: Requests for HR staff can ONLY be approved by the Company Owner."
+      };
     }
   }
 
@@ -128,7 +134,10 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
   // Stage 1: Manager / Supervisor / Approver Stage (PENDING_MANAGER -> PENDING_HR)
   if (request.status === "PENDING_MANAGER") {
     if (userRole === "hr") {
-      return { error: "Stage 1 Approval must be completed by the direct Manager first before HR can approve." };
+      return {
+        error:
+          "Stage 1 Approval must be completed by the direct Manager first before HR can approve."
+      };
     }
 
     const canApproveStage1 =
@@ -136,7 +145,10 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
       ["manager", "supervisor", "team_lead", "owner", "admin"].includes(userRole);
 
     if (!canApproveStage1) {
-      return { error: "Unauthorized: 1st stage approval must be completed by an authorized Manager or Approver." };
+      return {
+        error:
+          "Unauthorized: 1st stage approval must be completed by an authorized Manager or Approver."
+      };
     }
 
     await db.manualAttendanceRequest.update({
@@ -144,8 +156,8 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
       data: { status: "PENDING_HR" }
     });
 
-    revalidatePath("/approvals");
-    revalidatePath("/manual-requests");
+    revalidatePath("/employee-attendance-correction-requests");
+    revalidatePath("/my-attendance-correction-requests");
     revalidatePath("/my-attendance");
 
     return { success: "1st Stage Approval completed! Request advanced to HR for final approval." };
@@ -158,9 +170,7 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
     }
 
     const canApproveStage2 =
-      userRole === "hr" ||
-      isOwnerOrAdmin ||
-      hasPermission(user, "company_attendance");
+      userRole === "hr" || isOwnerOrAdmin || hasPermission(user, "company_attendance");
 
     if (!canApproveStage2) {
       return { error: "Unauthorized: Final stage approval must be completed by HR or Owner." };
@@ -191,8 +201,8 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
       }
     }
 
-    revalidatePath("/approvals");
-    revalidatePath("/manual-requests");
+    revalidatePath("/employee-attendance-correction-requests");
+    revalidatePath("/my-attendance-correction-requests");
     revalidatePath("/my-attendance");
 
     return { success: "Approval completed! Missing scan timestamp added to attendance table." };
@@ -201,7 +211,7 @@ export async function approveRequest(requestId: string): Promise<RequestState> {
   return { error: "Invalid request state." };
 }
 
-export async function rejectRequest(requestId: string): Promise<RequestState> {
+export async function rejectRequest(requestId: string): Promise<AttendanceCorrectionRequestState> {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -226,10 +236,13 @@ export async function rejectRequest(requestId: string): Promise<RequestState> {
 
   const requesterRole = request.employee.role?.name || request.createdBy?.role?.name;
   const isHRRequest = requesterRole === "hr";
-  const isSelf = user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
+  const isSelf =
+    user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
 
   if (isHRRequest && user.roleName !== "owner") {
-    return { error: "Unauthorized: Requests for HR staff can ONLY be rejected by the Company Owner." };
+    return {
+      error: "Unauthorized: Requests for HR staff can ONLY be rejected by the Company Owner."
+    };
   }
 
   if (isSelf && user.roleName !== "owner") {
@@ -241,8 +254,8 @@ export async function rejectRequest(requestId: string): Promise<RequestState> {
     data: { status: "REJECTED" }
   });
 
-  revalidatePath("/approvals");
-  revalidatePath("/manual-requests");
+  revalidatePath("/employee-attendance-correction-requests");
+  revalidatePath("/my-attendance-correction-requests");
   revalidatePath("/my-attendance");
 
   return { success: "Request rejected." };
@@ -264,7 +277,8 @@ export async function deleteManualRequest(formData: FormData) {
   if (!request) return;
 
   const isOwnerOrHR = user.roleName === "owner" || user.roleName === "hr";
-  const isOwnerOrCreator = request.employeeId === user.employeeId || request.createdByEmployeeId === user.employeeId;
+  const isOwnerOrCreator =
+    request.employeeId === user.employeeId || request.createdByEmployeeId === user.employeeId;
 
   if (!isOwnerOrHR && !isOwnerOrCreator) {
     throw new Error("Unauthorized: You can only delete your own submitted requests.");
@@ -274,7 +288,7 @@ export async function deleteManualRequest(formData: FormData) {
     where: { id }
   });
 
-  revalidatePath("/manual-requests");
+  revalidatePath("/my-attendance-correction-requests");
   revalidatePath("/my-attendance");
-  revalidatePath("/approvals");
+  revalidatePath("/employee-attendance-correction-requests");
 }

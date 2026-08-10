@@ -46,7 +46,7 @@ export async function updateWeeklyOffDays(formData: FormData) {
     where: { key: "weekly_off_days" }
   });
 
-  revalidatePath("/holidays");
+  revalidatePath("/work-calendar");
   revalidatePath("/company-attendance");
   revalidatePath("/team-attendance");
 }
@@ -81,7 +81,7 @@ export async function createHoliday(formData: FormData) {
     where: { date }
   });
 
-  revalidatePath("/holidays");
+  revalidatePath("/work-calendar");
   revalidatePath("/company-attendance");
   revalidatePath("/team-attendance");
 }
@@ -99,7 +99,7 @@ export async function deleteHoliday(formData: FormData) {
     where: { id }
   });
 
-  revalidatePath("/holidays");
+  revalidatePath("/work-calendar");
   revalidatePath("/company-attendance");
   revalidatePath("/team-attendance");
 }

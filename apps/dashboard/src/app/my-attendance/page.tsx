@@ -6,7 +6,7 @@ import type { Route } from "next";
 import { createPrismaClient } from "@attendance/db";
 import { classifyDailyScans, evaluateShiftAttendance } from "@attendance/attendance-core";
 import { logout } from "../login/actions";
-import { ManualRequestsContainer } from "../manual-requests/manual-requests-container";
+import { ManualRequestsContainer } from "../my-attendance-correction-requests/manual-requests-container";
 import { WeeklyAttendanceView, type WeekdayData } from "./weekly-attendance-view";
 import { MyAttendanceRangeFilter } from "./range-filter";
 
@@ -301,7 +301,7 @@ export default async function MyAttendancePage(props: PageProps) {
         <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
           <MyAttendanceRangeFilter currentRange={range} />
           <Link
-            href={"/leave-requests" as Route}
+            href={"/my-leave-requests" as Route}
             className="back-link"
             style={{ textDecoration: "none" }}
           >

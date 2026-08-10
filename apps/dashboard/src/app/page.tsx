@@ -13,41 +13,41 @@ const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 const allModules: { name: string; permission: Permission; description: string; href?: string }[] = [
   {
-    name: "My attendance",
+    name: "My Attendance",
     permission: "my_attendance",
     description: "View and manage your own daily attendance logs.",
     href: "/my-attendance"
   },
   {
-    name: "Apply for Leave",
+    name: "My Leave Requests",
     permission: "my_attendance",
     description: "Submit leave applications, track leave balances, and view approval status.",
-    href: "/leave-requests"
+    href: "/my-leave-requests"
   },
   {
-    name: "Leave",
+    name: "Leave Settings",
     permission: "reports",
     description: "Configure HR leave categories, quotas, and monthly/annual accrual rules.",
     href: "/leave-settings"
   },
   {
-    name: "List all employees",
+    name: "Employees",
     permission: "enrollment",
     description: "View the complete list of all registered employees and staff details.",
     href: "/employees"
   },
   {
-    name: "Team attendance",
+    name: "Team Attendance",
     permission: "team_attendance",
     description: "Monitor the attendance status of your entire team.",
     href: "/team-attendance"
   },
   {
-    name: "My Team",
+    name: "Team Management",
     permission: "my_team",
     description:
       "View team members in column layout, manage employee personal/public notes, and complete performance evaluations.",
-    href: "/my-team"
+    href: "/team-management"
   },
   {
     name: "Performance Tracking & Analysis",
@@ -57,33 +57,34 @@ const allModules: { name: string; permission: Permission; description: string; h
     href: "/performance"
   },
   {
-    name: "Manual requests",
+    name: "My Attendance Correction Requests",
     permission: "manual_reports",
-    description: "Submit manual requests for missing punches or time-off.",
-    href: "/manual-requests"
+    description: "Submit requests for missing or corrected attendance punches.",
+    href: "/my-attendance-correction-requests"
   },
   {
-    name: "Approvals",
+    name: "Employee Leave Requests",
     permission: "approvals",
-    description: "Review and approve pending requests from employees.",
-    href: "/approvals"
+    description: "Review employee leave requests and their decision history.",
+    href: "/employee-leave-requests"
   },
   {
-    name: "Enrollment",
+    name: "Employee Attendance Correction Requests",
+    permission: "approvals",
+    description: "Review employee requests for missing or corrected punches.",
+    href: "/employee-attendance-correction-requests"
+  },
+  {
+    name: "Add Employee",
     permission: "enrollment",
     description: "Enroll new employees and manage access credentials.",
-    href: "/enrollment"
-  },
-  {
-    name: "Reports",
-    permission: "reports",
-    description: "Generate detailed attendance reports for payroll and compliance."
+    href: "/employees/new"
   },
   {
     name: "Workdays & Holidays",
     permission: "reports",
     description: "Configure weekly off-days and manage official company holidays.",
-    href: "/holidays"
+    href: "/work-calendar"
   },
   {
     name: "Company Attendance",
@@ -124,8 +125,8 @@ export default async function Home() {
     if (roleName === "owner") {
       // Company Owners cannot apply for leave, submit manual requests, or view personal attendance
       if (
-        m.href === "/leave-requests" ||
-        m.href === "/manual-requests" ||
+        m.href === "/my-leave-requests" ||
+        m.href === "/my-attendance-correction-requests" ||
         m.href === "/my-attendance"
       ) {
         return false;
@@ -145,34 +146,33 @@ export default async function Home() {
   });
 
   // Query live pending approvals count for users with approval privileges
-  let pendingApprovalsCount = 0;
+  let pendingLeaveRequestsCount = 0;
+  let pendingAttendanceCorrectionRequestsCount = 0;
   const canApprove = hasPermission(user, "approvals");
 
   if (canApprove) {
     if (roleName === "manager") {
-      const attCount = await db.manualAttendanceRequest.count({
+      pendingAttendanceCorrectionRequestsCount = await db.manualAttendanceRequest.count({
         where: {
           status: "PENDING_MANAGER",
           employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });
-      const leaveCount = await db.leaveRequest.count({
+      pendingLeaveRequestsCount = await db.leaveRequest.count({
         where: {
           status: "PENDING_MANAGER",
           employee: { supervisorId: user.employeeId },
           employeeId: { not: user.employeeId }
         }
       });
-      pendingApprovalsCount = attCount + leaveCount;
     } else {
-      const attCount = await db.manualAttendanceRequest.count({
+      pendingAttendanceCorrectionRequestsCount = await db.manualAttendanceRequest.count({
         where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
       });
-      const leaveCount = await db.leaveRequest.count({
+      pendingLeaveRequestsCount = await db.leaveRequest.count({
         where: { status: { in: ["PENDING_MANAGER", "PENDING_HR"] } }
       });
-      pendingApprovalsCount = attCount + leaveCount;
     }
   }
   const currentEmployee = await db.employee.findUnique({
@@ -195,7 +195,7 @@ export default async function Home() {
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <Link
-            href={"/personal-records" as Route}
+            href={"/my-profile" as Route}
             className="back-link"
             style={{ textDecoration: "none" }}
           >
@@ -214,7 +214,12 @@ export default async function Home() {
           <p className="muted">You do not have permission to view any modules.</p>
         )}
         {allowedModules.map((module) => {
-          const isApprovals = module.permission === "approvals";
+          const pendingCount =
+            module.href === "/employee-leave-requests"
+              ? pendingLeaveRequestsCount
+              : module.href === "/employee-attendance-correction-requests"
+                ? pendingAttendanceCorrectionRequestsCount
+                : 0;
           const isAnnouncements = module.name === "Announcements";
 
           const content = (
@@ -227,7 +232,7 @@ export default async function Home() {
                 }}
               >
                 <h2>{module.name}</h2>
-                {isApprovals && pendingApprovalsCount > 0 && (
+                {pendingCount > 0 && (
                   <span
                     style={{
                       background: "rgba(251, 191, 36, 0.2)",
@@ -239,7 +244,7 @@ export default async function Home() {
                       fontWeight: 600
                     }}
                   >
-                    {pendingApprovalsCount} Pending
+                    {pendingCount} Pending
                   </span>
                 )}
                 {isAnnouncements && unreadAnnouncementsCount > 0 && (

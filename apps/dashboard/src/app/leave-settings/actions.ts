@@ -79,7 +79,7 @@ export async function createLeaveType(formData: FormData) {
     }
 
     revalidatePath("/leave-settings");
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create leave type.";
@@ -101,7 +101,7 @@ export async function toggleLeaveTypeStatus(id: string, isActive: boolean) {
     });
 
     revalidatePath("/leave-settings");
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update leave type status.";

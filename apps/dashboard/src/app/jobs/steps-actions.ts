@@ -148,7 +148,7 @@ export async function addJobStep(prevState: StepFormState, formData: FormData): 
     return { error: "Unknown step type." };
   }
 
-  revalidatePath(`/jobs/${jobPostingId}/steps`);
+  revalidatePath(`/jobs/${jobPostingId}/application-steps`);
 
   return { success: "Step added." };
 }
@@ -167,7 +167,7 @@ export async function deleteJobStep(formData: FormData) {
 
   await db.jobPostingStep.delete({ where: { id: stepId } });
 
-  revalidatePath(`/jobs/${jobPostingId}/steps`);
+  revalidatePath(`/jobs/${jobPostingId}/application-steps`);
 }
 
 export type AvailableSlotsResult = { slots: string[]; error?: string };
