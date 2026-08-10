@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "../../../lib/session";
 import { logout } from "../../login/actions";
-import { isHr } from "../permissions";
+import { canManageAnnouncements } from "../permissions";
 import { AnnouncementForm } from "./announcement-form";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export default async function NewAnnouncementPage() {
     redirect("/login");
   }
 
-  if (!isHr(user)) {
+  if (!canManageAnnouncements(user)) {
     return (
       <main className="app-shell">
         <header className="topbar">

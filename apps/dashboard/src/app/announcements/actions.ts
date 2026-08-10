@@ -3,19 +3,19 @@
 import { getCurrentUser } from "../../lib/session";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
-import { isHr } from "./permissions";
+import { canManageAnnouncements } from "./permissions";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 export type AnnouncementState = { error?: string; success?: string };
 
 export async function createAnnouncement(
-  prevState: AnnouncementState,
+  _prevState: AnnouncementState,
   formData: FormData
 ): Promise<AnnouncementState> {
   const user = await getCurrentUser();
 
-  if (!isHr(user)) {
+  if (!canManageAnnouncements(user)) {
     return { error: "Unauthorized: Only HR can post announcements." };
   }
 
@@ -47,7 +47,7 @@ export async function createAnnouncement(
 export async function deleteAnnouncement(formData: FormData) {
   const user = await getCurrentUser();
 
-  if (!isHr(user)) {
+  if (!canManageAnnouncements(user)) {
     throw new Error("Unauthorized");
   }
 
