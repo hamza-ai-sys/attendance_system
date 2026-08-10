@@ -4,15 +4,14 @@ import { getCurrentUser } from "../../lib/session";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 import { canManageAnnouncements } from "./permissions";
+import type { AnnouncementActionState } from "./types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
-export type AnnouncementState = { error?: string; success?: string };
-
 export async function createAnnouncement(
-  _prevState: AnnouncementState,
+  _prevState: AnnouncementActionState,
   formData: FormData
-): Promise<AnnouncementState> {
+): Promise<AnnouncementActionState> {
   const user = await getCurrentUser();
 
   if (!canManageAnnouncements(user)) {
