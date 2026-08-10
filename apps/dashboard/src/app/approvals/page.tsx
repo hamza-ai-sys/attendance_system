@@ -104,7 +104,7 @@ export default async function ApprovalsPage() {
   const leaveRequests = await db.leaveRequest.findMany({
     where: leaveWhereClause,
     include: {
-      employee: { include: { role: true, manager: true } },
+      employee: { include: { role: true, supervisor: true } },
       leaveType: true
     },
     orderBy: { createdAt: "desc" }
