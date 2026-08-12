@@ -23,8 +23,9 @@ ports or stopped the app containers.
 After a pull request is merged and you pull `main`, follow the post-pull workflow in
 [`docs/development/getting-started.md`](docs/development/getting-started.md#after-pulling-main).
 In short: run `pnpm install`, start the local database, run `pnpm db:migrate`, and then run
-`pnpm dev`. The migration command is safe to run when no migrations are pending. Do not seed
-the database after every pull.
+`pnpm db:seed` before `pnpm dev`. Migrations are a no-op when none are pending, and the
+development seed is safe to repeat, so engineers do not need to inspect merged pull requests
+for database or seed changes.
 
 ## Before Opening A Pull Request
 
@@ -51,6 +52,8 @@ pnpm firmware:build
 - Use `pnpm db:migrate` locally.
 - Use `pnpm db:migrate:deploy` on production.
 - Do not edit a migration after it has been applied to a shared environment.
+- Keep the development seed repeatable and limit its updates or deletions to seed-owned fixtures.
+- Put required cross-environment data backfills in a migration, not in the development seed.
 
 ## Environment And Secrets
 
