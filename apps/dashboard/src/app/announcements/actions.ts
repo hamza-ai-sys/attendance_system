@@ -33,7 +33,7 @@ export async function createAnnouncement(
     data: {
       title,
       content,
-      createdById: user!.employeeId
+      createdById: user!.userAccountId
     }
   });
 

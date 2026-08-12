@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function ManualRequestsPage() {
   const user = await requireCurrentUser();
   if (!hasPermission(user, "manual_reports")) redirect("/");
-  const requests = await getManualRequests(user.employeeId);
+  const requests = await getManualRequests(user.employeeId, user.userAccountId);
 
   return (
     <main className="app-shell">

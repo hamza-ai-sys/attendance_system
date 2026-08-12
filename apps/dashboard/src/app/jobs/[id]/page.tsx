@@ -18,6 +18,53 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
+function JobDescription({
+  createdAt,
+  creatorName,
+  description,
+  status
+}: {
+  createdAt: Date;
+  creatorName: string;
+  description: string;
+  status: "OPEN" | "CLOSED";
+}) {
+  const statusStyle =
+    status === "OPEN"
+      ? {
+          background: "rgba(16, 185, 129, 0.15)",
+          color: "#6ee7b7",
+          border: "1px solid rgba(16, 185, 129, 0.4)"
+        }
+      : {
+          background: "rgba(148, 163, 184, 0.15)",
+          color: "#94a3b8",
+          border: "1px solid rgba(148, 163, 184, 0.4)"
+        };
+
+  return (
+    <section className="panel" style={{ cursor: "default", marginBottom: "24px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "8px"
+        }}
+      >
+        <h2>Job Description</h2>
+        <span className="status-badge" style={statusStyle}>
+          {status}
+        </span>
+      </div>
+      <p className="muted" style={{ fontSize: "0.8rem", marginBottom: "16px" }}>
+        Posted {formatDate(createdAt)} by {creatorName}
+      </p>
+      <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{description}</p>
+    </section>
+  );
+}
+
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getCurrentUser();
@@ -26,10 +73,18 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const job = await db.jobPosting.findUnique({
     where: { id },
     include: {
-      createdBy: { select: { fullName: true } },
+      createdBy: { include: { person: { select: { legalName: true, preferredName: true } } } },
       steps: {
         orderBy: { order: "asc" },
-        include: { interviewer: { select: { fullName: true } } }
+        include: {
+          interviewer: {
+            include: {
+              membership: {
+                include: { person: { select: { legalName: true, preferredName: true } } }
+              }
+            }
+          }
+        }
       }
     }
   });
@@ -41,6 +96,17 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   if (job.status !== "OPEN" && !userIsHr) {
     notFound();
   }
+
+  const applicationSteps = job.steps.map((step) => ({
+    ...step,
+    interviewer: step.interviewer
+      ? {
+          fullName:
+            step.interviewer.membership.person.preferredName ??
+            step.interviewer.membership.person.legalName
+        }
+      : null
+  }));
 
   return (
     <main className="app-shell">
@@ -75,43 +141,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </header>
 
-      <section className="panel" style={{ cursor: "default", marginBottom: "24px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "8px"
-          }}
-        >
-          <h2>Job Description</h2>
-          <span
-            className="status-badge"
-            style={
-              job.status === "OPEN"
-                ? {
-                    background: "rgba(16, 185, 129, 0.15)",
-                    color: "#6ee7b7",
-                    border: "1px solid rgba(16, 185, 129, 0.4)"
-                  }
-                : {
-                    background: "rgba(148, 163, 184, 0.15)",
-                    color: "#94a3b8",
-                    border: "1px solid rgba(148, 163, 184, 0.4)"
-                  }
-            }
-          >
-            {job.status}
-          </span>
-        </div>
-        <p className="muted" style={{ fontSize: "0.8rem", marginBottom: "16px" }}>
-          Posted {formatDate(job.createdAt)} by {job.createdBy.fullName}
-        </p>
-        <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{job.description}</p>
-      </section>
+      <JobDescription
+        createdAt={job.createdAt}
+        creatorName={job.createdBy.person.preferredName ?? job.createdBy.person.legalName}
+        description={job.description}
+        status={job.status}
+      />
 
       {job.status === "OPEN" ? (
-        <ApplyForm jobPostingId={job.id} steps={job.steps} />
+        <ApplyForm jobPostingId={job.id} steps={applicationSteps} />
       ) : (
         <section className="panel" style={{ cursor: "default" }}>
           <p className="muted">This position is closed and is no longer accepting applications.</p>

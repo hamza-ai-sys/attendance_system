@@ -1,24 +1,49 @@
 import { createPrismaClient } from "@attendance/db";
+import {
+  employmentAccessInclude,
+  getEmploymentEmail,
+  getEmploymentName,
+  getEmploymentRoleKey
+} from "../../lib/employment";
 import type { SessionUser } from "../../lib/session";
 import type { EmployeeLeaveRequest } from "./types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
-export function getEmployeeLeaveRequests(user: SessionUser): Promise<EmployeeLeaveRequest[]> {
+export async function getEmployeeLeaveRequests(user: SessionUser): Promise<EmployeeLeaveRequest[]> {
   const where =
     user.roleName === "manager"
       ? {
-          employee: { supervisorId: user.employeeId },
+          employee: {
+            subordinateLines: {
+              some: { supervisorEmploymentId: user.employeeId, validUntil: null }
+            }
+          },
           employeeId: { not: user.employeeId }
         }
-      : {};
+      : { employee: { organizationId: user.organizationId } };
 
-  return db.leaveRequest.findMany({
+  const requests = await db.leaveRequest.findMany({
     where,
-    include: {
-      employee: { include: { role: true } },
-      leaveType: true
-    },
+    include: { employee: { include: employmentAccessInclude() }, leaveType: true },
     orderBy: { createdAt: "desc" }
   });
+
+  return requests.map((request) => ({
+    id: request.id,
+    employeeId: request.employeeId,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    totalDays: request.totalDays,
+    paidDays: request.paidDays,
+    unpaidDays: request.unpaidDays,
+    reason: request.reason,
+    status: request.status,
+    employee: {
+      fullName: getEmploymentName(request.employee),
+      email: getEmploymentEmail(request.employee),
+      role: { name: getEmploymentRoleKey(request.employee) }
+    },
+    leaveType: { name: request.leaveType.name, isPaid: request.leaveType.isPaid }
+  }));
 }

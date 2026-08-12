@@ -27,9 +27,16 @@ async function resolveRange(range: string, employeeId: string): Promise<Attendan
 
 async function getSources(employeeId: string, { startDate, endDate }: AttendanceRange) {
   return Promise.all([
-    db.employee.findUnique({
+    db.employment.findUnique({
       where: { id: employeeId },
-      select: { shiftInTime: true, shiftOutTime: true }
+      select: {
+        shiftAssignments: {
+          where: { effectiveTo: null },
+          orderBy: { effectiveFrom: "desc" },
+          take: 1,
+          select: { shift: { select: { startTime: true, endTime: true } } }
+        }
+      }
     }),
     db.companySetting.findUnique({ where: { key: "weekly_off_days" } }),
     db.holiday.findMany({ where: { date: { gte: startDate, lte: endDate } } }),
@@ -104,8 +111,8 @@ function buildDay(day: Date, sources: Sources, offDays: number[]): WeekdayData {
   const evaluation = evaluateShiftAttendance({
     firstScanTime: dayScans[0]!.serverReceivedAt,
     lastScanTime: dayScans.at(-1)!.serverReceivedAt,
-    shiftInTime: employee?.shiftInTime ?? "09:00",
-    shiftOutTime: employee?.shiftOutTime ?? "17:00",
+    shiftInTime: employee?.shiftAssignments[0]?.shift.startTime ?? "09:00",
+    shiftOutTime: employee?.shiftAssignments[0]?.shift.endTime ?? "17:00",
     graceMinutes: 20,
     halfDayThresholdHours: 3
   });

@@ -3,6 +3,11 @@ import { hasPermission, hasAnyPermission, hasAllPermissions, getPendingHRStatusT
 import type { SessionUser } from "./session";
 
 const mockUser: SessionUser = {
+  userAccountId: "account-1",
+  authVersion: 1,
+  membershipId: "membership-1",
+  organizationId: "organization-1",
+  roleKeys: ["manager"],
   email: "test@example.com",
   fullName: "Test User",
   employeeId: "emp-1",
@@ -95,6 +100,11 @@ describe("rbac", () => {
 
   describe("owner overrides", () => {
     const ownerUser: SessionUser = {
+      userAccountId: "account-owner",
+      authVersion: 1,
+      membershipId: "membership-owner",
+      organizationId: "organization-1",
+      roleKeys: ["owner"],
       email: "owner@test.com",
       fullName: "Owner User",
       employeeId: "emp-owner",

@@ -1,5 +1,3 @@
-import type { Prisma } from "@attendance/db";
-
 export type CompanyAttendanceRange = "today" | "last_week" | "last_month" | "all_time";
 
 export type SimpleEmployee = {
@@ -8,13 +6,21 @@ export type SimpleEmployee = {
   roleName: string;
 };
 
-export type CompanyEmployee = Prisma.EmployeeGetPayload<{
-  include: { role: true };
-}>;
+export type CompanyEmployee = {
+  id: string;
+  fullName?: string;
+  roleName?: string;
+  role?: { name: string } | null;
+};
 
-export type CompanyAttendanceScan = Prisma.ScanEventGetPayload<{
-  include: { employee: true; device: true };
-}>;
+export type CompanyAttendanceScan = {
+  id: string;
+  employeeId: string | null;
+  scannerTemplateId: number;
+  serverReceivedAt: Date;
+  employee: { fullName: string } | null;
+  device: { name: string; location: string | null };
+};
 
 export type CompanyAttendanceMetrics = {
   attendanceRatePercentage: number;

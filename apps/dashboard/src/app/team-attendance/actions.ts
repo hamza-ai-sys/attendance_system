@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "../../lib/session";
 import { createPrismaClient } from "@attendance/db";
+import {
+  employmentAccessInclude,
+  getEmploymentName,
+  getEmploymentRoleKey
+} from "../../lib/employment";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
@@ -46,11 +51,7 @@ export async function getEmployeeNotes(employeeId: string) {
     },
     include: {
       author: {
-        select: {
-          fullName: true,
-          email: true,
-          role: { select: { name: true } }
-        }
+        include: employmentAccessInclude()
       }
     },
     orderBy: { createdAt: "desc" }
@@ -61,8 +62,8 @@ export async function getEmployeeNotes(employeeId: string) {
     content: n.content,
     visibility: n.visibility,
     createdAt: n.createdAt.toISOString(),
-    authorName: n.author.fullName,
-    authorRole: n.author.role?.name || "Employee",
+    authorName: getEmploymentName(n.author),
+    authorRole: getEmploymentRoleKey(n.author),
     isOwn: n.authorId === user.employeeId
   }));
 }

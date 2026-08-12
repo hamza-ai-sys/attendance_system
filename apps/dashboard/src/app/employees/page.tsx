@@ -11,7 +11,7 @@ export default async function EmployeesPage() {
   const user = await requireCurrentUser();
   if (!canViewEmployees(user)) return <UnauthorizedView featureName="Employee Directory" />;
 
-  const employees = await getEmployeeRecords();
+  const employees = await getEmployeeRecords(user.organizationId);
 
   return (
     <main className="app-shell">

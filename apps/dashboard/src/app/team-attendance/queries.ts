@@ -1,6 +1,12 @@
 import { evaluateShiftAttendance } from "@attendance/attendance-core";
 import { createPrismaClient } from "@attendance/db";
 import type { TeamAttendanceData, TeamAttendanceRow, TeamAttendanceStatus } from "./types";
+import {
+  employmentAccessInclude,
+  getEmploymentEmail,
+  getEmploymentName,
+  getEmploymentRoleKey
+} from "../../lib/employment";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -42,22 +48,31 @@ function getMetrics(rows: TeamAttendanceRow[]): TeamAttendanceData["metrics"] {
 
 export async function getTeamAttendanceData(
   employeeId: string,
-  companyWide: boolean
+  companyWide: boolean,
+  organizationId: string
 ): Promise<TeamAttendanceData> {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  let employees = await db.employee.findMany({
-    where: companyWide ? {} : { supervisorId: employeeId },
-    include: { role: true },
-    orderBy: { fullName: "asc" }
+  const employees = await db.employment.findMany({
+    where: companyWide
+      ? { organizationId, status: "ACTIVE" }
+      : {
+          organizationId,
+          status: "ACTIVE",
+          subordinateLines: { some: { supervisorEmploymentId: employeeId, validUntil: null } }
+        },
+    include: {
+      ...employmentAccessInclude(),
+      shiftAssignments: {
+        where: { effectiveTo: null },
+        orderBy: { effectiveFrom: "desc" },
+        take: 1,
+        include: { shift: true }
+      }
+    },
+    orderBy: { employeeCode: "asc" }
   });
-  if (!employees.length && !companyWide) {
-    employees = await db.employee.findMany({
-      include: { role: true },
-      orderBy: { fullName: "asc" }
-    });
-  }
   const [setting, holiday, scans] = await Promise.all([
     db.companySetting.findUnique({ where: { key: "weekly_off_days" } }),
     db.holiday.findUnique({ where: { date: start } }),
@@ -81,16 +96,16 @@ export async function getTeamAttendanceData(
       .map((scan) => scan.serverReceivedAt);
     return {
       id: employee.id,
-      fullName: employee.fullName,
-      email: employee.email,
-      roleName: employee.role?.name ?? "employee",
+      fullName: getEmploymentName(employee),
+      email: getEmploymentEmail(employee),
+      roleName: getEmploymentRoleKey(employee),
       scanCount: times.length,
       firstIn: times[0] ? timeFormatter.format(times[0]) : "—",
       lastOut: times.length > 1 ? timeFormatter.format(times.at(-1)!) : "—",
       status: getEmployeeStatus(
         times,
-        employee.shiftInTime ?? "09:00",
-        employee.shiftOutTime ?? "17:00",
+        employee.shiftAssignments[0]?.shift.startTime ?? "09:00",
+        employee.shiftAssignments[0]?.shift.endTime ?? "17:00",
         emptyStatus
       )
     };

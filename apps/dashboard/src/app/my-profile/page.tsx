@@ -16,9 +16,9 @@ export default async function PersonalRecordsPage() {
     redirect("/login");
   }
 
-  const employee = await db.employee.findUnique({
+  const employee = await db.employment.findUnique({
     where: { id: user.employeeId },
-    include: { role: true }
+    include: { membership: { include: { person: { include: { userAccount: true } } } } }
   });
 
   if (!employee) {
@@ -26,18 +26,18 @@ export default async function PersonalRecordsPage() {
   }
 
   const initialData = {
-    fullName: employee.fullName,
-    email: employee.email,
+    fullName: employee.membership.person.preferredName ?? employee.membership.person.legalName,
+    email: employee.membership.person.userAccount?.loginEmail ?? "No dashboard account",
     employeeCode: employee.employeeCode,
-    roleName: employee.role?.name || "employee",
-    phone: employee.phone,
-    dateOfBirth: employee.dateOfBirth,
-    gender: employee.gender,
-    maritalStatus: employee.maritalStatus,
-    currentAddress: employee.currentAddress,
-    permanentAddress: employee.permanentAddress,
-    emergencyContactName: employee.emergencyContactName,
-    emergencyContactPhone: employee.emergencyContactPhone
+    roleName: user.roleName,
+    phone: employee.membership.person.phone,
+    dateOfBirth: employee.membership.person.dateOfBirth?.toISOString().slice(0, 10) ?? null,
+    gender: employee.membership.person.gender,
+    maritalStatus: employee.membership.person.maritalStatus,
+    currentAddress: employee.membership.person.currentAddress,
+    permanentAddress: employee.membership.person.permanentAddress,
+    emergencyContactName: employee.membership.person.emergencyContactName,
+    emergencyContactPhone: employee.membership.person.emergencyContactPhone
   };
 
   return (

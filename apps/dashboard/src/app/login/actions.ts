@@ -6,6 +6,7 @@ import { compareSync } from "bcryptjs";
 import { createPrismaClient } from "@attendance/db";
 import { signSessionToken } from "../../lib/session-token";
 import { getSessionSecret } from "../../lib/session";
+import { buildSessionUser, findUserAccessByEmail } from "../../lib/authorization";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
@@ -17,45 +18,30 @@ export async function login(prevState: unknown, formData: FormData) {
     return { error: "Email and password are required." };
   }
 
-  const employee = await db.employee.findUnique({
-    where: { email },
-    include: {
-      role: {
-        include: {
-          permissions: {
-            include: { permission: true }
-          }
-        }
-      }
-    }
-  });
+  const account = await findUserAccessByEmail(email.trim().toLowerCase());
+  const sessionUser = account ? buildSessionUser(account) : null;
 
-  if (!employee || employee.status !== "ACTIVE") {
+  if (!account || !sessionUser || !account.passwordHash) {
     return { error: "Invalid email or password." };
   }
 
-  const passwordMatch = compareSync(password, employee.passwordHash);
+  const passwordMatch = compareSync(password, account.passwordHash);
 
   if (!passwordMatch) {
     return { error: "Invalid email or password." };
   }
 
-  // Create JWT payload
-  const roleName = employee.role?.name || "employee";
-  const permissions =
-    employee.role?.permissions.map((rp: { permission: { name: string } }) => rp.permission.name) ||
-    [];
-
   const tokenPayload = {
-    employeeId: employee.id,
-    email: employee.email,
-    fullName: employee.fullName,
-    roleName,
-    permissions,
+    ...sessionUser,
     exp: Math.floor(Date.now() / 1000) + 60 * 60 // 1 hour expiry as requested
   };
 
   const token = signSessionToken(tokenPayload, getSessionSecret());
+
+  await db.userAccount.update({
+    where: { id: account.id },
+    data: { lastLoginAt: new Date() }
+  });
 
   // Set HTTP-only cookie
   (await cookies()).set("attendance_session", token, {

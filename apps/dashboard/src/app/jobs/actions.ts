@@ -49,7 +49,7 @@ export async function createJobPosting(
       location: location || null,
       employmentType: employmentType || null,
       description,
-      createdById: user!.employeeId
+      createdById: user!.userAccountId
     }
   });
 

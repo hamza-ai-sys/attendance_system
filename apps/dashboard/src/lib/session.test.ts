@@ -1,17 +1,28 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   cookies: vi.fn(),
-  redirect: vi.fn()
+  redirect: vi.fn(),
+  findUserAccessById: vi.fn(),
+  buildSessionUser: vi.fn()
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("./authorization", () => ({
+  findUserAccessById: mocks.findUserAccessById,
+  buildSessionUser: mocks.buildSessionUser
+}));
 
 import { getCurrentUser, requireCurrentUser } from "./session.js";
 import { signSessionToken } from "./session-token.js";
 
 const user = {
+  userAccountId: "account-7",
+  authVersion: 1,
+  membershipId: "membership-7",
+  organizationId: "organization-1",
+  roleKeys: ["hr"],
   email: "hr@example.com",
   fullName: "Test HR",
   employeeId: "employee-7",
@@ -23,6 +34,11 @@ describe("getCurrentUser", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+  });
+
+  beforeEach(() => {
+    mocks.findUserAccessById.mockResolvedValue({ authVersion: 1 });
+    mocks.buildSessionUser.mockReturnValue(user);
   });
 
   it("returns null when the session cookie is missing", async () => {
@@ -80,6 +96,11 @@ describe("requireCurrentUser", () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+  });
+
+  beforeEach(() => {
+    mocks.findUserAccessById.mockResolvedValue({ authVersion: 1 });
+    mocks.buildSessionUser.mockReturnValue(user);
   });
 
   it("redirects to login when the session cookie is missing", async () => {

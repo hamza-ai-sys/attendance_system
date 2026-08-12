@@ -52,7 +52,7 @@ export async function createPerformanceTemplate(data: {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       fields: fields as unknown as Prisma.InputJsonValue,
-      createdById: user.employeeId
+      createdById: user.userAccountId
     }
   });
 

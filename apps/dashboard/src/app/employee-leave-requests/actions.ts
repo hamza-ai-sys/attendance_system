@@ -5,6 +5,7 @@ import { createPrismaClient } from "@attendance/db";
 import { getCurrentUser } from "../../lib/session";
 
 import { calculateAvailableBalance } from "@attendance/attendance-core";
+import { employmentAccessInclude, getEmploymentRoleKey } from "../../lib/employment";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
@@ -159,7 +160,7 @@ export async function approveLeaveRequestAction(
     const leaveReq = await db.leaveRequest.findUnique({
       where: { id: requestId },
       include: {
-        employee: { include: { role: true } },
+        employee: { include: employmentAccessInclude() },
         approvalSteps: { orderBy: { sequence: "asc" } },
         leaveType: true
       }
@@ -173,7 +174,7 @@ export async function approveLeaveRequestAction(
       return { error: "You cannot approve your own leave request." };
     }
 
-    const requesterRole = leaveReq.employee.role?.name?.toLowerCase();
+    const requesterRole = getEmploymentRoleKey(leaveReq.employee);
     const isHRRequest = requesterRole === "hr";
 
     // RULE: HR staff requests can ONLY be approved by the Company Owner
@@ -212,7 +213,7 @@ export async function approveLeaveRequestAction(
         await applyLeaveBalanceDeduction(leaveReq, currentYear, overrideAllPaid);
       } else {
         // If Manager approves, advance to PENDING_HR
-        const hrEmployee = await db.employee.findFirst({ where: { role: { name: "hr" } } });
+        const hrEmployee = await findEmploymentByRole(user.organizationId, "hr");
         const hrApproverId = hrEmployee ? hrEmployee.id : user.employeeId;
 
         await db.leaveApprovalStep.create({
@@ -273,7 +274,7 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
   try {
     const leaveReq = await db.leaveRequest.findUnique({
       where: { id: requestId },
-      include: { employee: { include: { role: true } } }
+      include: { employee: { include: employmentAccessInclude() } }
     });
     if (!leaveReq) {
       return { error: "Leave request not found." };
@@ -283,7 +284,7 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
       return { error: "You cannot reject your own leave request." };
     }
 
-    const requesterRole = leaveReq.employee.role?.name?.toLowerCase();
+    const requesterRole = getEmploymentRoleKey(leaveReq.employee);
     const isHRRequest = requesterRole === "hr";
 
     if (isHRRequest && user.roleName !== "owner") {
@@ -309,4 +310,24 @@ export async function rejectLeaveRequestAction(requestId: string, reason?: strin
     const message = err instanceof Error ? err.message : "Failed to reject leave request.";
     return { error: message };
   }
+}
+
+function findEmploymentByRole(organizationId: string, roleKey: string) {
+  return db.employment.findFirst({
+    where: {
+      organizationId,
+      status: "ACTIVE",
+      OR: [
+        { membership: { roleAssignments: { some: { role: { key: roleKey }, revokedAt: null } } } },
+        {
+          assignments: {
+            some: {
+              validUntil: null,
+              position: { defaultRoleMappings: { some: { role: { key: roleKey } } } }
+            }
+          }
+        }
+      ]
+    }
+  });
 }

@@ -38,10 +38,15 @@ export function verifySessionToken(
   }
 
   return {
+    userAccountId: payload.userAccountId,
+    authVersion: payload.authVersion,
     email: payload.email,
     employeeId: payload.employeeId,
+    membershipId: payload.membershipId,
+    organizationId: payload.organizationId,
     fullName: payload.fullName,
     roleName: payload.roleName,
+    roleKeys: payload.roleKeys,
     permissions: payload.permissions
   };
 }
@@ -57,10 +62,15 @@ function parsePayload(encodedPayload: string): SessionPayload | null {
     if (
       typeof payload !== "object" ||
       payload === null ||
+      typeof payload.userAccountId !== "string" ||
+      typeof payload.authVersion !== "number" ||
       typeof payload.employeeId !== "string" ||
+      typeof payload.membershipId !== "string" ||
+      typeof payload.organizationId !== "string" ||
       typeof payload.email !== "string" ||
       typeof payload.fullName !== "string" ||
       typeof payload.roleName !== "string" ||
+      !Array.isArray(payload.roleKeys) ||
       !Array.isArray(payload.permissions) ||
       typeof payload.exp !== "number"
     ) {

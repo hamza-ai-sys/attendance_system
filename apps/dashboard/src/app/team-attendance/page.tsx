@@ -13,7 +13,8 @@ export default async function TeamAttendancePage() {
   if (!hasAccess(user, ["team_attendance", "company_attendance"])) redirect("/");
   const data = await getTeamAttendanceData(
     user.employeeId,
-    hasPermission(user, "company_attendance")
+    hasPermission(user, "company_attendance"),
+    user.organizationId
   );
   return (
     <main className="app-shell">

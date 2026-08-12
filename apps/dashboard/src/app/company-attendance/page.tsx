@@ -31,10 +31,10 @@ export default async function CompanyAttendancePage({ searchParams }: CompanyAtt
   const subtitle = selectedEmployee
     ? `Filter: ${selectedEmployee.fullName} (${filter.rangeTitle})`
     : `Filter: All Staff (${filter.rangeTitle})`;
-  const simpleEmployees = activeEmployees.map(({ id, fullName, role }) => ({
+  const simpleEmployees = activeEmployees.map(({ id, fullName, roleName }) => ({
     id,
     fullName,
-    roleName: role?.name || "employee"
+    roleName
   }));
 
   return (

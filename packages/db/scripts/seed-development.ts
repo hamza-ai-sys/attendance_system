@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { hashSync } from "bcryptjs";
+import { seedAccessFoundation, upsertSeedEmployment } from "./seed-access.js";
 
 const seedDir = dirname(fileURLToPath(import.meta.url));
 const rootEnvPath = resolve(seedDir, "../../../.env");
@@ -48,166 +49,97 @@ async function main() {
   }
 
   await prisma.$transaction(async (tx) => {
-    // 1. Setup RBAC Roles and Permissions
-    const rolesData = [
-      { name: "employee", perms: ["my_attendance", "manual_reports"] },
-      {
-        name: "manager",
-        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"]
-      },
-      {
-        name: "hr",
-        perms: [
-          "my_attendance",
-          "manual_reports",
-          "enrollment",
-          "reports",
-          "company_attendance",
-          "approvals",
-          "my_team",
-          "jobs_manage",
-          "announcements_manage"
-        ]
-      },
-      {
-        name: "owner",
-        perms: [
-          "my_attendance",
-          "manual_reports",
-          "enrollment",
-          "reports",
-          "company_attendance",
-          "approvals",
-          "my_team",
-          "jobs_manage",
-          "announcements_manage"
-        ]
-      }
-    ];
+    // 1. Setup organization, structure, roles, and position defaults.
+    const access = await seedAccessFoundation(tx, {
+      name: "Attendance System Company",
+      slug: "default"
+    });
 
-    for (const p of [...new Set(rolesData.flatMap((r) => r.perms))]) {
-      await tx.permission.upsert({ create: { name: p }, update: {}, where: { name: p } });
-    }
-
-    const roles: Record<string, { id: string }> = {};
-    for (const r of rolesData) {
-      roles[r.name] = await tx.role.upsert({
-        create: { name: r.name },
-        update: {},
-        where: { name: r.name }
-      });
-
-      const permissions = await tx.permission.findMany({
-        select: { id: true },
-        where: { name: { in: r.perms } }
-      });
-
-      await tx.rolePermission.deleteMany({ where: { roleId: roles[r.name]!.id } });
-      await tx.rolePermission.createMany({
-        data: permissions.map((permission) => ({
-          permissionId: permission.id,
-          roleId: roles[r.name]!.id
-        }))
-      });
-    }
-
-    // 2. Setup Employees with generic password123
+    // 2. Setup people, accounts, memberships, employments, and assignments.
     const defaultPasswordHash = hashSync("password123", 10);
-
-    const owner = await tx.employee.upsert({
-      create: {
-        email: "owner@test.com",
-        fullName: "Company Owner",
-        roleId: roles["owner"]!.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Company Owner",
+    const createSeededEmployment = (input: {
+      legalName: string;
+      loginEmail: string;
+      employeeCode: string;
+      unitCode: string;
+      positionCode: string;
+      shiftOutTime?: string;
+    }) =>
+      upsertSeedEmployment(tx, {
+        organizationId: access.organization.id,
+        legalName: input.legalName,
+        loginEmail: input.loginEmail,
         passwordHash: defaultPasswordHash,
-        roleId: roles["owner"]!.id,
-        status: "ACTIVE"
-      },
-      where: { email: "owner@test.com" }
+        employeeCode: input.employeeCode,
+        unitId: access.units.get(input.unitCode)!.id,
+        positionId: access.positions.get(input.positionCode)!.id,
+        shiftOutTime: input.shiftOutTime
+      });
+
+    const ownerRecord = await createSeededEmployment({
+      legalName: "Company Owner",
+      loginEmail: "owner@test.com",
+      employeeCode: "OWNER-001",
+      unitCode: "EXEC",
+      positionCode: "OWNER"
     });
-
-    const hr = await tx.employee.upsert({
-      create: {
-        email: "hr@test.com",
-        fullName: "HR Manager",
-        roleId: roles["hr"]!.id,
-        supervisorId: owner.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "HR Manager",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["hr"]!.id,
-        status: "ACTIVE",
-        supervisorId: owner.id
-      },
-      where: { email: "hr@test.com" }
+    const hrRecord = await createSeededEmployment({
+      legalName: "HR Manager",
+      loginEmail: "hr@test.com",
+      employeeCode: "HR-001",
+      unitCode: "HR",
+      positionCode: "HR_OFFICER"
     });
-
-    const manager = await tx.employee.upsert({
-      create: {
-        email: "manager@test.com",
-        fullName: "Team Manager",
-        roleId: roles["manager"]!.id,
-        supervisorId: owner.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Team Manager",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["manager"]!.id,
-        status: "ACTIVE",
-        supervisorId: owner.id
-      },
-      where: { email: "manager@test.com" }
+    const managerRecord = await createSeededEmployment({
+      legalName: "Team Manager",
+      loginEmail: "manager@test.com",
+      employeeCode: "MGR-001",
+      unitCode: "ENG",
+      positionCode: "MANAGER"
     });
-
-    const employee = await tx.employee.upsert({
-      create: {
-        email: "employee@test.com",
-        fullName: "Regular Employee",
-        roleId: roles["employee"]!.id,
-        supervisorId: manager.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Regular Employee",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["employee"]!.id,
-        status: "ACTIVE",
-        supervisorId: manager.id
-      },
-      where: { email: "employee@test.com" }
+    const employeeRecord = await createSeededEmployment({
+      legalName: "Regular Employee",
+      loginEmail: "employee@test.com",
+      employeeCode: "EMP-001",
+      unitCode: "ENG",
+      positionCode: "EMPLOYEE"
     });
+    const shaheerRecord = await createSeededEmployment({
+      legalName: "Shaheer",
+      loginEmail: "shaheer@test.com",
+      employeeCode: "EMP-07",
+      unitCode: "ENG",
+      positionCode: "EMPLOYEE",
+      shiftOutTime: "18:00"
+    });
+    const owner = ownerRecord.employment;
+    const hr = hrRecord.employment;
+    const manager = managerRecord.employment;
+    const employee = employeeRecord.employment;
+    const shaheer = shaheerRecord.employment;
 
-    const shaheer = await tx.employee.upsert({
-      create: {
-        email: "shaheer@test.com",
-        employeeCode: "EMP-07",
-        fullName: "Shaheer",
-        roleId: roles["employee"]!.id,
-        supervisorId: manager.id,
-        passwordHash: defaultPasswordHash,
-        shiftInTime: "09:00",
-        shiftOutTime: "18:00",
-        timezone: "Asia/Karachi"
-      },
-      update: {
-        employeeCode: "EMP-07",
-        fullName: "Shaheer",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["employee"]!.id,
-        shiftInTime: "09:00",
-        shiftOutTime: "18:00",
-        status: "ACTIVE",
-        supervisorId: manager.id,
-        timezone: "Asia/Karachi"
-      },
-      where: { email: "shaheer@test.com" }
+    await tx.reportingLine.deleteMany({
+      where: { subordinateEmploymentId: { in: [hr.id, manager.id, employee.id, shaheer.id] } }
+    });
+    await tx.reportingLine.createMany({
+      data: [
+        { subordinateEmploymentId: hr.id, supervisorEmploymentId: owner.id, validFrom: new Date() },
+        {
+          subordinateEmploymentId: manager.id,
+          supervisorEmploymentId: owner.id,
+          validFrom: new Date()
+        },
+        {
+          subordinateEmploymentId: employee.id,
+          supervisorEmploymentId: manager.id,
+          validFrom: new Date()
+        },
+        {
+          subordinateEmploymentId: shaheer.id,
+          supervisorEmploymentId: manager.id,
+          validFrom: new Date()
+        }
+      ]
     });
 
     // 3. Setup Dev Device

@@ -1,23 +1,48 @@
-import type { EmployeeManagerOption, EmployeeRoleOption } from "../../types";
+import type {
+  EmployeeManagerOption,
+  OrganizationUnitOption,
+  PositionOption
+} from "../../types";
 
 export function EmployeeAssignmentFields({
   managers,
-  roles
+  organizationUnits,
+  positions
 }: {
   managers: EmployeeManagerOption[];
-  roles: EmployeeRoleOption[];
+  organizationUnits: OrganizationUnitOption[];
+  positions: PositionOption[];
 }) {
   return (
     <>
       <div className="form-group">
-        <label htmlFor="roleId">Role *</label>
-        <select id="roleId" name="roleId" className="form-control" defaultValue="" required>
+        <label htmlFor="organizationUnitId">Organization Unit *</label>
+        <select
+          id="organizationUnitId"
+          name="organizationUnitId"
+          className="form-control"
+          defaultValue=""
+          required
+        >
           <option value="" disabled>
-            Select Employee Role
+            Select Department or Team
           </option>
-          {roles.map((role) => (
-            <option key={role.id} value={role.id}>
-              {role.name.toUpperCase()}
+          {organizationUnits.map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {unit.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="form-group">
+        <label htmlFor="positionId">Position *</label>
+        <select id="positionId" name="positionId" className="form-control" defaultValue="" required>
+          <option value="" disabled>
+            Select Position
+          </option>
+          {positions.map((position) => (
+            <option key={position.id} value={position.id}>
+              {position.title}
             </option>
           ))}
         </select>

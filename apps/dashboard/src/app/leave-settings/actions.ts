@@ -53,7 +53,7 @@ export async function createLeaveType(formData: FormData) {
 
     // Automatically create/update leave balances for active employees for the current year
     const currentYear = new Date().getFullYear();
-    const employees = await db.employee.findMany({ select: { id: true } });
+    const employees = await db.employment.findMany({ select: { id: true } });
 
     const accrued = defaultAllocation;
 

@@ -12,7 +12,8 @@ export default async function TeamManagementPage() {
   if (user.roleName.toLowerCase() === "employee" && !hasPermission(user, "my_team")) redirect("/");
   const data = await getTeamManagementData(
     user.employeeId,
-    hasPermission(user, "company_attendance")
+    hasPermission(user, "company_attendance"),
+    user.organizationId
   );
   return (
     <main className="app-shell">

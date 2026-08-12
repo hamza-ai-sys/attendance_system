@@ -89,18 +89,23 @@ export async function submitLeaveRequest(formData: FormData) {
 
   try {
     // 3. Determine initial approval status and steps based on applicant role
-    const employeeRecord = await db.employee.findUnique({
+    const employeeRecord = await db.employment.findUnique({
       where: { id: user.employeeId },
-      include: { supervisor: true, role: true }
+      include: {
+        subordinateLines: {
+          where: { type: "PRIMARY", validUntil: null },
+          take: 1
+        }
+      }
     });
 
-    const roleName = employeeRecord?.role?.name?.toLowerCase() || "employee";
+    const roleName = user.roleName;
     const isRegularEmployee = roleName === "employee";
 
     // Regular employees with a direct manager start at PENDING_MANAGER (Stage 1)
     // Managers, HR staff, and employees without a direct manager start at PENDING_HR (Stage 2 / Owner)
     const initialStatus =
-      isRegularEmployee && employeeRecord?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
+      isRegularEmployee && employeeRecord?.subordinateLines[0] ? "PENDING_MANAGER" : "PENDING_HR";
 
     const leaveReq = await db.leaveRequest.create({
       data: {
@@ -118,24 +123,21 @@ export async function submitLeaveRequest(formData: FormData) {
     });
 
     // Create Approval Steps
-    if (initialStatus === "PENDING_MANAGER" && employeeRecord?.supervisorId) {
+    const supervisorId = employeeRecord?.subordinateLines[0]?.supervisorEmploymentId;
+    if (initialStatus === "PENDING_MANAGER" && supervisorId) {
       await db.leaveApprovalStep.create({
         data: {
           leaveRequestId: leaveReq.id,
           sequence: 1,
-          approverEmployeeId: employeeRecord.supervisorId,
+          approverEmployeeId: supervisorId,
           approverKind: "MANAGER",
           status: "PENDING"
         }
       });
     } else {
       // Direct Stage 2 (HR / Owner stage)
-      const ownerEmployee = await db.employee.findFirst({
-        where: { role: { name: "owner" } }
-      });
-      const hrEmployee = await db.employee.findFirst({
-        where: { role: { name: "hr" } }
-      });
+      const ownerEmployee = await findEmploymentByRole(user.organizationId, "owner");
+      const hrEmployee = await findEmploymentByRole(user.organizationId, "hr");
 
       // For HR staff applications, the approver is the Company Owner
       const approverId =
@@ -163,6 +165,26 @@ export async function submitLeaveRequest(formData: FormData) {
     console.error("Leave request submission error:", err);
     return { error: message };
   }
+}
+
+function findEmploymentByRole(organizationId: string, roleKey: string) {
+  return db.employment.findFirst({
+    where: {
+      organizationId,
+      status: "ACTIVE",
+      OR: [
+        { membership: { roleAssignments: { some: { role: { key: roleKey }, revokedAt: null } } } },
+        {
+          assignments: {
+            some: {
+              validUntil: null,
+              position: { defaultRoleMappings: { some: { role: { key: roleKey } } } }
+            }
+          }
+        }
+      ]
+    }
+  });
 }
 
 export async function cancelLeaveRequest(requestId: string) {

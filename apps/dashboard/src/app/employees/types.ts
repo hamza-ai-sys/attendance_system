@@ -4,14 +4,21 @@ export type EmployeeRecord = {
   email: string;
   employeeCode: string | null;
   roleName: string;
+  departmentName: string;
+  positionTitle: string;
   managerName: string;
   timezone: string;
   status: string;
 };
 
-export type EmployeeRoleOption = {
+export type OrganizationUnitOption = {
   id: string;
   name: string;
+};
+
+export type PositionOption = {
+  id: string;
+  title: string;
 };
 
 export type EmployeeManagerOption = {
@@ -30,7 +37,9 @@ export type CreateEmployeeInput = {
   email: string;
   employeeCode: string;
   password: string;
-  roleId: string;
+  grantDashboardAccess: boolean;
+  organizationUnitId: string;
+  positionId: string;
   supervisorId: string;
   shiftInTime: string;
   shiftOutTime: string;

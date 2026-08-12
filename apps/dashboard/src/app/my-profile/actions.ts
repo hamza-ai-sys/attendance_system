@@ -30,11 +30,11 @@ export async function updatePersonalRecords(
   const emergencyContactPhone = formData.get("emergencyContactPhone") as string;
 
   try {
-    await db.employee.update({
-      where: { id: user.employeeId },
+    await db.person.update({
+      where: { id: (await db.userAccount.findUniqueOrThrow({ where: { id: user.userAccountId } })).personId },
       data: {
         phone: phone || null,
-        dateOfBirth: dateOfBirth || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
         gender: gender || null,
         maritalStatus: maritalStatus || null,
         currentAddress: currentAddress || null,

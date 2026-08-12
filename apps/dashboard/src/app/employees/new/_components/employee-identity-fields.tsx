@@ -13,14 +13,13 @@ export function EmployeeIdentityFields() {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="email">Email Address *</label>
+        <label htmlFor="email">Login Email</label>
         <input
           id="email"
           name="email"
           type="email"
           className="form-control"
           placeholder="e.g. jane@company.com"
-          required
         />
       </div>
       <div className="form-group">
@@ -34,16 +33,22 @@ export function EmployeeIdentityFields() {
         />
       </div>
       <div className="form-group">
-        <label htmlFor="password">Initial Password *</label>
+        <label htmlFor="password">Initial Password</label>
         <input
           id="password"
           name="password"
           type="password"
           className="form-control"
           placeholder="Min 6 characters"
-          required
           minLength={6}
         />
+      </div>
+      <div className="form-group">
+        <label>
+          <input name="grantDashboardAccess" type="checkbox" defaultChecked /> Grant dashboard
+          access
+        </label>
+        <span className="muted">Email and password are required only when access is granted.</span>
       </div>
     </>
   );

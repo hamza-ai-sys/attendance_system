@@ -11,7 +11,9 @@ export default async function NewEmployeePage() {
   const user = await requireCurrentUser();
   if (!canCreateEmployees(user)) return <UnauthorizedView featureName="Add Employee" />;
 
-  const { managers, roles } = await getEmployeeFormOptions();
+  const { managers, organizationUnits, positions } = await getEmployeeFormOptions(
+    user.organizationId
+  );
 
   return (
     <main className="app-shell">
@@ -19,7 +21,11 @@ export default async function NewEmployeePage() {
         title="Add Employee"
         subtitle={`Adding an employee as ${user.fullName} (${user.roleName})`}
       />
-      <EmployeeForm managers={managers} roles={roles} />
+      <EmployeeForm
+        managers={managers}
+        organizationUnits={organizationUnits}
+        positions={positions}
+      />
     </main>
   );
 }
