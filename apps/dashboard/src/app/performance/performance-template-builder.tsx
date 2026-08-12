@@ -10,6 +10,92 @@ const initialFields: FieldDefinition[] = [
   { id: "f_4", label: "Key Achievements & Comments", type: "text", required: false }
 ];
 
+function TemplateFieldEditor({
+  field,
+  index,
+  onRemove,
+  onUpdate
+}: {
+  field: FieldDefinition;
+  index: number;
+  onRemove: () => void;
+  onUpdate: (patch: Partial<FieldDefinition>) => void;
+}) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "auto 2fr 1fr auto", gap: "10px" }}>
+      <strong>#{index + 1}</strong>
+      <input
+        value={field.label}
+        onChange={(event) => onUpdate({ label: event.target.value })}
+        required
+      />
+      <select
+        value={field.type}
+        onChange={(event) => onUpdate({ type: event.target.value as FieldDefinition["type"] })}
+      >
+        <option value="rating">Rating (1-5)</option>
+        <option value="text">Text response</option>
+        <option value="number">Numeric score</option>
+      </select>
+      <button type="button" className="close-btn" onClick={onRemove}>
+        ✕
+      </button>
+    </div>
+  );
+}
+
+function TemplateDetails({
+  description,
+  endDate,
+  setDescription,
+  setEndDate,
+  setStartDate,
+  setTitle,
+  startDate,
+  title
+}: {
+  description: string;
+  endDate: string;
+  setDescription: (value: string) => void;
+  setEndDate: (value: string) => void;
+  setStartDate: (value: string) => void;
+  setTitle: (value: string) => void;
+  startDate: string;
+  title: string;
+}) {
+  return (
+    <>
+      <label>
+        Document Title *<input value={title} onChange={(e) => setTitle(e.target.value)} required />
+      </label>
+      <label>
+        Description
+        <textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <label>
+          Active Start Date *
+          <input
+            type="datetime-local"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Active End Date *
+          <input
+            type="datetime-local"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+    </>
+  );
+}
+
 export function PerformanceTemplateBuilder({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -22,7 +108,9 @@ export function PerformanceTemplateBuilder({ onClose }: { onClose: () => void })
   const [message, setMessage] = useState<string | null>(null);
 
   const updateField = (id: string, patch: Partial<FieldDefinition>) => {
-    setFields((current) => current.map((field) => (field.id === id ? { ...field, ...patch } : field)));
+    setFields((current) =>
+      current.map((field) => (field.id === id ? { ...field, ...patch } : field))
+    );
   };
 
   const removeField = (id: string) => {
@@ -51,71 +139,57 @@ export function PerformanceTemplateBuilder({ onClose }: { onClose: () => void })
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" style={{ maxWidth: "750px" }} onClick={(event) => event.stopPropagation()}>
+      <div
+        className="modal-card"
+        style={{ maxWidth: "750px" }}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="modal-header">
           <h2>Define Employee Performance Document</h2>
-          <button type="button" className="close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="close-btn" onClick={onClose}>
+            ✕
+          </button>
         </div>
         {message && <p className={message.startsWith("Error") ? "error" : "muted"}>{message}</p>}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <label>
-            Document Title *
-            <input
-              type="text"
-              placeholder="e.g. Q3 2026 Employee Performance Evaluation"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Description
-            <textarea
-              rows={2}
-              placeholder="Instructions for managers filling this form..."
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <label>
-              📅 Active Start Date *
-              <input type="datetime-local" value={startDate} onChange={(event) => setStartDate(event.target.value)} required />
-            </label>
-            <label>
-              🏁 Active End Date *
-              <input type="datetime-local" value={endDate} onChange={(event) => setEndDate(event.target.value)} required />
-            </label>
-          </div>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+        >
+          <TemplateDetails
+            {...{
+              title,
+              description,
+              startDate,
+              endDate,
+              setTitle,
+              setDescription,
+              setStartDate,
+              setEndDate
+            }}
+          />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3>Form Fields & Criteria</h3>
             <button
               type="button"
               className="back-link"
-              onClick={() => setFields((current) => [...current, { id: `f_${Date.now()}`, label: "", type: "rating", required: true }])}
+              onClick={() =>
+                setFields((current) => [
+                  ...current,
+                  { id: `f_${Date.now()}`, label: "", type: "rating", required: true }
+                ])
+              }
             >
               ➕ Add Field
             </button>
           </div>
           {fields.map((field, index) => (
-            <div key={field.id} style={{ display: "grid", gridTemplateColumns: "auto 2fr 1fr auto", gap: "10px", alignItems: "center" }}>
-              <strong>#{index + 1}</strong>
-              <input
-                value={field.label}
-                onChange={(event) => updateField(field.id, { label: event.target.value })}
-                placeholder="Field label"
-                required
-              />
-              <select
-                value={field.type}
-                onChange={(event) => updateField(field.id, { type: event.target.value as FieldDefinition["type"] })}
-              >
-                <option value="rating">Rating (1-5)</option>
-                <option value="text">Text response</option>
-                <option value="number">Numeric score</option>
-              </select>
-              <button type="button" className="close-btn" onClick={() => removeField(field.id)}>✕</button>
-            </div>
+            <TemplateFieldEditor
+              key={field.id}
+              field={field}
+              index={index}
+              onRemove={() => removeField(field.id)}
+              onUpdate={(patch) => updateField(field.id, patch)}
+            />
           ))}
           <button type="submit" disabled={submitting} className="primary-btn">
             {submitting ? "Saving Document..." : "Save & Publish Document"}

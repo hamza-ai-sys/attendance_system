@@ -29,9 +29,11 @@ export function LeaveRequestsClient({
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<LeaveStatusFilter>("all");
   const filteredRequests = myRequests.filter((request) => {
-    if (filter === "pending") return request.status === "PENDING_MANAGER" || request.status === "PENDING_HR";
+    if (filter === "pending")
+      return request.status === "PENDING_MANAGER" || request.status === "PENDING_HR";
     if (filter === "approved") return request.status === "APPROVED";
-    if (filter === "cancelled") return request.status === "CANCELLED" || request.status === "REJECTED";
+    if (filter === "cancelled")
+      return request.status === "CANCELLED" || request.status === "REJECTED";
     return true;
   });
 

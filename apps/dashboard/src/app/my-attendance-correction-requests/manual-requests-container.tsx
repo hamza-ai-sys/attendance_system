@@ -19,11 +19,7 @@ export function ManualRequestsContainer({ children }: ManualRequestsContainerPro
   return (
     <>
       <div style={{ marginBottom: "20px" }}>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleOpen}
-        >
+        <button type="button" className="btn-primary" onClick={handleOpen}>
           + Submit Manual Request
         </button>
       </div>

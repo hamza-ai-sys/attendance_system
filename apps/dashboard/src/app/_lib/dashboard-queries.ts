@@ -1,0 +1,33 @@
+import { createPrismaClient } from "@attendance/db";
+import { hasPermission } from "../../lib/rbac";
+import type { SessionUser } from "../../lib/session";
+
+const db = createPrismaClient(process.env.DATABASE_URL as string);
+
+export async function getDashboardCounts(user: SessionUser) {
+  const role = user.roleName.toLowerCase();
+  const managerWhere = {
+    employee: { supervisorId: user.employeeId },
+    employeeId: { not: user.employeeId }
+  };
+  const pendingWhere =
+    role === "manager"
+      ? { status: "PENDING_MANAGER" as const, ...managerWhere }
+      : { status: { in: ["PENDING_MANAGER" as const, "PENDING_HR" as const] } };
+
+  const [pendingAttendance, pendingLeave, employee] = await Promise.all([
+    hasPermission(user, "approvals")
+      ? db.manualAttendanceRequest.count({ where: pendingWhere })
+      : 0,
+    hasPermission(user, "approvals") ? db.leaveRequest.count({ where: pendingWhere }) : 0,
+    db.employee.findUnique({
+      where: { id: user.employeeId },
+      select: { lastAnnouncementsViewedAt: true }
+    })
+  ]);
+  const unreadAnnouncements = await db.announcement.count({
+    where: { createdAt: { gt: employee?.lastAnnouncementsViewedAt ?? new Date(0) } }
+  });
+
+  return { pendingAttendance, pendingLeave, unreadAnnouncements };
+}

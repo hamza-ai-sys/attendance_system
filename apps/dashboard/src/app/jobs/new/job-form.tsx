@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useRef, useEffect } from "react";
-import { createJobPosting, type JobPostingState } from "../actions";
+import { createJobPosting } from "../actions";
+import type { JobPostingState } from "../types";
 
 const initialState: JobPostingState = {};
 

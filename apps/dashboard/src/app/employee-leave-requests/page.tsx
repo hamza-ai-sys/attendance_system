@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeeLeaveRequestsPage() {
   const user = await requireCurrentUser();
+
   if (!hasPermission(user, "approvals"))
     return <UnauthorizedView featureName="Employee Leave Requests" />;
 

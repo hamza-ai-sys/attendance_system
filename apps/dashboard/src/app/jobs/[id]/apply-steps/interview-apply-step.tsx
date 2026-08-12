@@ -7,6 +7,54 @@ function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function TimeSlots({
+  slots,
+  selected,
+  loading,
+  error,
+  fieldName,
+  onSelect
+}: {
+  slots: string[];
+  selected: string;
+  loading: boolean;
+  error: string | null;
+  fieldName: string;
+  onSelect: (slot: string) => void;
+}) {
+  if (loading) return <p className="muted">Loading available times...</p>;
+  if (error) return <p className="muted">{error}</p>;
+  if (!slots.length)
+    return <p className="muted">No available times on this date. Please try another date.</p>;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {slots.map((slot) => (
+        <label
+          key={slot}
+          style={{
+            border: selected === slot ? "1px solid #c084fc" : "1px solid rgba(148,163,184,.3)",
+            background: selected === slot ? "rgba(139,92,246,.15)" : "transparent",
+            borderRadius: 8,
+            padding: "8px 12px",
+            cursor: "pointer"
+          }}
+        >
+          <input
+            type="radio"
+            name={fieldName}
+            value={slot}
+            checked={selected === slot}
+            onChange={() => onSelect(slot)}
+            required
+            style={{ display: "none" }}
+          />
+          {slot}
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function InterviewApplyStep({
   step,
   index
@@ -91,48 +139,14 @@ export function InterviewApplyStep({
       <div style={{ marginTop: "12px" }}>
         <label style={{ display: "block", marginBottom: "8px" }}>Choose a Time *</label>
 
-        {isLoading && <p className="muted">Loading available times...</p>}
-
-        {!isLoading && loadError && <p className="muted">{loadError}</p>}
-
-        {!isLoading && !loadError && slots.length === 0 && (
-          <p className="muted">No available times on this date. Please try another date.</p>
-        )}
-
-        {!isLoading && !loadError && slots.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {slots.map((slot) => (
-              <label
-                key={slot}
-                style={{
-                  border:
-                    selectedTime === slot
-                      ? "1px solid #c084fc"
-                      : "1px solid rgba(148, 163, 184, 0.3)",
-                  background: selectedTime === slot ? "rgba(139, 92, 246, 0.15)" : "transparent",
-                  borderRadius: "8px",
-                  padding: "8px 12px",
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                <input
-                  type="radio"
-                  name={`interview_${step.id}_time`}
-                  value={slot}
-                  checked={selectedTime === slot}
-                  onChange={() => setSelectedTime(slot)}
-                  required
-                  style={{ display: "none" }}
-                />
-                {slot}
-              </label>
-            ))}
-          </div>
-        )}
+        <TimeSlots
+          slots={slots}
+          selected={selectedTime}
+          loading={isLoading}
+          error={loadError}
+          fieldName={`interview_${step.id}_time`}
+          onSelect={setSelectedTime}
+        />
       </div>
     </div>
   );

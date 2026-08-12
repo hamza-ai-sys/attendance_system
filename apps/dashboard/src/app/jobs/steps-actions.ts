@@ -4,13 +4,21 @@ import { getCurrentUser } from "../../lib/session";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 import { isHr } from "./permissions";
-import { generateDaySlots, type EmailCvStepConfig, type QuestionnaireStepConfig, type JobStepQuestion } from "./step-types";
+import {
+  generateDaySlots,
+  type EmailCvStepConfig,
+  type QuestionnaireStepConfig,
+  type JobStepQuestion
+} from "./step-types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 export type StepFormState = { error?: string; success?: string };
 
-export async function addJobStep(prevState: StepFormState, formData: FormData): Promise<StepFormState> {
+export async function addJobStep(
+  prevState: StepFormState,
+  formData: FormData
+): Promise<StepFormState> {
   const user = await getCurrentUser();
 
   if (!isHr(user)) {
@@ -71,7 +79,10 @@ export async function addJobStep(prevState: StepFormState, formData: FormData): 
       if (!q.prompt || !q.prompt.trim()) {
         return { error: "Every question needs a prompt." };
       }
-      if (q.type === "MULTIPLE_CHOICE" && (!q.options || q.options.filter((o) => o.trim()).length < 2)) {
+      if (
+        q.type === "MULTIPLE_CHOICE" &&
+        (!q.options || q.options.filter((o) => o.trim()).length < 2)
+      ) {
         return { error: `Question "${q.prompt}" needs at least two options.` };
       }
     }
@@ -173,10 +184,19 @@ export async function deleteJobStep(formData: FormData) {
 export type AvailableSlotsResult = { slots: string[]; error?: string };
 
 // Callable directly from client components (not just as a <form action>).
-export async function getAvailableInterviewSlots(stepId: string, dateStr: string): Promise<AvailableSlotsResult> {
+export async function getAvailableInterviewSlots(
+  stepId: string,
+  dateStr: string
+): Promise<AvailableSlotsResult> {
   const step = await db.jobPostingStep.findUnique({ where: { id: stepId } });
 
-  if (!step || step.type !== "INTERVIEW" || !step.interviewerId || !step.dailyStartTime || !step.dailyEndTime) {
+  if (
+    !step ||
+    step.type !== "INTERVIEW" ||
+    !step.interviewerId ||
+    !step.dailyStartTime ||
+    !step.dailyEndTime
+  ) {
     return { slots: [], error: "This interview step is not configured correctly." };
   }
 

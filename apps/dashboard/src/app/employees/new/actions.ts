@@ -1,93 +1,60 @@
 "use server";
 
-import { getCurrentUser } from "../../../lib/session";
-import { hasPermission } from "../../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { hashSync } from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "../../../lib/session";
+import { parseCreateEmployeeForm, validateCreateEmployeeInput } from "../_lib/employee-form";
+import { canCreateEmployees } from "../permissions";
+import type { CreateEmployeeInput, CreateEmployeeState } from "../types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
-export type EnrollmentState = {
-  error?: string;
-  success?: string;
-};
+async function getEmployeeConflict(input: CreateEmployeeInput): Promise<string | null> {
+  const existingEmail = await db.employee.findUnique({ where: { email: input.email } });
+  if (existingEmail) return `An employee with the email "${input.email}" already exists.`;
 
-export async function createEmployee(prevState: EnrollmentState, formData: FormData): Promise<EnrollmentState> {
+  if (input.employeeCode) {
+    const existingCode = await db.employee.findUnique({
+      where: { employeeCode: input.employeeCode }
+    });
+    if (existingCode) return `Employee code "${input.employeeCode}" is already in use.`;
+  }
+
+  return null;
+}
+
+export async function createEmployee(
+  _previousState: CreateEmployeeState,
+  formData: FormData
+): Promise<CreateEmployeeState> {
   const user = await getCurrentUser();
-
-  if (!user || !hasPermission(user, "enrollment")) {
+  if (!user || !canCreateEmployees(user)) {
     return { error: "Unauthorized: You do not have permission to enroll employees." };
   }
 
-  const fullName = (formData.get("fullName") as string)?.trim();
-  const email = (formData.get("email") as string)?.trim().toLowerCase();
-  const employeeCode = (formData.get("employeeCode") as string)?.trim();
-  const password = formData.get("password") as string;
-  const roleId = formData.get("roleId") as string;
-  const supervisorId = (formData.get("supervisorId") as string || formData.get("managerId") as string) as string;
-  const shiftInTime = (formData.get("shiftInTime") as string)?.trim() || "09:00";
-  const shiftOutTime = (formData.get("shiftOutTime") as string)?.trim() || "17:00";
-  const timezone = (formData.get("timezone") as string)?.trim() || "Asia/Karachi";
+  const input = parseCreateEmployeeForm(formData);
+  const validationError = validateCreateEmployeeInput(input);
+  if (validationError) return { error: validationError };
 
-  if (!fullName) {
-    return { error: "Full Name is required." };
-  }
+  const conflict = await getEmployeeConflict(input);
+  if (conflict) return { error: conflict };
 
-  if (!email || !email.includes("@")) {
-    return { error: "A valid email address is required." };
-  }
-
-  if (!password || password.length < 6) {
-    return { error: "Password must be at least 6 characters long." };
-  }
-
-  if (!roleId) {
-    return { error: "Role selection is required." };
-  }
-
-  // Check email uniqueness
-  const existingEmail = await db.employee.findUnique({
-    where: { email }
-  });
-
-  if (existingEmail) {
-    return { error: `An employee with the email "${email}" already exists.` };
-  }
-
-  // Check employee code uniqueness if provided
-  if (employeeCode) {
-    const existingCode = await db.employee.findUnique({
-      where: { employeeCode }
-    });
-
-    if (existingCode) {
-      return { error: `Employee code "${employeeCode}" is already in use.` };
-    }
-  }
-
-  // Hash password
-  const passwordHash = hashSync(password, 10);
-
-  // Save new employee into PostgreSQL database
   await db.employee.create({
     data: {
-      fullName,
-      email,
-      employeeCode: employeeCode || null,
-      passwordHash,
-      roleId: roleId || null,
-      supervisorId: supervisorId || null,
-      shiftInTime,
-      shiftOutTime,
-      timezone,
+      fullName: input.fullName,
+      email: input.email,
+      employeeCode: input.employeeCode || null,
+      passwordHash: hashSync(input.password, 10),
+      roleId: input.roleId,
+      supervisorId: input.supervisorId || null,
+      shiftInTime: input.shiftInTime,
+      shiftOutTime: input.shiftOutTime,
+      timezone: input.timezone,
       status: "ACTIVE"
     }
   });
 
   revalidatePath("/employees");
-
-  return {
-    success: `New employee "${fullName}" (${email}) enrolled successfully!`
-  };
+  return { success: `New employee "${input.fullName}" (${input.email}) enrolled successfully!` };
 }

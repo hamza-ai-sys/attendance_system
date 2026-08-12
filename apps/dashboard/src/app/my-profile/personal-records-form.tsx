@@ -3,28 +3,153 @@
 import { useActionState } from "react";
 import { updatePersonalRecords, type PersonalRecordsState } from "./actions";
 
-interface PersonalRecordsFormProps {
-  initialData: {
-    fullName: string;
-    email: string;
-    employeeCode: string | null;
-    roleName: string;
-    phone: string | null;
-    dateOfBirth: string | null;
-    gender: string | null;
-    maritalStatus: string | null;
-    currentAddress: string | null;
-    permanentAddress: string | null;
-    emergencyContactName: string | null;
-    emergencyContactPhone: string | null;
-  };
-}
+type PersonalRecordsData = {
+  fullName: string;
+  email: string;
+  employeeCode: string | null;
+  roleName: string;
+  phone: string | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+  maritalStatus: string | null;
+  currentAddress: string | null;
+  permanentAddress: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+};
 
 const initialState: PersonalRecordsState = {};
+const readOnlyStyle = { opacity: 0.7, cursor: "not-allowed", background: "rgba(255,255,255,0.02)" };
 
-export function PersonalRecordsForm({ initialData }: PersonalRecordsFormProps) {
+function StaffProfileFields({ data }: { data: PersonalRecordsData }) {
+  const fields = [
+    ["Full Name", data.fullName, "text"],
+    ["Email Address", data.email, "email"],
+    ["Employee Code", data.employeeCode || "N/A", "text"],
+    ["Assigned Role", data.roleName, "text"]
+  ];
+  return (
+    <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
+      <h3 style={{ color: "#60a5fa" }}>Staff Profile (Read-only)</h3>
+      <div className="form-grid">
+        {fields.map(([label, value, type]) => (
+          <div className="form-group" key={label}>
+            <label>{label}</label>
+            <input
+              type={type}
+              className="form-control"
+              value={value}
+              readOnly
+              style={readOnlyStyle}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BioDataFields({ data }: { data: PersonalRecordsData }) {
+  return (
+    <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
+      <h3 style={{ color: "#c084fc" }}>Bio-data</h3>
+      <div className="form-grid">
+        <label>
+          Date of Birth
+          <input
+            name="dateOfBirth"
+            type="date"
+            className="form-control"
+            defaultValue={data.dateOfBirth || ""}
+          />
+        </label>
+        <label>
+          Gender
+          <select name="gender" className="form-control" defaultValue={data.gender || ""}>
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>
+          Marital Status
+          <select
+            name="maritalStatus"
+            className="form-control"
+            defaultValue={data.maritalStatus || ""}
+          >
+            <option value="">Select Status</option>
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+            <option value="divorced">Divorced</option>
+            <option value="widowed">Widowed</option>
+          </select>
+        </label>
+      </div>
+    </section>
+  );
+}
+
+function ContactFields({ data }: { data: PersonalRecordsData }) {
+  return (
+    <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
+      <h3 style={{ color: "#8b5cf6" }}>Contact Details</h3>
+      <div className="form-grid">
+        <label>
+          Phone Number
+          <input name="phone" type="tel" className="form-control" defaultValue={data.phone || ""} />
+        </label>
+        <label>
+          Current Address
+          <input
+            name="currentAddress"
+            className="form-control"
+            defaultValue={data.currentAddress || ""}
+          />
+        </label>
+        <label>
+          Permanent Address
+          <input
+            name="permanentAddress"
+            className="form-control"
+            defaultValue={data.permanentAddress || ""}
+          />
+        </label>
+      </div>
+    </section>
+  );
+}
+
+function EmergencyContactFields({ data }: { data: PersonalRecordsData }) {
+  return (
+    <section>
+      <h3 style={{ color: "#f43f5e" }}>Emergency Contact Information</h3>
+      <div className="form-grid">
+        <label>
+          Contact Name
+          <input
+            name="emergencyContactName"
+            className="form-control"
+            defaultValue={data.emergencyContactName || ""}
+          />
+        </label>
+        <label>
+          Contact Phone
+          <input
+            name="emergencyContactPhone"
+            type="tel"
+            className="form-control"
+            defaultValue={data.emergencyContactPhone || ""}
+          />
+        </label>
+      </div>
+    </section>
+  );
+}
+
+export function PersonalRecordsForm({ initialData }: { initialData: PersonalRecordsData }) {
   const [state, formAction, isPending] = useActionState(updatePersonalRecords, initialState);
-
   return (
     <form action={formAction} className="form-panel" style={{ gap: "24px" }}>
       {state.error && (
@@ -32,180 +157,18 @@ export function PersonalRecordsForm({ initialData }: PersonalRecordsFormProps) {
           ⚠️ {state.error}
         </div>
       )}
-
       {state.success && (
         <div className="alert-success" role="status">
           ✅ {state.success}
         </div>
       )}
-
-      {/* Profile/Staff Details Section (Read-only) */}
-      <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
-        <h3 style={{ margin: "0 0 16px 0", color: "#60a5fa" }}>Staff Profile (Read-only)</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              className="form-control"
-              value={initialData.fullName}
-              readOnly
-              style={{ opacity: 0.7, cursor: "not-allowed", background: "rgba(255,255,255,0.02)" }}
-            />
-          </div>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              className="form-control"
-              value={initialData.email}
-              readOnly
-              style={{ opacity: 0.7, cursor: "not-allowed", background: "rgba(255,255,255,0.02)" }}
-            />
-          </div>
-          <div className="form-group">
-            <label>Employee Code</label>
-            <input
-              type="text"
-              className="form-control"
-              value={initialData.employeeCode || "N/A"}
-              readOnly
-              style={{ opacity: 0.7, cursor: "not-allowed", background: "rgba(255,255,255,0.02)" }}
-            />
-          </div>
-          <div className="form-group">
-            <label>Assigned Role</label>
-            <input
-              type="text"
-              className="form-control"
-              value={initialData.roleName}
-              readOnly
-              style={{ opacity: 0.7, cursor: "not-allowed", background: "rgba(255,255,255,0.02)" }}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Bio-data Section */}
-      <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
-        <h3 style={{ margin: "0 0 16px 0", color: "#c084fc" }}>Bio-data</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="dateOfBirth">Date of Birth</label>
-            <input
-              id="dateOfBirth"
-              name="dateOfBirth"
-              type="date"
-              className="form-control"
-              defaultValue={initialData.dateOfBirth || ""}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="gender">Gender</label>
-            <select
-              id="gender"
-              name="gender"
-              className="form-control"
-              defaultValue={initialData.gender || ""}
-            >
-              <option value="">Select Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="maritalStatus">Marital Status</label>
-            <select
-              id="maritalStatus"
-              name="maritalStatus"
-              className="form-control"
-              defaultValue={initialData.maritalStatus || ""}
-            >
-              <option value="">Select Status</option>
-              <option value="single">Single</option>
-              <option value="married">Married</option>
-              <option value="divorced">Divorced</option>
-              <option value="widowed">Widowed</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Details Section */}
-      <section style={{ borderBottom: "1px solid var(--border)", paddingBottom: "20px" }}>
-        <h3 style={{ margin: "0 0 16px 0", color: "#8b5cf6" }}>Contact Details</h3>
-        <div className="form-grid">
-          <div className="form-group" style={{ gridColumn: "span 1" }}>
-            <label htmlFor="phone">Phone Number</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              className="form-control"
-              placeholder="e.g. +92 300 1234567"
-              defaultValue={initialData.phone || ""}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="currentAddress">Current Address</label>
-            <input
-              id="currentAddress"
-              name="currentAddress"
-              type="text"
-              className="form-control"
-              placeholder="Current residential address"
-              defaultValue={initialData.currentAddress || ""}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="permanentAddress">Permanent Address</label>
-            <input
-              id="permanentAddress"
-              name="permanentAddress"
-              type="text"
-              className="form-control"
-              placeholder="Permanent address (if different)"
-              defaultValue={initialData.permanentAddress || ""}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Emergency Contact Section */}
-      <section style={{ paddingBottom: "10px" }}>
-        <h3 style={{ margin: "0 0 16px 0", color: "#f43f5e" }}>Emergency Contact Information</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="emergencyContactName">Contact Name</label>
-            <input
-              id="emergencyContactName"
-              name="emergencyContactName"
-              type="text"
-              className="form-control"
-              placeholder="Full Name of contact person"
-              defaultValue={initialData.emergencyContactName || ""}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="emergencyContactPhone">Contact Phone</label>
-            <input
-              id="emergencyContactPhone"
-              name="emergencyContactPhone"
-              type="tel"
-              className="form-control"
-              placeholder="Phone number of contact person"
-              defaultValue={initialData.emergencyContactPhone || ""}
-            />
-          </div>
-        </div>
-      </section>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-        <button type="submit" className="btn-primary" disabled={isPending}>
-          {isPending ? "Saving changes..." : "Save Personal Records"}
-        </button>
-      </div>
+      <StaffProfileFields data={initialData} />
+      <BioDataFields data={initialData} />
+      <ContactFields data={initialData} />
+      <EmergencyContactFields data={initialData} />
+      <button type="submit" className="btn-primary" disabled={isPending}>
+        {isPending ? "Saving changes..." : "Save Personal Records"}
+      </button>
     </form>
   );
 }

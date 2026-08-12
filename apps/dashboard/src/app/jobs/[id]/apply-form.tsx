@@ -1,23 +1,80 @@
 "use client";
 
 import { useActionState, useRef, useEffect } from "react";
-import { submitApplication, type ApplicationState } from "../actions";
+import { submitApplication } from "../actions";
+import type { ApplicationState, ApplyStep } from "../types";
 import { EmailCvApplyStep } from "./apply-steps/email-cv-apply-step";
 import { QuestionnaireApplyStep } from "./apply-steps/questionnaire-apply-step";
 import { InterviewApplyStep } from "./apply-steps/interview-apply-step";
 
 const initialState: ApplicationState = {};
 
-type ApplyStep = {
-  id: string;
-  type: string;
-  config: unknown;
-  interviewMode: string | null;
-  location: string | null;
-  availabilityStart: Date | null;
-  availabilityEnd: Date | null;
-  interviewer: { fullName: string } | null;
-};
+function ApplicantFields() {
+  return (
+    <div className="form-grid">
+      <div className="form-group">
+        <label htmlFor="fullName">Full Name *</label>
+        <input
+          id="fullName"
+          name="fullName"
+          className="form-control"
+          placeholder="e.g. Jane Doe"
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="phone">Phone Number *</label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          className="form-control"
+          placeholder="e.g. +92 300 1234567"
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="email">Email Address *</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          className="form-control"
+          placeholder="e.g. jane@example.com"
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="cv">CV / Resume *</label>
+        <input
+          id="cv"
+          name="cv"
+          type="file"
+          className="form-control"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          required
+        />
+        <span className="muted">PDF or Word document, up to 5MB.</span>
+      </div>
+    </div>
+  );
+}
+
+function ApplicationSteps({ steps }: { steps: ApplyStep[] }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {steps.map((step, index) => {
+        if (step.type === "EMAIL_CV")
+          return <EmailCvApplyStep key={step.id} step={step} index={index} />;
+        if (step.type === "QUESTIONNAIRE")
+          return <QuestionnaireApplyStep key={step.id} step={step} index={index} />;
+        if (step.type === "INTERVIEW")
+          return <InterviewApplyStep key={step.id} step={step} index={index} />;
+        return null;
+      })}
+    </div>
+  );
+}
 
 export function ApplyForm({ jobPostingId, steps }: { jobPostingId: string; steps: ApplyStep[] }) {
   const [state, formAction, isPending] = useActionState(submitApplication, initialState);
@@ -59,75 +116,8 @@ export function ApplyForm({ jobPostingId, steps }: { jobPostingId: string; steps
       >
         <input type="hidden" name="jobPostingId" value={jobPostingId} />
 
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="fullName">Full Name *</label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              className="form-control"
-              placeholder="e.g. Jane Doe"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number *</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              className="form-control"
-              placeholder="e.g. +92 300 1234567"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Email Address *</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="form-control"
-              placeholder="e.g. jane@example.com"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="cv">CV / Resume *</label>
-            <input
-              id="cv"
-              name="cv"
-              type="file"
-              className="form-control"
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              required
-            />
-            <span className="muted" style={{ fontSize: "0.8rem" }}>
-              PDF or Word document, up to 5MB.
-            </span>
-          </div>
-        </div>
-
-        {steps.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "8px" }}>
-            {steps.map((step, index) => {
-              if (step.type === "EMAIL_CV") {
-                return <EmailCvApplyStep key={step.id} step={step} index={index} />;
-              }
-              if (step.type === "QUESTIONNAIRE") {
-                return <QuestionnaireApplyStep key={step.id} step={step} index={index} />;
-              }
-              if (step.type === "INTERVIEW") {
-                return <InterviewApplyStep key={step.id} step={step} index={index} />;
-              }
-              return null;
-            })}
-          </div>
-        )}
+        <ApplicantFields />
+        {steps.length > 0 && <ApplicationSteps steps={steps} />}
 
         <div style={{ marginTop: "4px" }}>
           <button type="submit" className="btn-primary" disabled={isPending}>

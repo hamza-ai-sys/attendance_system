@@ -5,6 +5,7 @@ import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isHr } from "./permissions";
+import type { ApplicationState, JobPostingState } from "./types";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
@@ -16,8 +17,6 @@ const ALLOWED_CV_TYPES = new Set([
 ]);
 
 const APPLICATION_STATUSES = ["SUBMITTED", "REVIEWED", "SHORTLISTED", "REJECTED", "HIRED"] as const;
-
-export type JobPostingState = { error?: string; success?: string };
 
 export async function createJobPosting(
   prevState: JobPostingState,
@@ -98,8 +97,6 @@ export async function deleteJobPosting(formData: FormData) {
 
   revalidatePath("/jobs");
 }
-
-export type ApplicationState = { error?: string; success?: string };
 
 export async function submitApplication(
   prevState: ApplicationState,

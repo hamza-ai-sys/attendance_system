@@ -6,7 +6,10 @@ export function LeaveBalanceCards({ balances }: { balances: LeaveBalanceItem[] }
   }
 
   return (
-    <section className="stats-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+    <section
+      className="stats-grid"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
+    >
       {balances.map((balance) => (
         <article key={balance.id} className="stat-card" style={{ cursor: "default" }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -22,7 +25,8 @@ export function LeaveBalanceCards({ balances }: { balances: LeaveBalanceItem[] }
             <span className="muted">days available</span>
           </div>
           <p className="muted" style={{ fontSize: "0.8rem", margin: 0 }}>
-            Accrued: <strong>{balance.accrued.toFixed(1)}</strong> · Used: {balance.used} · Carried: {balance.carriedOver}
+            Accrued: <strong>{balance.accrued.toFixed(1)}</strong> · Used: {balance.used} · Carried:{" "}
+            {balance.carriedOver}
           </p>
         </article>
       ))}

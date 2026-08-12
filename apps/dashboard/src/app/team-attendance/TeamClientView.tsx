@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  TeamPerformanceEvaluationModal,
-  type ActivePerformanceTemplate,
-  type PerformanceTemplateField,
-  type TeamMemberSummary
-} from "../../components/team-performance-evaluation-modal";
+import { TeamPerformanceEvaluationModal } from "../../components/team-performance-evaluation-modal";
+import type {
+  ActivePerformanceTemplate,
+  PerformanceTemplateField,
+  TeamMemberSummary
+} from "../team-management/types";
 import { TeamNotesModal } from "./team-notes-modal";
 
 export type TeamMember = TeamMemberSummary;
@@ -17,6 +17,55 @@ interface TeamClientViewProps {
   members: TeamMember[];
   activeTemplate: ActiveTemplate | null;
   currentUserId: string;
+}
+
+function TeamMemberCard({
+  member,
+  canEvaluate,
+  onNotes,
+  onEvaluate
+}: {
+  member: TeamMember;
+  canEvaluate: boolean;
+  onNotes: () => void;
+  onEvaluate: () => void;
+}) {
+  return (
+    <article
+      className="panel"
+      style={{ cursor: "default", display: "flex", flexDirection: "column", gap: 16 }}
+    >
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          <h3 style={{ margin: "0 0 4px", fontSize: "1.2rem" }}>{member.fullName}</h3>
+          <span className="note-badge public">{member.roleName}</span>
+        </div>
+        <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>
+          {member.email}
+        </p>
+        {member.employeeCode && <p className="muted">Code: {member.employeeCode}</p>}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+          marginTop: "auto",
+          paddingTop: 12,
+          borderTop: "1px solid var(--border)"
+        }}
+      >
+        <button type="button" className="back-link" onClick={onNotes}>
+          📝 Employee Notes
+        </button>
+        {canEvaluate && (
+          <button type="button" className="primary-btn" onClick={onEvaluate}>
+            ✨ Evaluate Performance
+          </button>
+        )}
+      </div>
+    </article>
+  );
 }
 
 export function TeamClientView({ members, activeTemplate }: TeamClientViewProps) {
@@ -39,8 +88,8 @@ export function TeamClientView({ members, activeTemplate }: TeamClientViewProps)
             ✨ Performance Evaluation Period Active
           </h3>
           <p style={{ margin: 0, color: "#cbd5e1" }}>
-            HR Document: <strong>{activeTemplate.title}</strong> (Active: {" "}
-            {new Date(activeTemplate.startDate).toLocaleDateString()} to {" "}
+            HR Document: <strong>{activeTemplate.title}</strong> (Active:{" "}
+            {new Date(activeTemplate.startDate).toLocaleDateString()} to{" "}
             {new Date(activeTemplate.endDate).toLocaleDateString()})
           </p>
         </div>
@@ -62,50 +111,13 @@ export function TeamClientView({ members, activeTemplate }: TeamClientViewProps)
           }}
         >
           {members.map((member) => (
-            <article
+            <TeamMemberCard
               key={member.id}
-              className="panel"
-              style={{ cursor: "default", display: "flex", flexDirection: "column", gap: "16px" }}
-            >
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                  <h3 style={{ margin: "0 0 4px", fontSize: "1.2rem" }}>{member.fullName}</h3>
-                  <span className="note-badge public">{member.roleName}</span>
-                </div>
-                <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>
-                  {member.email}
-                </p>
-                {member.employeeCode && (
-                  <p className="muted" style={{ margin: "4px 0 0", fontSize: "0.8rem" }}>
-                    Code: {member.employeeCode}
-                  </p>
-                )}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                  marginTop: "auto",
-                  paddingTop: "12px",
-                  borderTop: "1px solid var(--border)"
-                }}
-              >
-                <button type="button" className="back-link" onClick={() => setNotesEmployee(member)}>
-                  📝 Employee Notes
-                </button>
-                {activeTemplate && (
-                  <button
-                    type="button"
-                    className="primary-btn"
-                    onClick={() => setEvaluationEmployee(member)}
-                  >
-                    ✨ Evaluate Performance
-                  </button>
-                )}
-              </div>
-            </article>
+              member={member}
+              canEvaluate={Boolean(activeTemplate)}
+              onNotes={() => setNotesEmployee(member)}
+              onEvaluate={() => setEvaluationEmployee(member)}
+            />
           ))}
         </div>
       )}
