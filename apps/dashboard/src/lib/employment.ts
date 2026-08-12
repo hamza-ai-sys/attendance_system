@@ -64,9 +64,11 @@ export function getEmploymentRoleKey(employment: EmploymentRoles) {
       position.defaultRoleMappings.map(({ role }) => role.key)
     ) ?? [])
   ];
-  return ["owner", "org_admin", "hr", "manager", "employee"].find((key) => keys.includes(key)) ??
+  return (
+    ["owner", "org_admin", "hr", "manager", "employee"].find((key) => keys.includes(key)) ??
     keys[0] ??
-    "employee";
+    "employee"
+  );
 }
 
 export function currentAssignmentWhere() {

@@ -22,7 +22,10 @@ export function PerformanceClientView({ templates, evaluations }: PerformanceCli
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-      <div className="panel" style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}>
+      <div
+        className="panel"
+        style={{ display: "flex", justifyContent: "space-between", gap: "20px" }}
+      >
         <div>
           <h2>HR Employee Performance Management</h2>
           <p className="muted">

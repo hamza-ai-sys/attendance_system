@@ -1,8 +1,4 @@
-import type {
-  EmployeeManagerOption,
-  OrganizationUnitOption,
-  PositionOption
-} from "../../types";
+import type { EmployeeManagerOption, OrganizationUnitOption, PositionOption } from "../../types";
 
 export function EmployeeAssignmentFields({
   managers,

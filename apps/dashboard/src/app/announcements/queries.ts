@@ -12,7 +12,8 @@ export async function getAnnouncements() {
   return announcements.map((announcement) => ({
     ...announcement,
     createdBy: {
-      fullName: announcement.createdBy.person.preferredName ?? announcement.createdBy.person.legalName
+      fullName:
+        announcement.createdBy.person.preferredName ?? announcement.createdBy.person.legalName
     }
   }));
 }

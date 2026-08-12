@@ -5,7 +5,9 @@ const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 export async function getManualRequests(employeeId: string, userAccountId?: string) {
   const requests = await db.manualAttendanceRequest.findMany({
-    where: { OR: [{ employeeId }, ...(userAccountId ? [{ createdByUserAccountId: userAccountId }] : [])] },
+    where: {
+      OR: [{ employeeId }, ...(userAccountId ? [{ createdByUserAccountId: userAccountId }] : [])]
+    },
     include: { employee: { include: employmentAccessInclude() } },
     orderBy: { createdAt: "desc" }
   });

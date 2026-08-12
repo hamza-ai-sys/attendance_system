@@ -138,4 +138,3 @@ export function pairScans(scans: AttendanceScan[]): AttendancePair[] {
 
   return pairs;
 }
-

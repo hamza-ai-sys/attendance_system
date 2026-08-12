@@ -42,8 +42,7 @@ export async function getCompanyAttendanceData(filter: CompanyAttendanceFilter) 
     activeEmployees: activeEmployees.map((employee) => ({
       id: employee.id,
       fullName: getEmploymentName(employee),
-      roleName:
-        employee.assignments[0]?.position.defaultRoleMappings[0]?.role.name ?? "Employee"
+      roleName: employee.assignments[0]?.position.defaultRoleMappings[0]?.role.name ?? "Employee"
     })),
     activeDevicesCount,
     periodScans: periodScans.map((scan) => ({

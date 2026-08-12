@@ -10,43 +10,43 @@ const userAccessInclude = Prisma.validator<Prisma.UserAccountInclude>()({
         include: {
           organization: true,
           roleAssignments: {
-        where: {
-          revokedAt: null,
-          validFrom: { lte: new Date() },
-          OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }]
-        },
-        include: {
-          role: {
-            include: { permissions: { include: { permission: true } } }
-          }
-        }
-          },
-          employments: {
-        where: { status: "ACTIVE" },
-        orderBy: { hiredAt: "desc" },
-        include: {
-          assignments: {
             where: {
+              revokedAt: null,
               validFrom: { lte: new Date() },
               OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }]
             },
-            orderBy: { validFrom: "desc" },
             include: {
-              organizationUnit: true,
-              position: {
+              role: {
+                include: { permissions: { include: { permission: true } } }
+              }
+            }
+          },
+          employments: {
+            where: { status: "ACTIVE" },
+            orderBy: { hiredAt: "desc" },
+            include: {
+              assignments: {
+                where: {
+                  validFrom: { lte: new Date() },
+                  OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }]
+                },
+                orderBy: { validFrom: "desc" },
                 include: {
-                  defaultRoleMappings: {
+                  organizationUnit: true,
+                  position: {
                     include: {
-                      role: {
-                        include: { permissions: { include: { permission: true } } }
+                      defaultRoleMappings: {
+                        include: {
+                          role: {
+                            include: { permissions: { include: { permission: true } } }
+                          }
+                        }
                       }
                     }
                   }
                 }
               }
             }
-          }
-        }
           }
         }
       }
@@ -77,7 +77,9 @@ export async function findUserAccessById(id: string) {
   });
 }
 
-export function buildSessionUser(account: NonNullable<Awaited<ReturnType<typeof findUserAccessById>>>) {
+export function buildSessionUser(
+  account: NonNullable<Awaited<ReturnType<typeof findUserAccessById>>>
+) {
   const membership = account.person.memberships[0];
   const employment = membership?.employments[0];
 

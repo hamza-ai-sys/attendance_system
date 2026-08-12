@@ -11,7 +11,10 @@ function getFunctionName(node) {
   if (parent?.type === "VariableDeclarator" && parent.id.type === "Identifier") {
     return parent.id.name;
   }
-  if ((parent?.type === "Property" || parent?.type === "MethodDefinition") && parent.key.type === "Identifier") {
+  if (
+    (parent?.type === "Property" || parent?.type === "MethodDefinition") &&
+    parent.key.type === "Identifier"
+  ) {
     return parent.key.name;
   }
   return null;

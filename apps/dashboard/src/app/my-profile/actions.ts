@@ -31,7 +31,9 @@ export async function updatePersonalRecords(
 
   try {
     await db.person.update({
-      where: { id: (await db.userAccount.findUniqueOrThrow({ where: { id: user.userAccountId } })).personId },
+      where: {
+        id: (await db.userAccount.findUniqueOrThrow({ where: { id: user.userAccountId } })).personId
+      },
       data: {
         phone: phone || null,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,

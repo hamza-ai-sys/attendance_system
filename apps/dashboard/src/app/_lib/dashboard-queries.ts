@@ -9,7 +9,11 @@ export async function getDashboardCounts(user: SessionUser) {
   const managerWhere = {
     employee: {
       subordinateLines: {
-        some: { supervisorEmploymentId: user.employeeId, validUntil: null, type: "PRIMARY" as const }
+        some: {
+          supervisorEmploymentId: user.employeeId,
+          validUntil: null,
+          type: "PRIMARY" as const
+        }
       }
     },
     employeeId: { not: user.employeeId }

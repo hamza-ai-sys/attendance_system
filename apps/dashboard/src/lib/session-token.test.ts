@@ -93,17 +93,17 @@ describe("session tokens", () => {
       "test-session-secret"
     );
 
-    expect(verifySessionToken(token, "test-session-secret", new Date(1_783_334_400_000))).toBeNull();
+    expect(
+      verifySessionToken(token, "test-session-secret", new Date(1_783_334_400_000))
+    ).toBeNull();
   });
 
-  it.each([
-    "",
-    "one-part",
-    "one.two.three",
-    "not-json.invalid-signature"
-  ])("rejects malformed token %s", (token) => {
-    expect(verifySessionToken(token, "test-session-secret")).toBeNull();
-  });
+  it.each(["", "one-part", "one.two.three", "not-json.invalid-signature"])(
+    "rejects malformed token %s",
+    (token) => {
+      expect(verifySessionToken(token, "test-session-secret")).toBeNull();
+    }
+  );
 
   it("rejects a correctly signed payload with missing or invalid claims", () => {
     const invalidClaims = {

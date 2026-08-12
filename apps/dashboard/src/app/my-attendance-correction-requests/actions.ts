@@ -52,8 +52,7 @@ export async function submitManualRequest(
 
   const isRegularEmployee = user.roleName === "employee";
   // Regular employees start at PENDING_MANAGER (Stage 1), managers/HR start at PENDING_HR (Stage 2)
-  const initialStatus =
-    isRegularEmployee && managerLine ? "PENDING_MANAGER" : "PENDING_HR";
+  const initialStatus = isRegularEmployee && managerLine ? "PENDING_MANAGER" : "PENDING_HR";
 
   const punchLabel = punchType === "CHECK_OUT" ? "Check-Out" : "Check-In";
   const formattedReason = `[${punchLabel}] ${reason}`;
@@ -275,8 +274,7 @@ export async function deleteManualRequest(formData: FormData) {
 
   const isOwnerOrHR = user.roleName === "owner" || user.roleName === "hr";
   const isOwnerOrCreator =
-    request.employeeId === user.employeeId ||
-    request.createdByUserAccountId === user.userAccountId;
+    request.employeeId === user.employeeId || request.createdByUserAccountId === user.userAccountId;
 
   if (!isOwnerOrHR && !isOwnerOrCreator) {
     throw new Error("Unauthorized: You can only delete your own submitted requests.");

@@ -30,9 +30,7 @@ export async function getJobStepsData(id: string) {
           ...job,
           steps: job.steps.map((step) => ({
             ...step,
-            interviewer: step.interviewer
-              ? { fullName: getEmploymentName(step.interviewer) }
-              : null
+            interviewer: step.interviewer ? { fullName: getEmploymentName(step.interviewer) } : null
           }))
         }
       : null,

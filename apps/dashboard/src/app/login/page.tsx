@@ -17,32 +17,41 @@ export default function LoginPage() {
 
         <form action={formAction} suppressHydrationWarning>
           <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Email Address</label>
-            <input 
-              type="email" 
-              id="email" 
-              name="email" 
-              className={styles.input} 
+            <label htmlFor="email" className={styles.label}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              className={styles.input}
               placeholder="e.g., owner@test.com"
-              required 
+              required
               suppressHydrationWarning
             />
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>Password</label>
-            <input 
-              type="password" 
-              id="password" 
-              name="password" 
-              className={styles.input} 
+            <label htmlFor="password" className={styles.label}>
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              className={styles.input}
               placeholder="••••••••"
-              required 
+              required
               suppressHydrationWarning
             />
           </div>
 
-          <button type="submit" className={styles.button} disabled={isPending} suppressHydrationWarning>
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={isPending}
+            suppressHydrationWarning
+          >
             {isPending ? "Signing in..." : "Sign In"}
           </button>
         </form>

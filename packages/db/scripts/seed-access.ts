@@ -218,11 +218,11 @@ export async function upsertSeedEmployment(
       })
     : await tx.employment.create({
         data: {
-      organizationId: input.organizationId,
-      membershipId: membership.id,
-      employeeCode: input.employeeCode,
-      status: "ACTIVE",
-      hiredAt: new Date()
+          organizationId: input.organizationId,
+          membershipId: membership.id,
+          employeeCode: input.employeeCode,
+          status: "ACTIVE",
+          hiredAt: new Date()
         }
       });
 
