@@ -84,6 +84,8 @@ See `docs/deployment/vps-nginx.md` for the full runbook.
 ## Development Docs
 
 - `docs/development/getting-started.md`: local setup, workflows, Prisma, firmware, and troubleshooting.
+- `docs/architecture/data-model.md`: database domains, relationships, invariants, and known gaps.
+- `docs/development/database-changes.md`: required schema, migration, seed, documentation, and verification workflow.
 - `docs/development/onboarding-checklist.md`: checklist for new engineers.
 - `CONTRIBUTING.md`: pull request and contribution expectations.
 - `SECURITY.md`: secrets, device request security, and production safety rules.

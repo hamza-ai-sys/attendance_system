@@ -257,6 +257,13 @@ Important app-owned values:
 
 ## Database And Prisma
 
+Read the database documents before changing persisted data:
+
+- [`docs/architecture/data-model.md`](../architecture/data-model.md) explains model ownership,
+  relationships, invariants, tenant boundaries, and known gaps.
+- [`docs/development/database-changes.md`](database-changes.md) defines the mandatory migration,
+  seed, documentation, and verification workflow.
+
 The Prisma schema lives at:
 
 ```text
@@ -287,31 +294,10 @@ This repo uses Prisma 7 style configuration:
 - `prisma.config.ts` supplies the datasource URL for Prisma CLI commands.
 - Runtime Prisma clients use the PostgreSQL driver adapter in `packages/db/src/client.ts`.
 
-When changing the database:
-
-1. Edit `packages/db/prisma/schema.prisma`.
-2. Create a migration:
-
-   ```bash
-   pnpm db:migrate
-   ```
-
-3. Review and commit the generated migration under `packages/db/prisma/migrations`.
-4. Regenerate the client if needed:
-
-   ```bash
-   pnpm db:generate
-   ```
-
-5. Run checks:
-
-   ```bash
-   pnpm typecheck
-   pnpm test
-   ```
-
-Do not edit a migration after it has been applied to a shared environment. Create a new
-migration instead.
+When changing the database, follow the complete
+[`database-changes.md`](database-changes.md) workflow. It covers schema design, safe migration
+creation, existing-data backfills, seed maintenance, documentation, and verification. Do not edit
+a migration after it has been applied to a shared environment; create a new migration instead.
 
 ## Device Gateway Development
 
@@ -527,6 +513,7 @@ New engineers should read these in order:
 2. `docs/development/getting-started.md`
 3. `docs/architecture/overview.md`
 4. `docs/architecture/data-model.md`
-5. `docs/architecture/device-protocol.md`
-6. `CONTRIBUTING.md`
-7. `SECURITY.md`
+5. `docs/development/database-changes.md`
+6. `docs/architecture/device-protocol.md`
+7. `CONTRIBUTING.md`
+8. `SECURITY.md`
