@@ -119,6 +119,12 @@ The development seed must remain repeatable and may update/delete only fixtures 
 The E2E seed must remain minimal and deterministic. The clear script must delete child records
 before parents while preserving the schema and migration table.
 
+Each environment's seed is a complete entry point: development organization/access fixtures
+belong in `seed-development.ts`, while E2E organization/access fixtures belong in `seed-e2e.ts`.
+Do not add an environment-independent fixture seed that either script must invoke as a separate
+step. Small infrastructure-only utilities may be shared when they contain no fixture catalog or
+environment policy.
+
 Seed data is not a deployment mechanism. Any row or backfill required in every environment must
 be created by a migration or an explicitly managed production operation.
 

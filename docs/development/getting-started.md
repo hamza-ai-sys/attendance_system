@@ -278,9 +278,15 @@ packages/db/prisma.config.ts
 
 Executable database data scripts live under `packages/db/scripts`:
 
-- `seed-development.ts` creates development accounts, sample attendance data, and Shaheer's scans.
-- `seed-e2e.ts` creates the minimal deterministic fixtures used by Playwright.
+- `seed-development.ts` is the complete development dataset. It owns the development
+  organization, access model, accounts, employment structure, and sample feature data.
+- `seed-e2e.ts` is the complete E2E dataset. It creates only the deterministic organization,
+  access, identity, employment, and workflow fixtures required by Playwright.
 - `clear-development.ts` removes all application data while preserving the schema and migrations.
+
+Environment fixture definitions belong in their respective seed entry point. Do not introduce a
+third seed that must be run before or after either entry point, and do not make E2E depend on the
+development fixture catalog.
 
 The development seed is part of the standard post-pull workflow and must remain safe to run
 repeatedly. Seed-script changes should upsert stable fixtures or replace only records clearly

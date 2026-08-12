@@ -1,7 +1,35 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { hashSync } from "bcryptjs";
-import { seedAccessFoundation, upsertSeedEmployment } from "./seed-access.js";
+
+const e2eRolePermissions = {
+  employee: ["my_attendance", "manual_reports"],
+  manager: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"],
+  hr: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ],
+  owner: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ]
+} as const;
+
+const e2eEffectiveDate = new Date("2026-01-01T00:00:00.000Z");
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required to seed the E2E database.");
@@ -18,14 +46,154 @@ if (
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 
+async function seedE2eAccessFoundation(tx: Prisma.TransactionClient) {
+  const organization = await tx.organization.create({
+    data: { name: "E2E Organization", slug: "e2e", timezone: "Asia/Karachi" }
+  });
+
+  const permissionKeys = [...new Set(Object.values(e2eRolePermissions).flat())];
+  const permissions = new Map<string, string>();
+  for (const key of permissionKeys) {
+    const permission = await tx.permission.create({
+      data: { key, name: titleCase(key), category: key.split("_")[0] ?? "general" }
+    });
+    permissions.set(key, permission.id);
+  }
+
+  const roles = new Map<string, { id: string }>();
+  for (const [key, assignedPermissions] of Object.entries(e2eRolePermissions)) {
+    const role = await tx.role.create({
+      data: {
+        organizationId: organization.id,
+        key,
+        name: titleCase(key),
+        isSystem: true
+      }
+    });
+    roles.set(key, role);
+    await tx.rolePermission.createMany({
+      data: assignedPermissions.map((permissionKey) => ({
+        roleId: role.id,
+        permissionId: permissions.get(permissionKey)!
+      }))
+    });
+  }
+
+  const units = new Map<string, { id: string }>();
+  for (const definition of [
+    { code: "EXEC", name: "Executive" },
+    { code: "HR", name: "Human Resources" },
+    { code: "ENG", name: "Engineering" }
+  ]) {
+    const unit = await tx.organizationUnit.create({
+      data: { ...definition, organizationId: organization.id, type: "DEPARTMENT" }
+    });
+    units.set(definition.code, unit);
+  }
+
+  const positions = new Map<string, { id: string }>();
+  for (const definition of [
+    { code: "OWNER", title: "Owner", roleKey: "owner", scope: "ORGANIZATION" as const },
+    { code: "HR_OFFICER", title: "HR Officer", roleKey: "hr", scope: "ORGANIZATION" as const },
+    {
+      code: "MANAGER",
+      title: "Manager",
+      roleKey: "manager",
+      scope: "ORGANIZATION_UNIT_TREE" as const
+    },
+    { code: "EMPLOYEE", title: "Employee", roleKey: "employee", scope: "SELF" as const }
+  ]) {
+    const position = await tx.position.create({
+      data: { organizationId: organization.id, code: definition.code, title: definition.title }
+    });
+    positions.set(definition.code, position);
+    await tx.positionRoleMapping.create({
+      data: {
+        positionId: position.id,
+        roleId: roles.get(definition.roleKey)!.id,
+        scope: definition.scope
+      }
+    });
+  }
+
+  return { organization, units, positions };
+}
+
+async function createE2eEmployment(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    legalName: string;
+    loginEmail: string;
+    passwordHash: string;
+    employeeCode: string;
+    unitId: string;
+    positionId: string;
+  }
+) {
+  const account = await tx.userAccount.create({
+    data: {
+      loginEmail: input.loginEmail,
+      passwordHash: input.passwordHash,
+      status: "ACTIVE",
+      person: {
+        create: { legalName: input.legalName, personalEmail: input.loginEmail }
+      }
+    }
+  });
+  const membership = await tx.organizationMembership.create({
+    data: {
+      organizationId: input.organizationId,
+      personId: account.personId,
+      status: "ACTIVE",
+      joinedAt: e2eEffectiveDate
+    }
+  });
+  const employment = await tx.employment.create({
+    data: {
+      organizationId: input.organizationId,
+      membershipId: membership.id,
+      employeeCode: input.employeeCode,
+      status: "ACTIVE",
+      hiredAt: e2eEffectiveDate,
+      assignments: {
+        create: {
+          organizationUnitId: input.unitId,
+          positionId: input.positionId,
+          validFrom: e2eEffectiveDate,
+          timezone: "Asia/Karachi"
+        }
+      }
+    }
+  });
+  const shift = await tx.shift.create({
+    data: {
+      name: `${input.employeeCode} E2E shift`,
+      timezone: "Asia/Karachi",
+      startTime: "09:00",
+      endTime: "17:00",
+      workdays: [1, 2, 3, 4, 5]
+    }
+  });
+  await tx.shiftAssignment.create({
+    data: { employeeId: employment.id, shiftId: shift.id, effectiveFrom: e2eEffectiveDate }
+  });
+
+  return { account, employment };
+}
+
+function titleCase(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 async function main() {
   const passwordHash = hashSync("password123", 10);
 
   await prisma.$transaction(async (tx) => {
-    const access = await seedAccessFoundation(tx, {
-      name: "E2E Organization",
-      slug: "e2e"
-    });
+    const access = await seedE2eAccessFoundation(tx);
     const createEmployment = (input: {
       legalName: string;
       loginEmail: string;
@@ -33,10 +201,12 @@ async function main() {
       unitCode: string;
       positionCode: string;
     }) =>
-      upsertSeedEmployment(tx, {
-        ...input,
+      createE2eEmployment(tx, {
         organizationId: access.organization.id,
+        legalName: input.legalName,
+        loginEmail: input.loginEmail,
         passwordHash,
+        employeeCode: input.employeeCode,
         unitId: access.units.get(input.unitCode)!.id,
         positionId: access.positions.get(input.positionCode)!.id
       });
@@ -75,17 +245,17 @@ async function main() {
         {
           subordinateEmploymentId: manager.employment.id,
           supervisorEmploymentId: owner.employment.id,
-          validFrom: new Date()
+          validFrom: e2eEffectiveDate
         },
         {
           subordinateEmploymentId: hr.employment.id,
           supervisorEmploymentId: owner.employment.id,
-          validFrom: new Date()
+          validFrom: e2eEffectiveDate
         },
         {
           subordinateEmploymentId: employee.employment.id,
           supervisorEmploymentId: manager.employment.id,
-          validFrom: new Date()
+          validFrom: e2eEffectiveDate
         }
       ]
     });
