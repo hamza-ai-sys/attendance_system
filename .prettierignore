@@ -1,0 +1,35 @@
+# Package-manager generated files
+pnpm-lock.yaml
+
+# Editor and operating-system metadata
+.vscode/
+.DS_Store
+
+# Environment and local configuration
+.env
+.env.*
+!.env.*.example
+
+# Dependencies and generated build output
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+apps/dashboard/.next/
+apps/dashboard/out/
+apps/dashboard/next-env.d.ts
+
+# Generated firmware files
+apps/firmware/.pio/
+apps/firmware/compile_commands.json
+apps/firmware/include/config.h
+
+# Generated database and compiler files
+packages/db/prisma/dev.db
+packages/db/prisma/dev.db-journal
+*.tsbuildinfo
+*.log

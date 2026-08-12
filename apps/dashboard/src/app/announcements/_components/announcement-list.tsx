@@ -67,10 +67,7 @@ function AnnouncementCard({
   );
 }
 
-export function AnnouncementList({
-  announcements,
-  canManageAnnouncements
-}: AnnouncementListProps) {
+export function AnnouncementList({ announcements, canManageAnnouncements }: AnnouncementListProps) {
   if (announcements.length === 0) {
     return (
       <section className="panel" style={{ cursor: "default" }}>

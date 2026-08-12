@@ -7,9 +7,9 @@ export type AttendanceEvaluationResult = {
 export function evaluateShiftAttendance(params: {
   firstScanTime: Date | null;
   lastScanTime: Date | null;
-  shiftInTime?: string | null;  // e.g. "09:00"
+  shiftInTime?: string | null; // e.g. "09:00"
   shiftOutTime?: string | null; // e.g. "17:00"
-  graceMinutes?: number;        // default 20
+  graceMinutes?: number; // default 20
   halfDayThresholdHours?: number; // default 3
 }): AttendanceEvaluationResult {
   const {
@@ -50,8 +50,10 @@ export function evaluateShiftAttendance(params: {
 
   if (isLate3Hours || isEarly3Hours) {
     const reasons: string[] = [];
-    if (isLate3Hours) reasons.push(`Late arrival by ${Math.floor(lateMinutes / 60)}h ${lateMinutes % 60}m`);
-    if (isEarly3Hours) reasons.push(`Early departure by ${Math.floor(earlyMinutes / 60)}h ${earlyMinutes % 60}m`);
+    if (isLate3Hours)
+      reasons.push(`Late arrival by ${Math.floor(lateMinutes / 60)}h ${lateMinutes % 60}m`);
+    if (isEarly3Hours)
+      reasons.push(`Early departure by ${Math.floor(earlyMinutes / 60)}h ${earlyMinutes % 60}m`);
     return {
       status: "HALF_DAY",
       value: 0.5,

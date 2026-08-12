@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { classifyDailyScans } from "../src/pair-scans";
 
-
-
 describe("classifyDailyScans", () => {
   it("returns empty array for empty scans", () => {
     expect(classifyDailyScans([], "Monday")).toEqual([]);
   });
 
   it("marks 1 scan as needs-review with custom message", () => {
-    const scans = [
-      { id: "scan-1", occurredAt: new Date("2026-07-06T09:00:00.000Z") }
-    ];
+    const scans = [{ id: "scan-1", occurredAt: new Date("2026-07-06T09:00:00.000Z") }];
     const result = classifyDailyScans(scans, "Monday");
 
     expect(result).toHaveLength(1);

@@ -37,6 +37,7 @@ Use this checklist when a new engineer joins the project.
 
 - [ ] Read `docs/architecture/overview.md`.
 - [ ] Read `docs/architecture/data-model.md`.
+- [ ] Read `docs/development/database-changes.md` before making a database change.
 - [ ] Read `docs/architecture/device-protocol.md`.
 - [ ] Read `CONTRIBUTING.md`.
 - [ ] Read `SECURITY.md`.
@@ -46,5 +47,6 @@ Use this checklist when a new engineer joins the project.
 - [ ] Confirm service boundary for the change.
 - [ ] Add or update tests for changed behavior.
 - [ ] Include Prisma migration if schema changed.
+- [ ] Update database documentation and seeds if schema changed.
 - [ ] Document any new environment variables.
 - [ ] Confirm no real secrets are committed.

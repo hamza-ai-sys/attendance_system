@@ -4,23 +4,31 @@ import type {
   PerformanceTemplateField,
   TeamMemberSummary
 } from "./types";
+import {
+  employmentAccessInclude,
+  getEmploymentEmail,
+  getEmploymentName,
+  getEmploymentRoleKey
+} from "../../lib/employment";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
 export async function getTeamManagementData(
   employeeId: string,
-  companyWide: boolean
+  companyWide: boolean,
+  organizationId: string
 ): Promise<{ members: TeamMemberSummary[]; activeTemplate: ActivePerformanceTemplate | null }> {
-  let employees = await db.employee.findMany({
-    where: companyWide ? {} : { supervisorId: employeeId },
-    include: { role: true },
-    orderBy: { fullName: "asc" }
+  const employees = await db.employment.findMany({
+    where: companyWide
+      ? { organizationId, status: "ACTIVE" }
+      : {
+          organizationId,
+          status: "ACTIVE",
+          subordinateLines: { some: { supervisorEmploymentId: employeeId, validUntil: null } }
+        },
+    include: employmentAccessInclude(),
+    orderBy: { employeeCode: "asc" }
   });
-  if (!employees.length && !companyWide)
-    employees = await db.employee.findMany({
-      include: { role: true },
-      orderBy: { fullName: "asc" }
-    });
   const now = new Date();
   const template = await db.performanceTemplate.findFirst({
     where: { startDate: { lte: now }, endDate: { gte: now } },
@@ -28,10 +36,10 @@ export async function getTeamManagementData(
   });
   const members = employees.map((employee) => ({
     id: employee.id,
-    fullName: employee.fullName,
-    email: employee.email,
+    fullName: getEmploymentName(employee),
+    email: getEmploymentEmail(employee),
     employeeCode: employee.employeeCode,
-    roleName: employee.role?.name ?? "Employee"
+    roleName: getEmploymentRoleKey(employee)
   }));
   const activeTemplate = template
     ? {

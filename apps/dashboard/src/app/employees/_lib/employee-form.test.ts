@@ -6,7 +6,9 @@ function validFormData() {
   formData.set("fullName", "  Ayesha Khan  ");
   formData.set("email", " AYESHA@EXAMPLE.COM ");
   formData.set("password", "secret1");
-  formData.set("roleId", "role-1");
+  formData.set("grantDashboardAccess", "on");
+  formData.set("organizationUnitId", "unit-1");
+  formData.set("positionId", "position-1");
   return formData;
 }
 
@@ -29,13 +31,13 @@ describe("employee form logic", () => {
     const formData = validFormData();
     formData.set("email", "invalid");
     expect(validateCreateEmployeeInput(parseCreateEmployeeForm(formData))).toBe(
-      "A valid email address is required."
+      "A valid login email is required when dashboard access is enabled."
     );
 
     formData.set("email", "valid@example.com");
     formData.set("password", "short");
     expect(validateCreateEmployeeInput(parseCreateEmployeeForm(formData))).toBe(
-      "Password must be at least 6 characters long."
+      "Password must be at least 6 characters long when dashboard access is enabled."
     );
   });
 });

@@ -6,6 +6,8 @@ function EmployeeRow({ employee }: { employee: EmployeeRecord }) {
       <td style={{ fontWeight: 600 }}>{employee.fullName}</td>
       <td>{employee.email}</td>
       <td className="muted">{employee.employeeCode || "-"}</td>
+      <td>{employee.departmentName}</td>
+      <td>{employee.positionTitle}</td>
       <td>
         <span className={`role-badge ${employee.roleName.toLowerCase() || "employee"}`}>
           {employee.roleName}
@@ -39,6 +41,8 @@ export function EmployeeTable({ employees }: { employees: EmployeeRecord[] }) {
             <th>Full Name</th>
             <th>Email</th>
             <th>Employee Code</th>
+            <th>Organization Unit</th>
+            <th>Position</th>
             <th>Role</th>
             <th>Reports To</th>
             <th>Timezone</th>
@@ -50,7 +54,7 @@ export function EmployeeTable({ employees }: { employees: EmployeeRecord[] }) {
             employees.map((employee) => <EmployeeRow key={employee.id} employee={employee} />)
           ) : (
             <tr>
-              <td colSpan={7} style={{ textAlign: "center", padding: "24px" }}>
+              <td colSpan={9} style={{ textAlign: "center", padding: "24px" }}>
                 No employees found matching your search.
               </td>
             </tr>

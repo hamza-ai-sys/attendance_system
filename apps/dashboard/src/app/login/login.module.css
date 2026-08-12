@@ -4,7 +4,7 @@
   justify-content: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #0f172a, #1e1b4b);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   margin: -32px; /* offset app-shell padding if any */
 }
 
@@ -23,8 +23,14 @@
 }
 
 @keyframes floatUp {
-  0% { opacity: 0; transform: translateY(40px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .title {
@@ -86,7 +92,9 @@
   cursor: pointer;
   width: 100%;
   margin-top: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .button:hover:not(:disabled) {
@@ -112,12 +120,25 @@
   margin-bottom: 24px;
   font-size: 0.95rem;
   text-align: center;
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }

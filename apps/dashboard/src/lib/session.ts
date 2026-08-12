@@ -2,12 +2,18 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { verifySessionToken } from "./session-token";
+import { buildSessionUser, findUserAccessById } from "./authorization";
 
 export type SessionUser = {
+  userAccountId: string;
+  authVersion: number;
   employeeId: string;
+  membershipId: string;
+  organizationId: string;
   email: string;
   fullName: string;
   roleName: string;
+  roleKeys: string[];
   permissions: string[];
 };
 
@@ -21,7 +27,13 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     return null;
   }
 
-  return verifySessionToken(sessionCookie.value, sessionSecret);
+  const tokenUser = verifySessionToken(sessionCookie.value, sessionSecret);
+  if (!tokenUser) return null;
+
+  const account = await findUserAccessById(tokenUser.userAccountId);
+  if (!account || account.authVersion !== tokenUser.authVersion) return null;
+
+  return buildSessionUser(account);
 }
 
 export async function requireCurrentUser(): Promise<SessionUser> {

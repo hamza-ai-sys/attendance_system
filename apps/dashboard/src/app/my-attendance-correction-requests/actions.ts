@@ -5,6 +5,7 @@ import { hasPermission } from "../../lib/rbac";
 import { createPrismaClient } from "@attendance/db";
 import { revalidatePath } from "next/cache";
 import type { AttendanceCorrectionRequestState } from "./types";
+import { employmentAccessInclude, getEmploymentRoleKey } from "../../lib/employment";
 
 const db = createPrismaClient(process.env.DATABASE_URL as string);
 
@@ -41,16 +42,17 @@ export async function submitManualRequest(
     return { error: "Invalid date or time format provided." };
   }
 
-  // Fetch employee role and manager to determine initial status
-  const employee = await db.employee.findUnique({
-    where: { id: user.employeeId },
-    include: { role: true }
+  const managerLine = await db.reportingLine.findFirst({
+    where: {
+      subordinateEmploymentId: user.employeeId,
+      type: "PRIMARY",
+      validUntil: null
+    }
   });
 
-  const isRegularEmployee = !employee?.role || employee.role.name === "employee";
+  const isRegularEmployee = user.roleName === "employee";
   // Regular employees start at PENDING_MANAGER (Stage 1), managers/HR start at PENDING_HR (Stage 2)
-  const initialStatus =
-    isRegularEmployee && employee?.supervisorId ? "PENDING_MANAGER" : "PENDING_HR";
+  const initialStatus = isRegularEmployee && managerLine ? "PENDING_MANAGER" : "PENDING_HR";
 
   const punchLabel = punchType === "CHECK_OUT" ? "Check-Out" : "Check-In";
   const formattedReason = `[${punchLabel}] ${reason}`;
@@ -58,7 +60,7 @@ export async function submitManualRequest(
   await db.manualAttendanceRequest.create({
     data: {
       employeeId: user.employeeId,
-      createdByEmployeeId: user.employeeId,
+      createdByUserAccountId: user.userAccountId,
       type: "ADD_SCAN",
       requestedTimestamp: timestamp,
       reason: formattedReason,
@@ -89,10 +91,7 @@ export async function approveRequest(requestId: string): Promise<AttendanceCorre
     where: { id: requestId },
     include: {
       employee: {
-        include: { role: true }
-      },
-      createdBy: {
-        include: { role: true }
+        include: employmentAccessInclude()
       }
     }
   });
@@ -109,10 +108,10 @@ export async function approveRequest(requestId: string): Promise<AttendanceCorre
     return { error: "Request has been rejected." };
   }
 
-  const requesterRole = request.employee.role?.name || request.createdBy?.role?.name;
+  const requesterRole = getEmploymentRoleKey(request.employee);
   const isHRRequest = requesterRole === "hr";
   const isSelf =
-    user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
+    user.employeeId === request.employeeId || user.userAccountId === request.createdByUserAccountId;
 
   // RULE 1: HR requests can ONLY be approved by the Owner (HR cannot self-approve or approve fellow HR)
   if (isHRRequest) {
@@ -222,10 +221,7 @@ export async function rejectRequest(requestId: string): Promise<AttendanceCorrec
     where: { id: requestId },
     include: {
       employee: {
-        include: { role: true }
-      },
-      createdBy: {
-        include: { role: true }
+        include: employmentAccessInclude()
       }
     }
   });
@@ -234,10 +230,10 @@ export async function rejectRequest(requestId: string): Promise<AttendanceCorrec
     return { error: "Request not found" };
   }
 
-  const requesterRole = request.employee.role?.name || request.createdBy?.role?.name;
+  const requesterRole = getEmploymentRoleKey(request.employee);
   const isHRRequest = requesterRole === "hr";
   const isSelf =
-    user.employeeId === request.employeeId || user.employeeId === request.createdByEmployeeId;
+    user.employeeId === request.employeeId || user.userAccountId === request.createdByUserAccountId;
 
   if (isHRRequest && user.roleName !== "owner") {
     return {
@@ -278,7 +274,7 @@ export async function deleteManualRequest(formData: FormData) {
 
   const isOwnerOrHR = user.roleName === "owner" || user.roleName === "hr";
   const isOwnerOrCreator =
-    request.employeeId === user.employeeId || request.createdByEmployeeId === user.employeeId;
+    request.employeeId === user.employeeId || request.createdByUserAccountId === user.userAccountId;
 
   if (!isOwnerOrHR && !isOwnerOrCreator) {
     throw new Error("Unauthorized: You can only delete your own submitted requests.");

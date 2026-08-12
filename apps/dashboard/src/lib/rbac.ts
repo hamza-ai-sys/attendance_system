@@ -28,7 +28,10 @@ export function hasAnyPermission(user: SessionUser | null, permissions: Permissi
   return permissions.some((p) => hasPermission(user, p));
 }
 
-export function hasAccess(user: SessionUser | null, permissions: Permission | Permission[]): boolean {
+export function hasAccess(
+  user: SessionUser | null,
+  permissions: Permission | Permission[]
+): boolean {
   if (!user) return false;
   const list = Array.isArray(permissions) ? permissions : [permissions];
   return list.some((p) => hasPermission(user, p));

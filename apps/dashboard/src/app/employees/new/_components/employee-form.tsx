@@ -5,16 +5,23 @@ import { createEmployee } from "../actions";
 import { EmployeeAssignmentFields } from "./employee-assignment-fields";
 import { EmployeeIdentityFields } from "./employee-identity-fields";
 import { EmployeeScheduleFields } from "./employee-schedule-fields";
-import type { CreateEmployeeState, EmployeeManagerOption, EmployeeRoleOption } from "../../types";
+import type {
+  CreateEmployeeState,
+  EmployeeManagerOption,
+  OrganizationUnitOption,
+  PositionOption
+} from "../../types";
 
 const initialState: CreateEmployeeState = {};
 
 export function EmployeeForm({
   managers,
-  roles
+  organizationUnits,
+  positions
 }: {
   managers: EmployeeManagerOption[];
-  roles: EmployeeRoleOption[];
+  organizationUnits: OrganizationUnitOption[];
+  positions: PositionOption[];
 }) {
   const [state, formAction, isPending] = useActionState(createEmployee, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -47,7 +54,11 @@ export function EmployeeForm({
       >
         <div className="form-grid">
           <EmployeeIdentityFields />
-          <EmployeeAssignmentFields managers={managers} roles={roles} />
+          <EmployeeAssignmentFields
+            managers={managers}
+            organizationUnits={organizationUnits}
+            positions={positions}
+          />
           <EmployeeScheduleFields />
         </div>
         <button type="submit" className="btn-primary" disabled={isPending}>

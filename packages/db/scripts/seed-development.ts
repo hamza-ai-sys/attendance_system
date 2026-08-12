@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { loadEnvFile } from "node:process";
 import { fileURLToPath } from "node:url";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { hashSync } from "bcryptjs";
 
 const seedDir = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +21,52 @@ const prisma = new PrismaClient({
 const devDeviceId = "esp32-dev-001";
 const devDeviceSecret = getRequiredEnv("DEV_DEVICE_SECRET");
 const seededScanPayload = { source: "development-seed" } as const;
+
+const developmentRolePermissions = {
+  employee: ["my_attendance", "manual_reports"],
+  manager: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"],
+  hr: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ],
+  owner: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ]
+} as const;
+
+const developmentUnits = [
+  { code: "EXEC", name: "Executive", type: "DEPARTMENT" as const },
+  { code: "HR", name: "Human Resources", type: "DEPARTMENT" as const },
+  { code: "ENG", name: "Engineering", type: "DEPARTMENT" as const },
+  { code: "OPS", name: "Operations", type: "DEPARTMENT" as const }
+];
+
+const developmentPositions = [
+  { code: "OWNER", title: "Owner", roleKey: "owner", scope: "ORGANIZATION" as const },
+  { code: "HR_OFFICER", title: "HR Officer", roleKey: "hr", scope: "ORGANIZATION" as const },
+  {
+    code: "MANAGER",
+    title: "Manager",
+    roleKey: "manager",
+    scope: "ORGANIZATION_UNIT_TREE" as const
+  },
+  { code: "EMPLOYEE", title: "Employee", roleKey: "employee", scope: "SELF" as const }
+];
 
 function hashDeviceSecret(secret: string) {
   return createHash("sha256").update(secret, "utf8").digest("hex");
@@ -42,172 +88,320 @@ function getDatabaseUrl() {
   return getRequiredEnv("DATABASE_URL");
 }
 
+async function seedDevelopmentAccessFoundation(tx: Prisma.TransactionClient) {
+  const organization = await tx.organization.upsert({
+    where: { slug: "default" },
+    create: {
+      name: "Attendance System Company",
+      slug: "default",
+      timezone: "Asia/Karachi"
+    },
+    update: { name: "Attendance System Company", isActive: true }
+  });
+
+  const permissionKeys = [...new Set(Object.values(developmentRolePermissions).flat())];
+  const permissions = new Map<string, string>();
+  for (const key of permissionKeys) {
+    const permission = await tx.permission.upsert({
+      where: { key },
+      create: { key, name: titleCase(key), category: key.split("_")[0] ?? "general" },
+      update: { isActive: true }
+    });
+    permissions.set(key, permission.id);
+  }
+
+  const roles = new Map<string, { id: string }>();
+  for (const [key, assignedPermissions] of Object.entries(developmentRolePermissions)) {
+    const role = await tx.role.upsert({
+      where: { organizationId_key: { organizationId: organization.id, key } },
+      create: {
+        organizationId: organization.id,
+        key,
+        name: titleCase(key),
+        isSystem: true
+      },
+      update: { isActive: true, name: titleCase(key) }
+    });
+    roles.set(key, role);
+
+    await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
+    await tx.rolePermission.createMany({
+      data: assignedPermissions.map((permissionKey) => ({
+        roleId: role.id,
+        permissionId: permissions.get(permissionKey)!
+      }))
+    });
+  }
+
+  const units = new Map<string, { id: string }>();
+  for (const definition of developmentUnits) {
+    const unit = await tx.organizationUnit.upsert({
+      where: {
+        organizationId_code: { organizationId: organization.id, code: definition.code }
+      },
+      create: { ...definition, organizationId: organization.id },
+      update: { name: definition.name, type: definition.type, isActive: true }
+    });
+    units.set(definition.code, unit);
+  }
+
+  const positions = new Map<string, { id: string }>();
+  for (const definition of developmentPositions) {
+    const position = await tx.position.upsert({
+      where: {
+        organizationId_code: { organizationId: organization.id, code: definition.code }
+      },
+      create: {
+        organizationId: organization.id,
+        code: definition.code,
+        title: definition.title
+      },
+      update: { title: definition.title, isActive: true }
+    });
+    positions.set(definition.code, position);
+
+    await tx.positionRoleMapping.upsert({
+      where: {
+        positionId_roleId_scope: {
+          positionId: position.id,
+          roleId: roles.get(definition.roleKey)!.id,
+          scope: definition.scope
+        }
+      },
+      create: {
+        positionId: position.id,
+        roleId: roles.get(definition.roleKey)!.id,
+        scope: definition.scope
+      },
+      update: {}
+    });
+  }
+
+  return { organization, units, positions };
+}
+
+async function upsertDevelopmentEmployment(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    legalName: string;
+    loginEmail: string;
+    passwordHash: string;
+    employeeCode: string;
+    unitId: string;
+    positionId: string;
+    timezone?: string;
+    shiftInTime?: string;
+    shiftOutTime?: string;
+  }
+) {
+  const account = await tx.userAccount.upsert({
+    where: { loginEmail: input.loginEmail },
+    create: {
+      loginEmail: input.loginEmail,
+      passwordHash: input.passwordHash,
+      status: "ACTIVE",
+      person: {
+        create: { legalName: input.legalName, personalEmail: input.loginEmail }
+      }
+    },
+    update: {
+      passwordHash: input.passwordHash,
+      status: "ACTIVE",
+      person: {
+        update: { legalName: input.legalName, personalEmail: input.loginEmail }
+      }
+    },
+    include: { person: true }
+  });
+
+  const membership = await tx.organizationMembership.upsert({
+    where: {
+      organizationId_personId: {
+        organizationId: input.organizationId,
+        personId: account.personId
+      }
+    },
+    create: {
+      organizationId: input.organizationId,
+      personId: account.personId,
+      status: "ACTIVE",
+      joinedAt: new Date()
+    },
+    update: { status: "ACTIVE", endedAt: null }
+  });
+
+  const existingEmployment =
+    (await tx.employment.findUnique({
+      where: {
+        organizationId_employeeCode: {
+          organizationId: input.organizationId,
+          employeeCode: input.employeeCode
+        }
+      }
+    })) ??
+    (await tx.employment.findFirst({
+      where: { organizationId: input.organizationId, membershipId: membership.id, endedAt: null },
+      orderBy: { hiredAt: "desc" }
+    }));
+
+  const employment = existingEmployment
+    ? await tx.employment.update({
+        where: { id: existingEmployment.id },
+        data: {
+          membershipId: membership.id,
+          employeeCode: input.employeeCode,
+          status: "ACTIVE",
+          endedAt: null
+        }
+      })
+    : await tx.employment.create({
+        data: {
+          organizationId: input.organizationId,
+          membershipId: membership.id,
+          employeeCode: input.employeeCode,
+          status: "ACTIVE",
+          hiredAt: new Date()
+        }
+      });
+
+  await tx.employmentAssignment.deleteMany({ where: { employmentId: employment.id } });
+  await tx.employmentAssignment.create({
+    data: {
+      employmentId: employment.id,
+      organizationUnitId: input.unitId,
+      positionId: input.positionId,
+      validFrom: new Date(),
+      timezone: input.timezone ?? "Asia/Karachi"
+    }
+  });
+
+  let shift = await tx.shift.findFirst({
+    where: {
+      name: `${input.employeeCode} default shift`,
+      startTime: input.shiftInTime ?? "09:00",
+      endTime: input.shiftOutTime ?? "17:00"
+    }
+  });
+  shift ??= await tx.shift.create({
+    data: {
+      name: `${input.employeeCode} default shift`,
+      timezone: input.timezone ?? "Asia/Karachi",
+      startTime: input.shiftInTime ?? "09:00",
+      endTime: input.shiftOutTime ?? "17:00",
+      workdays: [1, 2, 3, 4, 5]
+    }
+  });
+
+  await tx.shiftAssignment.deleteMany({ where: { employeeId: employment.id } });
+  await tx.shiftAssignment.create({
+    data: { employeeId: employment.id, shiftId: shift.id, effectiveFrom: new Date() }
+  });
+
+  return { account, employment };
+}
+
+function titleCase(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 async function main() {
   if (process.env.NODE_ENV !== "development") {
     throw new Error("The development seed may only run when NODE_ENV=development.");
   }
 
   await prisma.$transaction(async (tx) => {
-    // 1. Setup RBAC Roles and Permissions
-    const rolesData = [
-      { name: "employee", perms: ["my_attendance", "manual_reports"] },
-      {
-        name: "manager",
-        perms: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"]
-      },
-      {
-        name: "hr",
-        perms: [
-          "my_attendance",
-          "manual_reports",
-          "enrollment",
-          "reports",
-          "company_attendance",
-          "approvals",
-          "my_team",
-          "jobs_manage",
-          "announcements_manage"
-        ]
-      },
-      {
-        name: "owner",
-        perms: [
-          "my_attendance",
-          "manual_reports",
-          "enrollment",
-          "reports",
-          "company_attendance",
-          "approvals",
-          "my_team",
-          "jobs_manage",
-          "announcements_manage"
-        ]
-      }
-    ];
+    // 1. Setup organization, structure, roles, and position defaults.
+    const access = await seedDevelopmentAccessFoundation(tx);
 
-    for (const p of [...new Set(rolesData.flatMap((r) => r.perms))]) {
-      await tx.permission.upsert({ create: { name: p }, update: {}, where: { name: p } });
-    }
-
-    const roles: Record<string, { id: string }> = {};
-    for (const r of rolesData) {
-      roles[r.name] = await tx.role.upsert({
-        create: { name: r.name },
-        update: {},
-        where: { name: r.name }
-      });
-
-      const permissions = await tx.permission.findMany({
-        select: { id: true },
-        where: { name: { in: r.perms } }
-      });
-
-      await tx.rolePermission.deleteMany({ where: { roleId: roles[r.name]!.id } });
-      await tx.rolePermission.createMany({
-        data: permissions.map((permission) => ({
-          permissionId: permission.id,
-          roleId: roles[r.name]!.id
-        }))
-      });
-    }
-
-    // 2. Setup Employees with generic password123
+    // 2. Setup people, accounts, memberships, employments, and assignments.
     const defaultPasswordHash = hashSync("password123", 10);
-
-    const owner = await tx.employee.upsert({
-      create: {
-        email: "owner@test.com",
-        fullName: "Company Owner",
-        roleId: roles["owner"]!.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Company Owner",
+    const createSeededEmployment = (input: {
+      legalName: string;
+      loginEmail: string;
+      employeeCode: string;
+      unitCode: string;
+      positionCode: string;
+      shiftOutTime?: string;
+    }) =>
+      upsertDevelopmentEmployment(tx, {
+        organizationId: access.organization.id,
+        legalName: input.legalName,
+        loginEmail: input.loginEmail,
         passwordHash: defaultPasswordHash,
-        roleId: roles["owner"]!.id,
-        status: "ACTIVE"
-      },
-      where: { email: "owner@test.com" }
+        employeeCode: input.employeeCode,
+        unitId: access.units.get(input.unitCode)!.id,
+        positionId: access.positions.get(input.positionCode)!.id,
+        shiftOutTime: input.shiftOutTime
+      });
+
+    const ownerRecord = await createSeededEmployment({
+      legalName: "Company Owner",
+      loginEmail: "owner@test.com",
+      employeeCode: "OWNER-001",
+      unitCode: "EXEC",
+      positionCode: "OWNER"
     });
-
-    const hr = await tx.employee.upsert({
-      create: {
-        email: "hr@test.com",
-        fullName: "HR Manager",
-        roleId: roles["hr"]!.id,
-        supervisorId: owner.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "HR Manager",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["hr"]!.id,
-        status: "ACTIVE",
-        supervisorId: owner.id
-      },
-      where: { email: "hr@test.com" }
+    const hrRecord = await createSeededEmployment({
+      legalName: "HR Manager",
+      loginEmail: "hr@test.com",
+      employeeCode: "HR-001",
+      unitCode: "HR",
+      positionCode: "HR_OFFICER"
     });
-
-    const manager = await tx.employee.upsert({
-      create: {
-        email: "manager@test.com",
-        fullName: "Team Manager",
-        roleId: roles["manager"]!.id,
-        supervisorId: owner.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Team Manager",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["manager"]!.id,
-        status: "ACTIVE",
-        supervisorId: owner.id
-      },
-      where: { email: "manager@test.com" }
+    const managerRecord = await createSeededEmployment({
+      legalName: "Team Manager",
+      loginEmail: "manager@test.com",
+      employeeCode: "MGR-001",
+      unitCode: "ENG",
+      positionCode: "MANAGER"
     });
-
-    const employee = await tx.employee.upsert({
-      create: {
-        email: "employee@test.com",
-        fullName: "Regular Employee",
-        roleId: roles["employee"]!.id,
-        supervisorId: manager.id,
-        passwordHash: defaultPasswordHash
-      },
-      update: {
-        fullName: "Regular Employee",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["employee"]!.id,
-        status: "ACTIVE",
-        supervisorId: manager.id
-      },
-      where: { email: "employee@test.com" }
+    const employeeRecord = await createSeededEmployment({
+      legalName: "Regular Employee",
+      loginEmail: "employee@test.com",
+      employeeCode: "EMP-001",
+      unitCode: "ENG",
+      positionCode: "EMPLOYEE"
     });
+    const shaheerRecord = await createSeededEmployment({
+      legalName: "Shaheer",
+      loginEmail: "shaheer@test.com",
+      employeeCode: "EMP-07",
+      unitCode: "ENG",
+      positionCode: "EMPLOYEE",
+      shiftOutTime: "18:00"
+    });
+    const owner = ownerRecord.employment;
+    const hr = hrRecord.employment;
+    const manager = managerRecord.employment;
+    const employee = employeeRecord.employment;
+    const shaheer = shaheerRecord.employment;
 
-    const shaheer = await tx.employee.upsert({
-      create: {
-        email: "shaheer@test.com",
-        employeeCode: "EMP-07",
-        fullName: "Shaheer",
-        roleId: roles["employee"]!.id,
-        supervisorId: manager.id,
-        passwordHash: defaultPasswordHash,
-        shiftInTime: "09:00",
-        shiftOutTime: "18:00",
-        timezone: "Asia/Karachi"
-      },
-      update: {
-        employeeCode: "EMP-07",
-        fullName: "Shaheer",
-        passwordHash: defaultPasswordHash,
-        roleId: roles["employee"]!.id,
-        shiftInTime: "09:00",
-        shiftOutTime: "18:00",
-        status: "ACTIVE",
-        supervisorId: manager.id,
-        timezone: "Asia/Karachi"
-      },
-      where: { email: "shaheer@test.com" }
+    await tx.reportingLine.deleteMany({
+      where: { subordinateEmploymentId: { in: [hr.id, manager.id, employee.id, shaheer.id] } }
+    });
+    await tx.reportingLine.createMany({
+      data: [
+        { subordinateEmploymentId: hr.id, supervisorEmploymentId: owner.id, validFrom: new Date() },
+        {
+          subordinateEmploymentId: manager.id,
+          supervisorEmploymentId: owner.id,
+          validFrom: new Date()
+        },
+        {
+          subordinateEmploymentId: employee.id,
+          supervisorEmploymentId: manager.id,
+          validFrom: new Date()
+        },
+        {
+          subordinateEmploymentId: shaheer.id,
+          supervisorEmploymentId: manager.id,
+          validFrom: new Date()
+        }
+      ]
     });
 
     // 3. Setup Dev Device

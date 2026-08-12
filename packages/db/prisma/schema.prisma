@@ -24,9 +24,73 @@ enum LeaveRequestStatus {
   CANCELLED
 }
 
-enum EmployeeStatus {
+enum UserAccountStatus {
+  PENDING
+  ACTIVE
+  LOCKED
+  DISABLED
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+enum EmploymentStatus {
+  PENDING
   ACTIVE
   INACTIVE
+  ON_LEAVE
+  SUSPENDED
+  ENDED
+}
+
+enum EmploymentType {
+  PERMANENT
+  CONTRACT
+  PART_TIME
+  INTERN
+  CONSULTANT
+}
+
+enum AssignmentType {
+  PRIMARY
+  SECONDARY
+  ACTING
+  TEMPORARY
+}
+
+enum OrganizationUnitType {
+  COMPANY
+  DIVISION
+  DEPARTMENT
+  TEAM
+  BRANCH
+  COST_CENTER
+}
+
+enum ReportingLineType {
+  PRIMARY
+  FUNCTIONAL
+  PROJECT
+}
+
+enum RoleAssignmentSource {
+  SYSTEM
+  POSITION
+  MANUAL
+  TEMPORARY
+}
+
+enum PermissionScope {
+  SELF
+  DIRECT_REPORTS
+  REPORTING_TREE
+  ORGANIZATION_UNIT
+  ORGANIZATION_UNIT_TREE
+  ORGANIZATION
 }
 
 enum DeviceStatus {
@@ -107,57 +171,212 @@ enum JobPostingStatus {
   CLOSED
 }
 
-
-model Employee {
-  id                   String                    @id @default(cuid())
-  email                String                    @unique
-  employeeCode         String?                   @unique
-  fullName             String
-  passwordHash         String
-  status               EmployeeStatus            @default(ACTIVE)
-  supervisorId         String?                   @map("managerId")
-  roleId               String?
-  shiftInTime          String?                   @default("09:00")
-  shiftOutTime         String?                   @default("17:00")
-  timezone              String                    @default("Asia/Karachi")
+model Person {
+  id                    String                   @id @default(cuid())
+  legalName             String
+  preferredName         String?
+  personalEmail         String?
   phone                 String?
-  dateOfBirth           String?
+  dateOfBirth           DateTime?                @db.Date
   gender                String?
   maritalStatus         String?
   currentAddress        String?
   permanentAddress      String?
   emergencyContactName  String?
   emergencyContactPhone String?
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
-  role                 Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  supervisor           Employee?                 @relation("EmployeeSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
-  directReports        Employee[]                @relation("EmployeeSupervisor")
-  approvalSteps        ApprovalStep[]            @relation("ApprovalStepApprover")
-  auditLogs            AuditLog[]                @relation("AuditLogActor")
-  fingerprintRecords   FingerprintEnrollment[]
-  requestedEnrollments EnrollmentSession[]       @relation("EnrollmentRequestedBy")
-  enrollmentSessions   EnrollmentSession[]
-  manualRequests       ManualAttendanceRequest[] @relation("ManualRequestEmployee")
-  createdRequests      ManualAttendanceRequest[] @relation("ManualRequestCreatedBy")
-  notifications        Notification[]
-  reportExports        ReportExport[]
-  scanEvents           ScanEvent[]
-  shiftAssignments     EmployeeShiftAssignment[]
-  createdJobPostings   JobPosting[]              @relation("JobPostingCreatedBy")
-  createdAnnouncements Announcement[]            @relation("AnnouncementCreatedBy")
-  interviewStepAssignments JobPostingStep[]      @relation("InterviewStepInterviewer")
-  lastAnnouncementsViewedAt DateTime?
-  leaveRequests        LeaveRequest[]            @relation("LeaveRequestEmployee")
-  leaveApprovalSteps   LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
-  leaveBalances        LeaveBalance[]
-  targetNotes          EmployeeNote[]            @relation("NoteTargetEmployee")
-  authoredNotes        EmployeeNote[]            @relation("NoteAuthor")
-  createdTemplates     PerformanceTemplate[]     @relation("PerformanceTemplateCreator")
-  receivedEvaluations  PerformanceEvaluation[]   @relation("PerformanceTargetEmployee")
-  submittedEvaluations PerformanceEvaluation[]   @relation("PerformanceEvaluator")
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  userAccount           UserAccount?
+  memberships           OrganizationMembership[]
+}
 
-  @@index([supervisorId])
+model UserAccount {
+  id                     String                    @id @default(cuid())
+  personId               String                    @unique
+  loginEmail             String                    @unique
+  passwordHash           String?
+  status                 UserAccountStatus         @default(PENDING)
+  emailVerifiedAt        DateTime?
+  lastLoginAt            DateTime?
+  authVersion            Int                       @default(1)
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  person                 Person                    @relation(fields: [personId], references: [id], onDelete: Restrict)
+  sessions               UserSession[]
+  createdManualRequests  ManualAttendanceRequest[] @relation("ManualRequestCreatedBy")
+  requestedEnrollments   EnrollmentSession[]       @relation("EnrollmentRequestedBy")
+  notifications          Notification[]
+  auditLogs              AuditLog[]                @relation("AuditLogActor")
+  reportExports          ReportExport[]
+  createdJobPostings     JobPosting[]              @relation("JobPostingCreatedBy")
+  createdAnnouncements   Announcement[]            @relation("AnnouncementCreatedBy")
+  createdTemplates       PerformanceTemplate[]     @relation("PerformanceTemplateCreator")
+  grantedRoleAssignments RoleAssignment[]          @relation("RoleAssignmentGrantedBy")
+
+  @@index([status])
+}
+
+model UserSession {
+  id            String      @id @default(cuid())
+  userAccountId String
+  tokenHash     String      @unique
+  authVersion   Int
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  lastSeenAt    DateTime?
+  createdAt     DateTime    @default(now())
+  userAccount   UserAccount @relation(fields: [userAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userAccountId, expiresAt])
+}
+
+model Organization {
+  id          String                   @id @default(cuid())
+  name        String
+  slug        String                   @unique
+  timezone    String                   @default("Asia/Karachi")
+  isActive    Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  memberships OrganizationMembership[]
+  employments Employment[]
+  units       OrganizationUnit[]
+  positions   Position[]
+  roles       Role[]
+}
+
+model OrganizationMembership {
+  id              String           @id @default(cuid())
+  organizationId  String
+  personId        String
+  status          MembershipStatus @default(INVITED)
+  joinedAt        DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  person          Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  employments     Employment[]
+  roleAssignments RoleAssignment[]
+
+  @@unique([organizationId, personId])
+  @@unique([id, organizationId])
+  @@index([personId, status])
+  @@index([organizationId, status])
+}
+
+model Employment {
+  id                        String                    @id @default(cuid())
+  organizationId            String
+  membershipId              String
+  employeeCode              String?
+  status                    EmploymentStatus          @default(PENDING)
+  type                      EmploymentType            @default(PERMANENT)
+  hiredAt                   DateTime                  @default(now()) @db.Date
+  probationEnd              DateTime?                 @db.Date
+  endedAt                   DateTime?                 @db.Date
+  attendanceEligible        Boolean                   @default(true)
+  leaveEligible             Boolean                   @default(true)
+  lastAnnouncementsViewedAt DateTime?
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  organization              Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  membership                OrganizationMembership    @relation(fields: [membershipId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  assignments               EmploymentAssignment[]
+  subordinateLines          ReportingLine[]           @relation("ReportingLineSubordinate")
+  supervisorLines           ReportingLine[]           @relation("ReportingLineSupervisor")
+  approvalSteps             ApprovalStep[]            @relation("ApprovalStepApprover")
+  fingerprintRecords        FingerprintEnrollment[]
+  enrollmentSessions        EnrollmentSession[]
+  manualRequests            ManualAttendanceRequest[] @relation("ManualRequestEmployee")
+  scanEvents                ScanEvent[]
+  shiftAssignments          ShiftAssignment[]
+  interviewStepAssignments  JobPostingStep[]          @relation("InterviewStepInterviewer")
+  leaveRequests             LeaveRequest[]            @relation("LeaveRequestEmployee")
+  leaveApprovalSteps        LeaveApprovalStep[]       @relation("LeaveApprovalStepApprover")
+  leaveBalances             LeaveBalance[]
+  targetNotes               EmployeeNote[]            @relation("NoteTargetEmployee")
+  authoredNotes             EmployeeNote[]            @relation("NoteAuthor")
+  receivedEvaluations       PerformanceEvaluation[]   @relation("PerformanceTargetEmployee")
+  submittedEvaluations      PerformanceEvaluation[]   @relation("PerformanceEvaluator")
+
+  @@unique([organizationId, employeeCode])
+  @@index([membershipId, status])
+  @@index([organizationId, status])
+}
+
+model OrganizationUnit {
+  id                    String                 @id @default(cuid())
+  organizationId        String
+  parentId              String?
+  code                  String?
+  name                  String
+  type                  OrganizationUnitType
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  parent                OrganizationUnit?      @relation("OrganizationUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children              OrganizationUnit[]     @relation("OrganizationUnitHierarchy")
+  employmentAssignments EmploymentAssignment[]
+  scopedRoleAssignments RoleAssignment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, parentId])
+}
+
+model Position {
+  id                    String                 @id @default(cuid())
+  organizationId        String
+  code                  String?
+  title                 String
+  description           String?
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  employmentAssignments EmploymentAssignment[]
+  defaultRoleMappings   PositionRoleMapping[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+}
+
+model EmploymentAssignment {
+  id                 String           @id @default(cuid())
+  employmentId       String
+  organizationUnitId String
+  positionId         String
+  type               AssignmentType   @default(PRIMARY)
+  validFrom          DateTime         @db.Date
+  validUntil         DateTime?        @db.Date
+  workLocation       String?
+  timezone           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  employment         Employment       @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  organizationUnit   OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position           Position         @relation(fields: [positionId], references: [id], onDelete: Restrict)
+
+  @@index([employmentId, validFrom, validUntil])
+  @@index([organizationUnitId, validFrom, validUntil])
+  @@index([positionId, validFrom, validUntil])
+}
+
+model ReportingLine {
+  id                      String            @id @default(cuid())
+  subordinateEmploymentId String
+  supervisorEmploymentId  String
+  type                    ReportingLineType @default(PRIMARY)
+  validFrom               DateTime          @db.Date
+  validUntil              DateTime?         @db.Date
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  subordinate             Employment        @relation("ReportingLineSubordinate", fields: [subordinateEmploymentId], references: [id], onDelete: Restrict)
+  supervisor              Employment        @relation("ReportingLineSupervisor", fields: [supervisorEmploymentId], references: [id], onDelete: Restrict)
+
+  @@index([subordinateEmploymentId, validFrom, validUntil])
+  @@index([supervisorEmploymentId, validFrom, validUntil])
 }
 
 model Device {
@@ -188,28 +407,28 @@ model FingerprintEnrollment {
   enrolledAt        DateTime                    @default(now())
   revokedAt         DateTime?
   device            Device                      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  employee          Employee                    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee          Employment                  @relation(fields: [employeeId], references: [id], onDelete: Restrict)
 
   @@unique([deviceId, scannerTemplateId])
   @@unique([employeeId, deviceId])
 }
 
 model EnrollmentSession {
-  id                    String                  @id @default(cuid())
-  employeeId            String
-  deviceId              String
-  requestedByEmployeeId String
-  scannerTemplateId     Int?
-  status                EnrollmentSessionStatus @default(PENDING)
-  errorMessage          String?
-  expiresAt             DateTime
-  claimedAt             DateTime?
-  completedAt           DateTime?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  device                Device                  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  employee              Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  requestedBy           Employee                @relation("EnrollmentRequestedBy", fields: [requestedByEmployeeId], references: [id])
+  id                       String                  @id @default(cuid())
+  employeeId               String
+  deviceId                 String
+  requestedByUserAccountId String
+  scannerTemplateId        Int?
+  status                   EnrollmentSessionStatus @default(PENDING)
+  errorMessage             String?
+  expiresAt                DateTime
+  claimedAt                DateTime?
+  completedAt              DateTime?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  device                   Device                  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  employee                 Employment              @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  requestedBy              UserAccount             @relation("EnrollmentRequestedBy", fields: [requestedByUserAccountId], references: [id], onDelete: Restrict)
 
   @@index([deviceId, status, expiresAt])
   @@index([employeeId, status])
@@ -228,7 +447,7 @@ model ScanEvent {
   createdAt          DateTime                  @default(now())
   removedByRequests  ManualAttendanceRequest[] @relation("RemovedScan")
   device             Device                    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  employee           Employee?                 @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  employee           Employment?               @relation(fields: [employeeId], references: [id], onDelete: SetNull)
 
   @@unique([deviceId, deviceScanSequence])
   @@index([employeeId, serverReceivedAt])
@@ -236,47 +455,47 @@ model ScanEvent {
 }
 
 model Shift {
-  id           String                    @id @default(cuid())
+  id           String            @id @default(cuid())
   name         String
-  timezone     String                    @default("Asia/Karachi")
+  timezone     String            @default("Asia/Karachi")
   startTime    String
   endTime      String
   workdays     Int[]
-  graceMinutes Int                       @default(0)
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
-  assignments  EmployeeShiftAssignment[]
+  graceMinutes Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  assignments  ShiftAssignment[]
 }
 
-model EmployeeShiftAssignment {
-  id            String    @id @default(cuid())
+model ShiftAssignment {
+  id            String     @id @default(cuid())
   employeeId    String
   shiftId       String
   effectiveFrom DateTime
   effectiveTo   DateTime?
-  createdAt     DateTime  @default(now())
-  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  shift         Shift     @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  employee      Employment @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  shift         Shift      @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
   @@index([employeeId, effectiveFrom, effectiveTo])
 }
 
 model ManualAttendanceRequest {
-  id                  String                        @id @default(cuid())
-  employeeId          String
-  createdByEmployeeId String
-  type                ManualAttendanceRequestType
-  requestedTimestamp  DateTime?
-  targetScanEventId   String?
-  reason              String
-  status              ManualAttendanceRequestStatus @default(PENDING_MANAGER)
-  appliedAt           DateTime?
-  createdAt           DateTime                      @default(now())
-  updatedAt           DateTime                      @updatedAt
-  approvalSteps       ApprovalStep[]
-  createdBy           Employee                      @relation("ManualRequestCreatedBy", fields: [createdByEmployeeId], references: [id])
-  employee            Employee                      @relation("ManualRequestEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
-  targetScanEvent     ScanEvent?                    @relation("RemovedScan", fields: [targetScanEventId], references: [id], onDelete: SetNull)
+  id                     String                        @id @default(cuid())
+  employeeId             String
+  createdByUserAccountId String
+  type                   ManualAttendanceRequestType
+  requestedTimestamp     DateTime?
+  targetScanEventId      String?
+  reason                 String
+  status                 ManualAttendanceRequestStatus @default(PENDING_MANAGER)
+  appliedAt              DateTime?
+  createdAt              DateTime                      @default(now())
+  updatedAt              DateTime                      @updatedAt
+  approvalSteps          ApprovalStep[]
+  createdBy              UserAccount                   @relation("ManualRequestCreatedBy", fields: [createdByUserAccountId], references: [id], onDelete: Restrict)
+  employee               Employment                    @relation("ManualRequestEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
+  targetScanEvent        ScanEvent?                    @relation("RemovedScan", fields: [targetScanEventId], references: [id], onDelete: SetNull)
 
   @@index([employeeId, createdAt])
   @@index([status, createdAt])
@@ -292,7 +511,7 @@ model ApprovalStep {
   comment                   String?
   decidedAt                 DateTime?
   createdAt                 DateTime                @default(now())
-  approver                  Employee                @relation("ApprovalStepApprover", fields: [approverEmployeeId], references: [id], onDelete: Cascade)
+  approver                  Employment              @relation("ApprovalStepApprover", fields: [approverEmployeeId], references: [id], onDelete: Restrict)
   manualAttendanceRequest   ManualAttendanceRequest @relation(fields: [manualAttendanceRequestId], references: [id], onDelete: Cascade)
 
   @@unique([manualAttendanceRequestId, sequence])
@@ -300,30 +519,30 @@ model ApprovalStep {
 }
 
 model Notification {
-  id         String             @id @default(cuid())
-  employeeId String
-  type       NotificationType
-  status     NotificationStatus @default(UNREAD)
-  title      String
-  body       String
-  payload    Json?
-  readAt     DateTime?
-  createdAt  DateTime           @default(now())
-  employee   Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id            String             @id @default(cuid())
+  userAccountId String
+  type          NotificationType
+  status        NotificationStatus @default(UNREAD)
+  title         String
+  body          String
+  payload       Json?
+  readAt        DateTime?
+  createdAt     DateTime           @default(now())
+  userAccount   UserAccount        @relation(fields: [userAccountId], references: [id], onDelete: Cascade)
 
-  @@index([employeeId, status, createdAt])
+  @@index([userAccountId, status, createdAt])
 }
 
 model AuditLog {
-  id         String    @id @default(cuid())
+  id         String       @id @default(cuid())
   actorId    String?
   action     String
   entityType String
   entityId   String
   before     Json?
   after      Json?
-  createdAt  DateTime  @default(now())
-  actor      Employee? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime     @default(now())
+  actor      UserAccount? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([entityType, entityId, createdAt])
   @@index([actorId, createdAt])
@@ -341,32 +560,48 @@ model JobRun {
 }
 
 model ReportExport {
-  id            String             @id @default(cuid())
-  requestedById String
-  name          String
-  status        ReportExportStatus @default(PENDING)
-  parameters    Json
-  filePath      String?
-  errorMessage  String?
-  createdAt     DateTime           @default(now())
-  completedAt   DateTime?
-  requestedBy   Employee           @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  id                       String             @id @default(cuid())
+  requestedByUserAccountId String
+  name                     String
+  status                   ReportExportStatus @default(PENDING)
+  parameters               Json
+  filePath                 String?
+  errorMessage             String?
+  createdAt                DateTime           @default(now())
+  completedAt              DateTime?
+  requestedBy              UserAccount        @relation(fields: [requestedByUserAccountId], references: [id], onDelete: Restrict)
 
-  @@index([requestedById, createdAt])
+  @@index([requestedByUserAccountId, createdAt])
 }
 
 model Role {
-  id          String           @id @default(cuid())
-  name        String           @unique
-  description String?
-  permissions RolePermission[]
-  employees   Employee[]
+  id               String                @id @default(cuid())
+  organizationId   String
+  key              String
+  name             String
+  description      String?
+  isSystem         Boolean               @default(false)
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  permissions      RolePermission[]
+  assignments      RoleAssignment[]
+  positionMappings PositionRoleMapping[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId, isActive])
 }
 
 model Permission {
   id          String           @id @default(cuid())
-  name        String           @unique
+  key         String           @unique
+  category    String
+  name        String
   description String?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   roles       RolePermission[]
 }
 
@@ -377,6 +612,45 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model PositionRoleMapping {
+  id         String          @id @default(cuid())
+  positionId String
+  roleId     String
+  scope      PermissionScope
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  position   Position        @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  role       Role            @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([positionId, roleId, scope])
+  @@index([roleId])
+}
+
+model RoleAssignment {
+  id                     String                 @id @default(cuid())
+  membershipId           String
+  roleId                 String
+  scope                  PermissionScope
+  organizationUnitId     String?
+  source                 RoleAssignmentSource
+  validFrom              DateTime               @default(now())
+  validUntil             DateTime?
+  grantedByUserAccountId String?
+  reason                 String?
+  revokedAt              DateTime?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  membership             OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  role                   Role                   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  organizationUnit       OrganizationUnit?      @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  grantedBy              UserAccount?           @relation("RoleAssignmentGrantedBy", fields: [grantedByUserAccountId], references: [id], onDelete: SetNull)
+
+  @@index([membershipId, validFrom, validUntil])
+  @@index([roleId])
+  @@index([organizationUnitId])
 }
 
 model Holiday {
@@ -395,17 +669,17 @@ model CompanySetting {
 }
 
 model JobPosting {
-  id             String            @id @default(cuid())
+  id             String           @id @default(cuid())
   title          String
   department     String?
   location       String?
   employmentType String?
   description    String
-  status         JobPostingStatus  @default(OPEN)
+  status         JobPostingStatus @default(OPEN)
   createdById    String
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  createdBy      Employee          @relation("JobPostingCreatedBy", fields: [createdById], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  createdBy      UserAccount      @relation("JobPostingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   applications   JobApplication[]
   steps          JobPostingStep[]
 
@@ -414,18 +688,18 @@ model JobPosting {
 }
 
 model JobApplication {
-  id           String                @id @default(cuid())
-  jobPostingId String
-  fullName     String
-  phone        String
-  email        String
-  cvFileName   String
-  cvFileType   String
-  cvFileSize   Int
-  cvFileData   Bytes
-  status       JobApplicationStatus  @default(SUBMITTED)
-  createdAt    DateTime              @default(now())
-  jobPosting   JobPosting            @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  id            String                       @id @default(cuid())
+  jobPostingId  String
+  fullName      String
+  phone         String
+  email         String
+  cvFileName    String
+  cvFileType    String
+  cvFileSize    Int
+  cvFileData    Bytes
+  status        JobApplicationStatus         @default(SUBMITTED)
+  createdAt     DateTime                     @default(now())
+  jobPosting    JobPosting                   @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
   stepResponses JobApplicationStepResponse[]
 
   @@index([jobPostingId, createdAt])
@@ -451,24 +725,24 @@ enum InterviewMode {
 }
 
 model Announcement {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   content     String
   createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   Employee @relation("AnnouncementCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   UserAccount @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@index([createdAt])
   @@index([createdById])
 }
 
 model JobPostingStep {
-  id            String         @id @default(cuid())
-  jobPostingId  String
-  type          JobStepType
-  order         Int
-  config        Json?
+  id           String      @id @default(cuid())
+  jobPostingId String
+  type         JobStepType
+  order        Int
+  config       Json?
 
   // Interview-specific fields (only set when type = INTERVIEW)
   interviewMode     InterviewMode?
@@ -482,8 +756,8 @@ model JobPostingStep {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  jobPosting  JobPosting                    @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
-  interviewer Employee?                     @relation("InterviewStepInterviewer", fields: [interviewerId], references: [id])
+  jobPosting  JobPosting                   @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  interviewer Employment?                  @relation("InterviewStepInterviewer", fields: [interviewerId], references: [id], onDelete: Restrict)
   responses   JobApplicationStepResponse[]
 
   @@index([jobPostingId, order])
@@ -510,6 +784,7 @@ model JobApplicationStepResponse {
   @@unique([interviewerId, scheduledAt])
   @@index([stepId, scheduledAt])
 }
+
 model LeaveTypeConfig {
   id                  String           @id @default(cuid())
   code                String           @unique
@@ -542,7 +817,7 @@ model LeaveRequest {
   appliedAt       DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  employee        Employee            @relation("LeaveRequestEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  employee        Employment          @relation("LeaveRequestEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
   leaveType       LeaveTypeConfig     @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
   approvalSteps   LeaveApprovalStep[]
 
@@ -560,7 +835,7 @@ model LeaveApprovalStep {
   comment            String?
   decidedAt          DateTime?
   createdAt          DateTime       @default(now())
-  approver           Employee       @relation("LeaveApprovalStepApprover", fields: [approverEmployeeId], references: [id], onDelete: Cascade)
+  approver           Employment     @relation("LeaveApprovalStepApprover", fields: [approverEmployeeId], references: [id], onDelete: Restrict)
   leaveRequest       LeaveRequest   @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
 
   @@unique([leaveRequestId, sequence])
@@ -578,7 +853,7 @@ model LeaveBalance {
   carriedOver Float           @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  employee    Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    Employment      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   leaveType   LeaveTypeConfig @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, year, leaveTypeId])
@@ -593,8 +868,8 @@ model EmployeeNote {
   visibility NoteVisibility @default(PRIVATE)
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
-  employee   Employee       @relation("NoteTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
-  author     Employee       @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  employee   Employment     @relation("NoteTargetEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
+  author     Employment     @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   @@index([employeeId, visibility])
   @@index([authorId])
@@ -610,7 +885,7 @@ model PerformanceTemplate {
   createdById String
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
-  createdBy   Employee                @relation("PerformanceTemplateCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   UserAccount             @relation("PerformanceTemplateCreator", fields: [createdById], references: [id], onDelete: Restrict)
   evaluations PerformanceEvaluation[]
 
   @@index([startDate, endDate])
@@ -626,11 +901,10 @@ model PerformanceEvaluation {
   comments     String?
   submittedAt  DateTime            @default(now())
   template     PerformanceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  employee     Employee            @relation("PerformanceTargetEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
-  evaluator    Employee            @relation("PerformanceEvaluator", fields: [evaluatorId], references: [id], onDelete: Cascade)
+  employee     Employment          @relation("PerformanceTargetEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
+  evaluator    Employment          @relation("PerformanceEvaluator", fields: [evaluatorId], references: [id], onDelete: Restrict)
 
   @@unique([templateId, employeeId, evaluatorId])
   @@index([employeeId])
   @@index([evaluatorId])
 }
-

@@ -1,16 +1,41 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { hashSync } from "bcryptjs";
 
-const databaseUrl = process.env.DATABASE_URL;
+const e2eRolePermissions = {
+  employee: ["my_attendance", "manual_reports"],
+  manager: ["my_attendance", "manual_reports", "team_attendance", "approvals", "my_team"],
+  hr: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ],
+  owner: [
+    "my_attendance",
+    "manual_reports",
+    "enrollment",
+    "reports",
+    "company_attendance",
+    "approvals",
+    "my_team",
+    "jobs_manage",
+    "announcements_manage"
+  ]
+} as const;
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to seed the E2E database.");
-}
+const e2eEffectiveDate = new Date("2026-01-01T00:00:00.000Z");
+
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error("DATABASE_URL is required to seed the E2E database.");
 
 const parsedDatabaseUrl = new URL(databaseUrl);
 const isLocalDatabase = ["127.0.0.1", "localhost"].includes(parsedDatabaseUrl.hostname);
-
 if (
   process.env.NODE_ENV !== "test" ||
   !isLocalDatabase ||
@@ -19,112 +44,239 @@ if (
   throw new Error("The E2E seed may only run against the attendance_e2e database in test mode.");
 }
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: databaseUrl })
-});
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 
-const rolePermissions = {
-  employee: ["my_attendance", "manual_reports"],
-  manager: ["my_attendance", "manual_reports", "team_attendance", "approvals"],
-  hr: [
-    "my_attendance",
-    "manual_reports",
-    "enrollment",
-    "reports",
-    "company_attendance",
-    "approvals"
-  ],
-  owner: [
-    "my_attendance",
-    "manual_reports",
-    "enrollment",
-    "reports",
-    "company_attendance",
-    "approvals"
-  ]
-} as const;
+async function seedE2eAccessFoundation(tx: Prisma.TransactionClient) {
+  const organization = await tx.organization.create({
+    data: { name: "E2E Organization", slug: "e2e", timezone: "Asia/Karachi" }
+  });
+
+  const permissionKeys = [...new Set(Object.values(e2eRolePermissions).flat())];
+  const permissions = new Map<string, string>();
+  for (const key of permissionKeys) {
+    const permission = await tx.permission.create({
+      data: { key, name: titleCase(key), category: key.split("_")[0] ?? "general" }
+    });
+    permissions.set(key, permission.id);
+  }
+
+  const roles = new Map<string, { id: string }>();
+  for (const [key, assignedPermissions] of Object.entries(e2eRolePermissions)) {
+    const role = await tx.role.create({
+      data: {
+        organizationId: organization.id,
+        key,
+        name: titleCase(key),
+        isSystem: true
+      }
+    });
+    roles.set(key, role);
+    await tx.rolePermission.createMany({
+      data: assignedPermissions.map((permissionKey) => ({
+        roleId: role.id,
+        permissionId: permissions.get(permissionKey)!
+      }))
+    });
+  }
+
+  const units = new Map<string, { id: string }>();
+  for (const definition of [
+    { code: "EXEC", name: "Executive" },
+    { code: "HR", name: "Human Resources" },
+    { code: "ENG", name: "Engineering" }
+  ]) {
+    const unit = await tx.organizationUnit.create({
+      data: { ...definition, organizationId: organization.id, type: "DEPARTMENT" }
+    });
+    units.set(definition.code, unit);
+  }
+
+  const positions = new Map<string, { id: string }>();
+  for (const definition of [
+    { code: "OWNER", title: "Owner", roleKey: "owner", scope: "ORGANIZATION" as const },
+    { code: "HR_OFFICER", title: "HR Officer", roleKey: "hr", scope: "ORGANIZATION" as const },
+    {
+      code: "MANAGER",
+      title: "Manager",
+      roleKey: "manager",
+      scope: "ORGANIZATION_UNIT_TREE" as const
+    },
+    { code: "EMPLOYEE", title: "Employee", roleKey: "employee", scope: "SELF" as const }
+  ]) {
+    const position = await tx.position.create({
+      data: { organizationId: organization.id, code: definition.code, title: definition.title }
+    });
+    positions.set(definition.code, position);
+    await tx.positionRoleMapping.create({
+      data: {
+        positionId: position.id,
+        roleId: roles.get(definition.roleKey)!.id,
+        scope: definition.scope
+      }
+    });
+  }
+
+  return { organization, units, positions };
+}
+
+async function createE2eEmployment(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    legalName: string;
+    loginEmail: string;
+    passwordHash: string;
+    employeeCode: string;
+    unitId: string;
+    positionId: string;
+  }
+) {
+  const account = await tx.userAccount.create({
+    data: {
+      loginEmail: input.loginEmail,
+      passwordHash: input.passwordHash,
+      status: "ACTIVE",
+      person: {
+        create: { legalName: input.legalName, personalEmail: input.loginEmail }
+      }
+    }
+  });
+  const membership = await tx.organizationMembership.create({
+    data: {
+      organizationId: input.organizationId,
+      personId: account.personId,
+      status: "ACTIVE",
+      joinedAt: e2eEffectiveDate
+    }
+  });
+  const employment = await tx.employment.create({
+    data: {
+      organizationId: input.organizationId,
+      membershipId: membership.id,
+      employeeCode: input.employeeCode,
+      status: "ACTIVE",
+      hiredAt: e2eEffectiveDate,
+      assignments: {
+        create: {
+          organizationUnitId: input.unitId,
+          positionId: input.positionId,
+          validFrom: e2eEffectiveDate,
+          timezone: "Asia/Karachi"
+        }
+      }
+    }
+  });
+  const shift = await tx.shift.create({
+    data: {
+      name: `${input.employeeCode} E2E shift`,
+      timezone: "Asia/Karachi",
+      startTime: "09:00",
+      endTime: "17:00",
+      workdays: [1, 2, 3, 4, 5]
+    }
+  });
+  await tx.shiftAssignment.create({
+    data: { employeeId: employment.id, shiftId: shift.id, effectiveFrom: e2eEffectiveDate }
+  });
+
+  return { account, employment };
+}
+
+function titleCase(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 async function main() {
   const passwordHash = hashSync("password123", 10);
 
   await prisma.$transaction(async (tx) => {
-    const permissionNames = [...new Set(Object.values(rolePermissions).flat())];
-    const permissions = new Map<string, string>();
-
-    for (const name of permissionNames) {
-      const permission = await tx.permission.create({ data: { name } });
-      permissions.set(name, permission.id);
-    }
-
-    const roles = new Map<string, string>();
-    for (const [name, assignedPermissions] of Object.entries(rolePermissions)) {
-      const role = await tx.role.create({ data: { name } });
-      roles.set(name, role.id);
-      await tx.rolePermission.createMany({
-        data: assignedPermissions.map((permissionName) => ({
-          roleId: role.id,
-          permissionId: permissions.get(permissionName)!
-        }))
+    const access = await seedE2eAccessFoundation(tx);
+    const createEmployment = (input: {
+      legalName: string;
+      loginEmail: string;
+      employeeCode: string;
+      unitCode: string;
+      positionCode: string;
+    }) =>
+      createE2eEmployment(tx, {
+        organizationId: access.organization.id,
+        legalName: input.legalName,
+        loginEmail: input.loginEmail,
+        passwordHash,
+        employeeCode: input.employeeCode,
+        unitId: access.units.get(input.unitCode)!.id,
+        positionId: access.positions.get(input.positionCode)!.id
       });
-    }
 
-    const owner = await tx.employee.create({
-      data: {
-        email: "owner@e2e.test",
-        fullName: "E2E Owner",
-        passwordHash,
-        roleId: roles.get("owner")!
-      }
+    const owner = await createEmployment({
+      legalName: "E2E Owner",
+      loginEmail: "owner@e2e.test",
+      employeeCode: "OWNER-001",
+      unitCode: "EXEC",
+      positionCode: "OWNER"
     });
-    const manager = await tx.employee.create({
-      data: {
-        email: "manager@e2e.test",
-        fullName: "E2E Manager",
-        managerId: owner.id,
-        passwordHash,
-        roleId: roles.get("manager")!
-      }
+    const manager = await createEmployment({
+      legalName: "E2E Manager",
+      loginEmail: "manager@e2e.test",
+      employeeCode: "MGR-001",
+      unitCode: "ENG",
+      positionCode: "MANAGER"
     });
-    const hr = await tx.employee.create({
-      data: {
-        email: "hr@e2e.test",
-        fullName: "E2E HR",
-        managerId: owner.id,
-        passwordHash,
-        roleId: roles.get("hr")!
-      }
+    const hr = await createEmployment({
+      legalName: "E2E HR",
+      loginEmail: "hr@e2e.test",
+      employeeCode: "HR-001",
+      unitCode: "HR",
+      positionCode: "HR_OFFICER"
     });
-    const employee = await tx.employee.create({
-      data: {
-        email: "employee@e2e.test",
-        fullName: "E2E Employee",
-        managerId: manager.id,
-        passwordHash,
-        roleId: roles.get("employee")!
-      }
+    const employee = await createEmployment({
+      legalName: "E2E Employee",
+      loginEmail: "employee@e2e.test",
+      employeeCode: "EMP-001",
+      unitCode: "ENG",
+      positionCode: "EMPLOYEE"
+    });
+
+    await tx.reportingLine.createMany({
+      data: [
+        {
+          subordinateEmploymentId: manager.employment.id,
+          supervisorEmploymentId: owner.employment.id,
+          validFrom: e2eEffectiveDate
+        },
+        {
+          subordinateEmploymentId: hr.employment.id,
+          supervisorEmploymentId: owner.employment.id,
+          validFrom: e2eEffectiveDate
+        },
+        {
+          subordinateEmploymentId: employee.employment.id,
+          supervisorEmploymentId: manager.employment.id,
+          validFrom: e2eEffectiveDate
+        }
+      ]
     });
 
     const annualLeave = await tx.leaveTypeConfig.create({
-      data: {
-        code: "E2E_ANNUAL",
-        name: "E2E Annual Leave",
-        defaultAllocation: 10
-      }
+      data: { code: "E2E_ANNUAL", name: "E2E Annual Leave", defaultAllocation: 10 }
     });
 
     await tx.manualAttendanceRequest.createMany({
       data: [
         {
-          employeeId: employee.id,
-          createdByEmployeeId: employee.id,
+          employeeId: employee.employment.id,
+          createdByUserAccountId: employee.account.id,
           type: "ADD_SCAN",
           reason: "Manager-visible E2E request",
           requestedTimestamp: new Date("2026-01-12T09:00:00.000Z"),
           status: "PENDING_MANAGER"
         },
         {
-          employeeId: hr.id,
-          createdByEmployeeId: hr.id,
+          employeeId: hr.employment.id,
+          createdByUserAccountId: hr.account.id,
           type: "ADD_SCAN",
           reason: "Organization-visible E2E request",
           requestedTimestamp: new Date("2026-01-13T09:00:00.000Z"),
@@ -136,7 +288,7 @@ async function main() {
     await tx.leaveRequest.createMany({
       data: [
         {
-          employeeId: employee.id,
+          employeeId: employee.employment.id,
           leaveTypeId: annualLeave.id,
           startDate: new Date("2026-02-02T00:00:00.000Z"),
           endDate: new Date("2026-02-02T00:00:00.000Z"),
@@ -145,7 +297,7 @@ async function main() {
           status: "PENDING_MANAGER"
         },
         {
-          employeeId: manager.id,
+          employeeId: manager.employment.id,
           leaveTypeId: annualLeave.id,
           startDate: new Date("2026-02-03T00:00:00.000Z"),
           endDate: new Date("2026-02-03T00:00:00.000Z"),
@@ -159,9 +311,7 @@ async function main() {
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
+  .then(async () => prisma.$disconnect())
   .catch(async (error: unknown) => {
     console.error(error);
     await prisma.$disconnect();

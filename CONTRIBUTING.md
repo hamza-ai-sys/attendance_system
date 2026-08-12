@@ -46,14 +46,23 @@ pnpm firmware:build
 
 ## Database Changes
 
-- Change `packages/db/prisma/schema.prisma`.
-- Keep datasource URLs in `packages/db/prisma.config.ts`, not in `schema.prisma`.
-- Create and commit a migration under `packages/db/prisma/migrations`.
-- Use `pnpm db:migrate` locally.
-- Use `pnpm db:migrate:deploy` on production.
-- Do not edit a migration after it has been applied to a shared environment.
-- Keep the development seed repeatable and limit its updates or deletions to seed-owned fixtures.
-- Put required cross-environment data backfills in a migration, not in the development seed.
+The current structure and model boundaries are documented in
+[`docs/architecture/data-model.md`](docs/architecture/data-model.md). Every database change must
+follow [`docs/development/database-changes.md`](docs/development/database-changes.md).
+
+At minimum, a database pull request must:
+
+- include and review a committed migration under `packages/db/prisma/migrations`;
+- preserve existing data or explicitly document an approved destructive change;
+- update the development/E2E seeds and clear script when affected;
+- update the data-model and feature documentation in the same pull request;
+- verify both the existing-data upgrade and clean-database paths; and
+- pass Prisma validation, lint, typecheck, tests, build, and formatting checks.
+
+Keep datasource URLs in `packages/db/prisma.config.ts`, not in `schema.prisma`. Use
+`pnpm db:migrate` locally and `pnpm db:migrate:deploy` in production. Never edit a migration after
+it has been applied to a shared environment, and never use the development seed for a required
+cross-environment backfill.
 
 ## Environment And Secrets
 

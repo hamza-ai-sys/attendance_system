@@ -44,7 +44,7 @@ async function main() {
       results.push(await tx.reportExport.deleteMany());
       results.push(await tx.fingerprintEnrollment.deleteMany());
       results.push(await tx.enrollmentSession.deleteMany());
-      results.push(await tx.employeeShiftAssignment.deleteMany());
+      results.push(await tx.shiftAssignment.deleteMany());
       results.push(await tx.manualAttendanceRequest.deleteMany());
       results.push(await tx.leaveRequest.deleteMany());
       results.push(await tx.leaveBalance.deleteMany());
@@ -53,13 +53,24 @@ async function main() {
       results.push(await tx.jobRun.deleteMany());
       results.push(await tx.holiday.deleteMany());
       results.push(await tx.companySetting.deleteMany());
-      results.push(await tx.employee.deleteMany());
+      results.push(await tx.reportingLine.deleteMany());
+      results.push(await tx.employmentAssignment.deleteMany());
+      results.push(await tx.roleAssignment.deleteMany());
+      results.push(await tx.positionRoleMapping.deleteMany());
+      results.push(await tx.employment.deleteMany());
+      results.push(await tx.organizationMembership.deleteMany());
+      results.push(await tx.userSession.deleteMany());
+      results.push(await tx.userAccount.deleteMany());
+      results.push(await tx.person.deleteMany());
       results.push(await tx.device.deleteMany());
       results.push(await tx.shift.deleteMany());
       results.push(await tx.leaveTypeConfig.deleteMany());
       results.push(await tx.rolePermission.deleteMany());
       results.push(await tx.role.deleteMany());
       results.push(await tx.permission.deleteMany());
+      results.push(await tx.position.deleteMany());
+      results.push(await tx.organizationUnit.deleteMany());
+      results.push(await tx.organization.deleteMany());
 
       return results.reduce((total, result) => total + result.count, 0);
     });

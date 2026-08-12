@@ -26,7 +26,7 @@ export function calculateAttendanceMetrics(
 
 export function getRoleBreakdown(employees: CompanyEmployee[]): Record<string, number> {
   return employees.reduce<Record<string, number>>((breakdown, employee) => {
-    const roleName = employee.role?.name || "employee";
+    const roleName = employee.roleName || employee.role?.name || "employee";
     breakdown[roleName] = (breakdown[roleName] || 0) + 1;
     return breakdown;
   }, {});

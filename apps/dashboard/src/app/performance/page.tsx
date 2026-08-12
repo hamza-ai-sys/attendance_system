@@ -7,6 +7,12 @@ import { logout } from "../login/actions";
 import { PerformanceClientView } from "./performance-client-view";
 import type { FieldDefinition } from "./actions";
 import { UnauthorizedView } from "../../components/unauthorized-view";
+import {
+  employmentAccessInclude,
+  getEmploymentEmail,
+  getEmploymentName,
+  getEmploymentRoleKey
+} from "../../lib/employment";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +66,7 @@ export default async function PerformancePage() {
   const rawTemplates = db.performanceTemplate
     ? await db.performanceTemplate.findMany({
         include: {
-          createdBy: { select: { fullName: true } },
+          createdBy: { include: { person: true } },
           _count: { select: { evaluations: true } }
         },
         orderBy: { createdAt: "desc" }
@@ -75,7 +81,10 @@ export default async function PerformancePage() {
     endDate: t.endDate.toISOString(),
     fields: t.fields as unknown as FieldDefinition[],
     createdAt: t.createdAt.toISOString(),
-    creatorName: t.createdBy.fullName,
+    creatorName:
+      (t.createdBy as unknown as { person: { legalName: string; preferredName: string | null } })
+        .person.preferredName ??
+      (t.createdBy as unknown as { person: { legalName: string } }).person.legalName,
     evaluationCount: t._count.evaluations
   }));
 
@@ -84,10 +93,8 @@ export default async function PerformancePage() {
     ? await db.performanceEvaluation.findMany({
         include: {
           template: true,
-          employee: true,
-          evaluator: {
-            include: { role: true }
-          }
+          employee: { include: employmentAccessInclude() },
+          evaluator: { include: employmentAccessInclude() }
         },
         orderBy: { submittedAt: "desc" }
       })
@@ -96,10 +103,10 @@ export default async function PerformancePage() {
   const evaluations = (rawEvaluations as unknown as RawEvaluation[]).map((ev) => ({
     id: ev.id,
     templateTitle: ev.template.title,
-    employeeName: ev.employee.fullName,
-    employeeEmail: ev.employee.email,
-    evaluatorName: ev.evaluator.fullName,
-    evaluatorRole: ev.evaluator.role?.name || "Manager",
+    employeeName: getEmploymentName(ev.employee as never),
+    employeeEmail: getEmploymentEmail(ev.employee as never),
+    evaluatorName: getEmploymentName(ev.evaluator as never),
+    evaluatorRole: getEmploymentRoleKey(ev.evaluator as never),
     overallScore: ev.overallScore,
     comments: ev.comments,
     submittedAt: ev.submittedAt.toISOString(),

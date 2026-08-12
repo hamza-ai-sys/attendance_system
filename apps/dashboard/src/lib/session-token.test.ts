@@ -2,10 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import { signSessionToken, verifySessionToken } from "./session-token.js";
 
+const accessClaims = {
+  userAccountId: "account-1",
+  authVersion: 1,
+  membershipId: "membership-1",
+  organizationId: "organization-1",
+  roleKeys: ["owner"]
+};
+
 describe("session tokens", () => {
   it("verifies signed, unexpired session payloads", () => {
     const token = signSessionToken(
       {
+        ...accessClaims,
         email: "owner@example.com",
         fullName: "Test Owner",
         employeeId: "employee-1",
@@ -19,6 +28,7 @@ describe("session tokens", () => {
     expect(
       verifySessionToken(token, "test-session-secret", new Date("2026-07-06T10:00:00Z"))
     ).toEqual({
+      ...accessClaims,
       email: "owner@example.com",
       fullName: "Test Owner",
       employeeId: "employee-1",
@@ -30,6 +40,7 @@ describe("session tokens", () => {
   it("rejects tampered tokens", () => {
     const token = signSessionToken(
       {
+        ...accessClaims,
         email: "owner@example.com",
         fullName: "Test Owner",
         employeeId: "employee-1",
@@ -52,6 +63,7 @@ describe("session tokens", () => {
   it("rejects expired tokens", () => {
     const token = signSessionToken(
       {
+        ...accessClaims,
         email: "owner@example.com",
         fullName: "Test Owner",
         employeeId: "employee-1",
@@ -70,6 +82,7 @@ describe("session tokens", () => {
   it("rejects a token at its exact expiration time", () => {
     const token = signSessionToken(
       {
+        ...accessClaims,
         email: "owner@example.com",
         fullName: "Test Owner",
         employeeId: "employee-1",
@@ -80,20 +93,21 @@ describe("session tokens", () => {
       "test-session-secret"
     );
 
-    expect(verifySessionToken(token, "test-session-secret", new Date(1_783_334_400_000))).toBeNull();
+    expect(
+      verifySessionToken(token, "test-session-secret", new Date(1_783_334_400_000))
+    ).toBeNull();
   });
 
-  it.each([
-    "",
-    "one-part",
-    "one.two.three",
-    "not-json.invalid-signature"
-  ])("rejects malformed token %s", (token) => {
-    expect(verifySessionToken(token, "test-session-secret")).toBeNull();
-  });
+  it.each(["", "one-part", "one.two.three", "not-json.invalid-signature"])(
+    "rejects malformed token %s",
+    (token) => {
+      expect(verifySessionToken(token, "test-session-secret")).toBeNull();
+    }
+  );
 
   it("rejects a correctly signed payload with missing or invalid claims", () => {
     const invalidClaims = {
+      ...accessClaims,
       email: "owner@example.com",
       fullName: "Test Owner",
       employeeId: "employee-1",
@@ -112,6 +126,7 @@ describe("session tokens", () => {
   it("rejects a valid token when a different secret is used", () => {
     const token = signSessionToken(
       {
+        ...accessClaims,
         email: "owner@example.com",
         fullName: "Test Owner",
         employeeId: "employee-1",

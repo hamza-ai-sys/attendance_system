@@ -257,6 +257,13 @@ Important app-owned values:
 
 ## Database And Prisma
 
+Read the database documents before changing persisted data:
+
+- [`docs/architecture/data-model.md`](../architecture/data-model.md) explains model ownership,
+  relationships, invariants, tenant boundaries, and known gaps.
+- [`docs/development/database-changes.md`](database-changes.md) defines the mandatory migration,
+  seed, documentation, and verification workflow.
+
 The Prisma schema lives at:
 
 ```text
@@ -271,9 +278,15 @@ packages/db/prisma.config.ts
 
 Executable database data scripts live under `packages/db/scripts`:
 
-- `seed-development.ts` creates development accounts, sample attendance data, and Shaheer's scans.
-- `seed-e2e.ts` creates the minimal deterministic fixtures used by Playwright.
+- `seed-development.ts` is the complete development dataset. It owns the development
+  organization, access model, accounts, employment structure, and sample feature data.
+- `seed-e2e.ts` is the complete E2E dataset. It creates only the deterministic organization,
+  access, identity, employment, and workflow fixtures required by Playwright.
 - `clear-development.ts` removes all application data while preserving the schema and migrations.
+
+Environment fixture definitions belong in their respective seed entry point. Do not introduce a
+third seed that must be run before or after either entry point, and do not make E2E depend on the
+development fixture catalog.
 
 The development seed is part of the standard post-pull workflow and must remain safe to run
 repeatedly. Seed-script changes should upsert stable fixtures or replace only records clearly
@@ -287,31 +300,10 @@ This repo uses Prisma 7 style configuration:
 - `prisma.config.ts` supplies the datasource URL for Prisma CLI commands.
 - Runtime Prisma clients use the PostgreSQL driver adapter in `packages/db/src/client.ts`.
 
-When changing the database:
-
-1. Edit `packages/db/prisma/schema.prisma`.
-2. Create a migration:
-
-   ```bash
-   pnpm db:migrate
-   ```
-
-3. Review and commit the generated migration under `packages/db/prisma/migrations`.
-4. Regenerate the client if needed:
-
-   ```bash
-   pnpm db:generate
-   ```
-
-5. Run checks:
-
-   ```bash
-   pnpm typecheck
-   pnpm test
-   ```
-
-Do not edit a migration after it has been applied to a shared environment. Create a new
-migration instead.
+When changing the database, follow the complete
+[`database-changes.md`](database-changes.md) workflow. It covers schema design, safe migration
+creation, existing-data backfills, seed maintenance, documentation, and verification. Do not edit
+a migration after it has been applied to a shared environment; create a new migration instead.
 
 ## Device Gateway Development
 
@@ -527,6 +519,7 @@ New engineers should read these in order:
 2. `docs/development/getting-started.md`
 3. `docs/architecture/overview.md`
 4. `docs/architecture/data-model.md`
-5. `docs/architecture/device-protocol.md`
-6. `CONTRIBUTING.md`
-7. `SECURITY.md`
+5. `docs/development/database-changes.md`
+6. `docs/architecture/device-protocol.md`
+7. `CONTRIBUTING.md`
+8. `SECURITY.md`
