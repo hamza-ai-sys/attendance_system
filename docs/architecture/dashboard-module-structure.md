@@ -86,7 +86,8 @@ disable the rules to avoid a reasonable extraction.
 
 ## Naming And Imports
 
-- Use kebab-case filenames for new modules and components.
+- Use kebab-case filenames for all TypeScript modules and components. ESLint enforces this rule;
+  PascalCase is reserved for component and type symbols, not filenames.
 - Name components and functions after their responsibility, such as `EmployeeDirectoryTable` or
   `getAttendanceMetrics`.
 - Use `import type` for type-only imports.

@@ -1,4 +1,4 @@
-import { UnauthorizedView } from "../../components/UnauthorizedView";
+import { UnauthorizedView } from "../../components/unauthorized-view";
 import { requireCurrentUser } from "../../lib/session";
 import { EmployeeDirectory } from "./_components/employee-directory";
 import { EmployeesHeader } from "./_components/employees-header";

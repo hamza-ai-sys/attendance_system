@@ -1,4 +1,4 @@
-import { UnauthorizedView } from "../../components/UnauthorizedView";
+import { UnauthorizedView } from "../../components/unauthorized-view";
 import { requireCurrentUser } from "../../lib/session";
 import { AttendanceMetricCards } from "./_components/attendance-metric-cards";
 import { CompanyAttendanceHeader } from "./_components/company-attendance-header";

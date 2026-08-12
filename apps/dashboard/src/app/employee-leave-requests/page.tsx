@@ -1,4 +1,4 @@
-import { UnauthorizedView } from "../../components/UnauthorizedView";
+import { UnauthorizedView } from "../../components/unauthorized-view";
 import { RequestReviewHeader } from "../../components/request-review-header";
 import { RequestSummary } from "../../components/request-summary";
 import { hasPermission } from "../../lib/rbac";

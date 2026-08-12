@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { hasPermission } from "../../lib/rbac";
 import { requireCurrentUser } from "../../lib/session";
 import { TeamManagementHeader } from "./_components/team-management-header";
-import { MyTeamClientView } from "./MyTeamClientView";
+import { MyTeamClientView } from "./my-team-client-view";
 import { getTeamManagementData } from "./queries";
 
 export const dynamic = "force-dynamic";
