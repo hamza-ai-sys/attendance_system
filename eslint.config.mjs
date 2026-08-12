@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import { filenameCaseRule } from "./eslint-rules/filename-case.mjs";
 import { functionSizeRule } from "./eslint-rules/function-size.mjs";
 
 export default [
@@ -41,14 +42,21 @@ export default [
     }
   },
   {
-    files: ["apps/dashboard/src/**/*.tsx"],
+    files: ["apps/dashboard/src/**/*.{ts,tsx}"],
     plugins: {
       local: {
         rules: {
+          "filename-case": filenameCaseRule,
           "function-size": functionSizeRule
         }
       }
     },
+    rules: {
+      "local/filename-case": "error"
+    }
+  },
+  {
+    files: ["apps/dashboard/src/**/*.tsx"],
     rules: {
       // UI modules should remain easy to review and split along component boundaries.
       "max-lines": [

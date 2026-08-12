@@ -69,6 +69,34 @@ directly from the working tree so tests avoid rebuilding a Docker image after ev
 change. Development and production contain the complete service set because they support
 running the deployed application topology.
 
+### After Pulling Main
+
+After a merged pull request reaches `main`, update your local checkout and run the following
+from the repo root:
+
+```bash
+pnpm install
+pnpm docker:dev:db:up
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
+`pnpm install` picks up lockfile changes and regenerates the Prisma client through the
+repository's postinstall script. `pnpm db:migrate` applies any committed migrations to your
+local database; when there are no pending migrations, it is a safe no-op. You therefore do
+not need to inspect each merged pull request before running this sequence.
+
+`pnpm db:seed` is also part of every post-pull sync. The development seed is repeatable: it
+updates or recreates seed-owned fixtures and leaves unrelated local application data intact.
+This ensures seed-script changes reach every engineer without requiring them to inspect the
+merged pull request. Do not run `pnpm db:clear` routinely; it deletes all local application
+data and is only needed when you intentionally want a clean dataset.
+
+If you use the full-stack Docker workflow, replace `pnpm dev` with `pnpm docker:dev:up` so the
+application images are rebuilt from the pulled code. Still run `pnpm db:migrate` and
+`pnpm db:seed` before starting the stack.
+
 ### Recommended: Database In Docker, Apps Local
 
 Use this for daily feature development:
@@ -246,6 +274,12 @@ Executable database data scripts live under `packages/db/scripts`:
 - `seed-development.ts` creates development accounts, sample attendance data, and Shaheer's scans.
 - `seed-e2e.ts` creates the minimal deterministic fixtures used by Playwright.
 - `clear-development.ts` removes all application data while preserving the schema and migrations.
+
+The development seed is part of the standard post-pull workflow and must remain safe to run
+repeatedly. Seed-script changes should upsert stable fixtures or replace only records clearly
+owned by the seed. They must not require engineers to clear their databases or silently remove
+unrelated local data. Schema changes and data backfills required in every environment belong in
+a committed migration, not in the development seed.
 
 This repo uses Prisma 7 style configuration:
 

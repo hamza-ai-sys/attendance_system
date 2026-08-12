@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { verifySessionToken } from "./session-token";
 
@@ -21,6 +22,16 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   }
 
   return verifySessionToken(sessionCookie.value, sessionSecret);
+}
+
+export async function requireCurrentUser(): Promise<SessionUser> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  return user;
 }
 
 export function getSessionSecret() {

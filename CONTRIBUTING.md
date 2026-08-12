@@ -18,6 +18,15 @@ Use `pnpm docker:dev:up` only when you intentionally want the whole stack runnin
 Do not run `pnpm dev` at the same time as the full Docker stack unless you have changed
 ports or stopped the app containers.
 
+## After Pulling Main
+
+After a pull request is merged and you pull `main`, follow the post-pull workflow in
+[`docs/development/getting-started.md`](docs/development/getting-started.md#after-pulling-main).
+In short: run `pnpm install`, start the local database, run `pnpm db:migrate`, and then run
+`pnpm db:seed` before `pnpm dev`. Migrations are a no-op when none are pending, and the
+development seed is safe to repeat, so engineers do not need to inspect merged pull requests
+for database or seed changes.
+
 ## Before Opening A Pull Request
 
 Run the same checks CI runs:
@@ -43,6 +52,8 @@ pnpm firmware:build
 - Use `pnpm db:migrate` locally.
 - Use `pnpm db:migrate:deploy` on production.
 - Do not edit a migration after it has been applied to a shared environment.
+- Keep the development seed repeatable and limit its updates or deletions to seed-owned fixtures.
+- Put required cross-environment data backfills in a migration, not in the development seed.
 
 ## Environment And Secrets
 
@@ -61,7 +72,15 @@ pnpm firmware:build
 - `apps/dashboard` owns human-facing workflows.
 - `apps/worker` owns background work.
 - Shared code belongs in `packages/*` only when at least two services need it.
-# Dashboard component size limits
+
+## Dashboard Modules
+
+Dashboard route work must follow the feature-local structure described in
+[`docs/architecture/dashboard-module-structure.md`](docs/architecture/dashboard-module-structure.md).
+Keep route pages thin, put feature UI in `_components`, pure feature logic in `_lib`, and keep
+queries, permissions, actions, and types in modules named for those responsibilities.
+
+## Dashboard Component Size Limits
 
 Dashboard React modules are limited to 250 effective lines. Ordinary functions are limited to 50
 effective lines, while named React components are limited to 100. Blank lines and comment-only

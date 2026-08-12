@@ -16,7 +16,8 @@ export async function createLeaveType(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   const code = (formData.get("code") as string)?.trim().toUpperCase().replace(/\s+/g, "_");
   const description = (formData.get("description") as string)?.trim() || null;
-  const accrualFrequency = (formData.get("accrualFrequency") as "MONTHLY" | "ANNUALLY") || "ANNUALLY";
+  const accrualFrequency =
+    (formData.get("accrualFrequency") as "MONTHLY" | "ANNUALLY") || "ANNUALLY";
   const defaultAllocation = parseFloat((formData.get("defaultAllocation") as string) || "0");
   const allowCarryForward = formData.get("allowCarryForward") === "true";
   const maxCarryForwardDays = parseFloat((formData.get("maxCarryForwardDays") as string) || "0");
@@ -79,7 +80,7 @@ export async function createLeaveType(formData: FormData) {
     }
 
     revalidatePath("/leave-settings");
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create leave type.";
@@ -101,7 +102,7 @@ export async function toggleLeaveTypeStatus(id: string, isActive: boolean) {
     });
 
     revalidatePath("/leave-settings");
-    revalidatePath("/leave-requests");
+    revalidatePath("/my-leave-requests");
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update leave type status.";

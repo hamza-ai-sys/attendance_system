@@ -3,11 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { Route } from "next";
 
-export function MyAttendanceRangeFilter({
-  currentRange
-}: {
-  currentRange: string;
-}) {
+export function MyAttendanceRangeFilter({ currentRange }: { currentRange: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,7 +34,11 @@ export function MyAttendanceRangeFilter({
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <label htmlFor="my-range-select" className="muted" style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+      <label
+        htmlFor="my-range-select"
+        className="muted"
+        style={{ fontSize: "0.85rem", fontWeight: 500 }}
+      >
         Period:
       </label>
       <select
@@ -47,10 +47,18 @@ export function MyAttendanceRangeFilter({
         onChange={(e) => handleRangeChange(e.target.value)}
         style={selectStyle}
       >
-        <option value="today" style={{ background: "#1e1b4b", color: "#fff" }}>Last Day / Today</option>
-        <option value="last_week" style={{ background: "#1e1b4b", color: "#fff" }}>Last Week (7 Days)</option>
-        <option value="last_month" style={{ background: "#1e1b4b", color: "#fff" }}>Last Month (30 Days)</option>
-        <option value="all_time" style={{ background: "#1e1b4b", color: "#fff" }}>All Time / All Months</option>
+        <option value="today" style={{ background: "#1e1b4b", color: "#fff" }}>
+          Last Day / Today
+        </option>
+        <option value="last_week" style={{ background: "#1e1b4b", color: "#fff" }}>
+          Last Week (7 Days)
+        </option>
+        <option value="last_month" style={{ background: "#1e1b4b", color: "#fff" }}>
+          Last Month (30 Days)
+        </option>
+        <option value="all_time" style={{ background: "#1e1b4b", color: "#fff" }}>
+          All Time / All Months
+        </option>
       </select>
     </div>
   );

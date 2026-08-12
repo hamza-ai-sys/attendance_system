@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createPrismaClient } from "@attendance/db";
 import { logout } from "../login/actions";
-import { PerformanceClientView } from "./PerformanceClientView";
+import { PerformanceClientView } from "./performance-client-view";
 import type { FieldDefinition } from "./actions";
-import { UnauthorizedView } from "../../components/UnauthorizedView";
+import { UnauthorizedView } from "../../components/unauthorized-view";
 
 export const dynamic = "force-dynamic";
 

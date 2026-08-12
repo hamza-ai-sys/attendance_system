@@ -42,10 +42,7 @@ export async function getEmployeeNotes(employeeId: string) {
   const notes = await db.employeeNote.findMany({
     where: {
       employeeId,
-      OR: [
-        { visibility: "PUBLIC" },
-        { authorId: user.employeeId }
-      ]
+      OR: [{ visibility: "PUBLIC" }, { authorId: user.employeeId }]
     },
     include: {
       author: {
@@ -59,7 +56,7 @@ export async function getEmployeeNotes(employeeId: string) {
     orderBy: { createdAt: "desc" }
   });
 
-  return notes.map(n => ({
+  return notes.map((n) => ({
     id: n.id,
     content: n.content,
     visibility: n.visibility,

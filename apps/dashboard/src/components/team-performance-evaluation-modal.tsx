@@ -2,36 +2,109 @@
 
 import { useState } from "react";
 import { submitPerformanceEvaluation } from "../app/team-attendance/actions";
-
-export interface TeamMemberSummary {
-  id: string;
-  fullName: string;
-  email: string;
-  employeeCode: string | null;
-  roleName: string;
-}
-
-export interface PerformanceTemplateField {
-  id: string;
-  label: string;
-  type: "rating" | "text" | "number" | "select";
-  options?: string[];
-  required?: boolean;
-}
-
-export interface ActivePerformanceTemplate {
-  id: string;
-  title: string;
-  description?: string | null;
-  fields: PerformanceTemplateField[];
-  startDate: string;
-  endDate: string;
-}
+import type {
+  ActivePerformanceTemplate,
+  PerformanceTemplateField,
+  TeamMemberSummary
+} from "../app/team-management/types";
 
 interface TeamPerformanceEvaluationModalProps {
   employee: TeamMemberSummary;
   template: ActivePerformanceTemplate;
   onClose: () => void;
+}
+
+function EvaluationField({
+  field,
+  value,
+  onChange
+}: {
+  field: PerformanceTemplateField;
+  value?: string | number;
+  onChange: (value: string | number) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={{ fontWeight: 600 }}>
+        {field.label} {field.required && <span style={{ color: "#ef4444" }}>*</span>}
+      </label>
+      {field.type === "rating" && (
+        <div style={{ display: "flex", gap: 12 }}>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <button
+              key={rating}
+              type="button"
+              onClick={() => onChange(rating)}
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 10,
+                border: value === rating ? "2px solid #f59e0b" : "1px solid var(--border)",
+                background: value === rating ? "rgba(245,158,11,.2)" : "rgba(15,23,42,.5)",
+                color: value === rating ? "#fbbf24" : "#94a3b8"
+              }}
+            >
+              ★ {rating}
+            </button>
+          ))}
+        </div>
+      )}
+      {field.type === "text" && (
+        <textarea
+          rows={2}
+          value={(value as string) || ""}
+          onChange={(event) => onChange(event.target.value)}
+          required={field.required}
+          placeholder={`Enter details for ${field.label}...`}
+        />
+      )}
+      {field.type === "number" && (
+        <input
+          type="number"
+          min="0"
+          max="100"
+          value={(value as number) || ""}
+          onChange={(event) => onChange(Number(event.target.value))}
+          required={field.required}
+          placeholder="Score (0-100)"
+        />
+      )}
+      {field.type === "select" && (
+        <select
+          value={(value as string) || ""}
+          onChange={(event) => onChange(event.target.value)}
+          required={field.required}
+        >
+          <option value="">Select option...</option>
+          {field.options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+function TemplateSummary({ template }: { template: ActivePerformanceTemplate }) {
+  return (
+    <div
+      style={{
+        background: "rgba(139,92,246,.1)",
+        border: "1px solid rgba(139,92,246,.3)",
+        borderRadius: 10,
+        padding: "12px 16px"
+      }}
+    >
+      <p style={{ margin: 0, fontWeight: 600, color: "#c084fc" }}>Document: {template.title}</p>
+      {template.description && (
+        <p className="muted" style={{ margin: "4px 0 0" }}>
+          {template.description}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function TeamPerformanceEvaluationModal({
@@ -80,23 +153,7 @@ export function TeamPerformanceEvaluationModal({
           </button>
         </div>
 
-        <div
-          style={{
-            background: "rgba(139, 92, 246, 0.1)",
-            border: "1px solid rgba(139, 92, 246, 0.3)",
-            borderRadius: "10px",
-            padding: "12px 16px"
-          }}
-        >
-          <p style={{ margin: 0, fontWeight: 600, color: "#c084fc", fontSize: "0.95rem" }}>
-            Document: {template.title}
-          </p>
-          {template.description && (
-            <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>
-              {template.description}
-            </p>
-          )}
-        </div>
+        <TemplateSummary template={template} />
 
         {statusMessage && (
           <div
@@ -114,80 +171,17 @@ export function TeamPerformanceEvaluationModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "18px" }}
+        >
           {template.fields.map((field) => (
-            <div key={field.id} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "0.9rem", color: "#f1f5f9", fontWeight: 600 }}>
-                {field.label} {field.required && <span style={{ color: "#ef4444" }}>*</span>}
-              </label>
-
-              {field.type === "rating" && (
-                <div style={{ display: "flex", gap: "12px" }}>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <button
-                      key={rating}
-                      type="button"
-                      onClick={() => updateResponse(field.id, rating)}
-                      style={{
-                        flex: 1,
-                        padding: "10px",
-                        borderRadius: "10px",
-                        border:
-                          responses[field.id] === rating
-                            ? "2px solid #f59e0b"
-                            : "1px solid var(--border)",
-                        background:
-                          responses[field.id] === rating
-                            ? "rgba(245, 158, 11, 0.2)"
-                            : "rgba(15, 23, 42, 0.5)",
-                        color: responses[field.id] === rating ? "#fbbf24" : "#94a3b8",
-                        fontWeight: 700,
-                        cursor: "pointer"
-                      }}
-                    >
-                      ★ {rating}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {field.type === "text" && (
-                <textarea
-                  rows={2}
-                  value={(responses[field.id] as string) || ""}
-                  onChange={(event) => updateResponse(field.id, event.target.value)}
-                  required={field.required}
-                  placeholder={`Enter details for ${field.label}...`}
-                />
-              )}
-
-              {field.type === "number" && (
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={(responses[field.id] as number) || ""}
-                  onChange={(event) => updateResponse(field.id, Number(event.target.value))}
-                  required={field.required}
-                  placeholder="Score (0-100)"
-                />
-              )}
-
-              {field.type === "select" && (
-                <select
-                  value={(responses[field.id] as string) || ""}
-                  onChange={(event) => updateResponse(field.id, event.target.value)}
-                  required={field.required}
-                >
-                  <option value="">Select option...</option>
-                  {field.options?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <EvaluationField
+              key={field.id}
+              field={field}
+              value={responses[field.id]}
+              onChange={(value) => updateResponse(field.id, value)}
+            />
           ))}
 
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontWeight: 600 }}>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useRef, useEffect } from "react";
-import { createAnnouncement, type AnnouncementState } from "../actions";
+import { createAnnouncement } from "../actions";
+import type { AnnouncementActionState } from "../types";
 
-const initialState: AnnouncementState = {};
+const initialState: AnnouncementActionState = {};
 
 export function AnnouncementForm() {
   const [state, formAction, isPending] = useActionState(createAnnouncement, initialState);

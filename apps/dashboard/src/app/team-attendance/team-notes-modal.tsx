@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { TeamMemberSummary } from "../../components/team-performance-evaluation-modal";
+import type { TeamMemberSummary } from "../team-management/types";
 import { addEmployeeNote, getEmployeeNotes } from "./actions";
 
 interface NoteItem {
@@ -17,6 +17,28 @@ interface NoteItem {
 interface TeamNotesModalProps {
   employee: TeamMemberSummary;
   onClose: () => void;
+}
+
+function NotesList({ loading, notes }: { loading: boolean; notes: NoteItem[] }) {
+  if (loading) return <p className="muted">Loading notes...</p>;
+  if (notes.length === 0) return <p className="muted">No notes recorded for this employee yet.</p>;
+
+  return notes.map((note) => (
+    <article key={note.id} className="panel" style={{ cursor: "default", padding: "14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+        <span className={`note-badge ${note.visibility.toLowerCase()}`}>
+          {note.visibility === "PRIVATE" ? "🔒 Private" : "🌐 Public"}
+        </span>
+        <time className="muted" style={{ fontSize: "0.75rem" }}>
+          {new Date(note.createdAt).toLocaleString()}
+        </time>
+      </div>
+      <strong style={{ fontSize: "0.85rem" }}>
+        {note.authorName} ({note.authorRole})
+      </strong>
+      <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>{note.content}</p>
+    </article>
+  ));
 }
 
 export function TeamNotesModal({ employee, onClose }: TeamNotesModalProps) {
@@ -68,7 +90,10 @@ export function TeamNotesModal({ employee, onClose }: TeamNotesModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+        >
           <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
             <legend style={{ fontSize: "0.9rem", color: "#cbd5e1", fontWeight: 600 }}>
               Note visibility
@@ -103,28 +128,7 @@ export function TeamNotesModal({ employee, onClose }: TeamNotesModalProps) {
         <hr style={{ borderColor: "var(--border)", margin: "10px 0" }} />
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <h3 style={{ fontSize: "1rem", color: "#cbd5e1", margin: 0 }}>Previous Notes</h3>
-          {loading ? (
-            <p className="muted">Loading notes...</p>
-          ) : notes.length === 0 ? (
-            <p className="muted">No notes recorded for this employee yet.</p>
-          ) : (
-            notes.map((note) => (
-              <article key={note.id} className="panel" style={{ cursor: "default", padding: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                  <span className={`note-badge ${note.visibility.toLowerCase()}`}>
-                    {note.visibility === "PRIVATE" ? "🔒 Private" : "🌐 Public"}
-                  </span>
-                  <time className="muted" style={{ fontSize: "0.75rem" }}>
-                    {new Date(note.createdAt).toLocaleString()}
-                  </time>
-                </div>
-                <strong style={{ fontSize: "0.85rem" }}>
-                  {note.authorName} ({note.authorRole})
-                </strong>
-                <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>{note.content}</p>
-              </article>
-            ))
-          )}
+          <NotesList loading={loading} notes={notes} />
         </div>
       </div>
     </div>
