@@ -69,6 +69,31 @@ directly from the working tree so tests avoid rebuilding a Docker image after ev
 change. Development and production contain the complete service set because they support
 running the deployed application topology.
 
+### After Pulling Main
+
+After a merged pull request reaches `main`, update your local checkout and run the following
+from the repo root:
+
+```bash
+pnpm install
+pnpm docker:dev:db:up
+pnpm db:migrate
+pnpm dev
+```
+
+`pnpm install` picks up lockfile changes and regenerates the Prisma client through the
+repository's postinstall script. `pnpm db:migrate` applies any committed migrations to your
+local database; when there are no pending migrations, it is a safe no-op. You therefore do
+not need to inspect each merged pull request before running this sequence.
+
+Do not run `pnpm db:seed` after every pull. Seed only during first-time setup or when a change
+explicitly requires refreshed development data. If the seed data changed and you need to
+rebuild it, follow the `pnpm db:clear` and `pnpm db:seed` instructions below.
+
+If you use the full-stack Docker workflow, replace `pnpm dev` with `pnpm docker:dev:up` so the
+application images are rebuilt from the pulled code. Still run `pnpm db:migrate` before
+starting the stack.
+
 ### Recommended: Database In Docker, Apps Local
 
 Use this for daily feature development:

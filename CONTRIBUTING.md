@@ -18,6 +18,14 @@ Use `pnpm docker:dev:up` only when you intentionally want the whole stack runnin
 Do not run `pnpm dev` at the same time as the full Docker stack unless you have changed
 ports or stopped the app containers.
 
+## After Pulling Main
+
+After a pull request is merged and you pull `main`, follow the post-pull workflow in
+[`docs/development/getting-started.md`](docs/development/getting-started.md#after-pulling-main).
+In short: run `pnpm install`, start the local database, run `pnpm db:migrate`, and then run
+`pnpm dev`. The migration command is safe to run when no migrations are pending. Do not seed
+the database after every pull.
+
 ## Before Opening A Pull Request
 
 Run the same checks CI runs:
