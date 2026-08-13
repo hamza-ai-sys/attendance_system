@@ -78,6 +78,7 @@ from the repo root:
 pnpm install
 pnpm docker:dev:db:up
 pnpm db:migrate
+pnpm db:generate
 pnpm db:seed
 pnpm dev
 ```
