@@ -1,26 +1,23 @@
 import Link from "next/link";
-import { logout } from "../app/(auth)/login/actions";
+import { logout } from "../../../(auth)/login/actions";
 
-type RequestReviewHeaderProps = {
-  title: string;
-  description: string;
-  reviewerName: string;
-};
-
-export function RequestReviewHeader({
-  title,
-  description,
-  reviewerName
-}: RequestReviewHeaderProps) {
+export function TeamAttendanceHeader({
+  dateText,
+  dayNote
+}: {
+  dateText: string;
+  dayNote?: string;
+}) {
   return (
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
           ← Dashboard
         </Link>
-        <h1>{title}</h1>
+        <h1>Team Attendance Status</h1>
         <p className="muted">
-          {description} Reviewing as <strong>{reviewerName}</strong>.
+          Live team monitor for <strong>{dateText}</strong>
+          {dayNote && <span style={{ color: "#c084fc", marginLeft: 8 }}>• {dayNote}</span>}
         </p>
       </div>
       <form action={logout}>

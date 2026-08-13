@@ -1,26 +1,16 @@
 import Link from "next/link";
-import { logout } from "../app/(auth)/login/actions";
+import { logout } from "../../../(auth)/login/actions";
 
-type RequestReviewHeaderProps = {
-  title: string;
-  description: string;
-  reviewerName: string;
-};
-
-export function RequestReviewHeader({
-  title,
-  description,
-  reviewerName
-}: RequestReviewHeaderProps) {
+export function WorkCalendarHeader() {
   return (
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
           ← Dashboard
         </Link>
-        <h1>{title}</h1>
+        <h1>Workday Policy & Company Holidays</h1>
         <p className="muted">
-          {description} Reviewing as <strong>{reviewerName}</strong>.
+          Configure weekly off-days, hybrid schedules, and official holiday exemptions
         </p>
       </div>
       <form action={logout}>
