@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { submitPerformanceEvaluation } from "../app/team-attendance/actions";
+import { submitPerformanceEvaluation } from "../app/(dashboard)/team-attendance/actions";
 import type {
   ActivePerformanceTemplate,
   PerformanceTemplateField,
   TeamMemberSummary
-} from "../app/team-management/types";
+} from "../app/(dashboard)/team-management/types";
 
 interface TeamPerformanceEvaluationModalProps {
   employee: TeamMemberSummary;

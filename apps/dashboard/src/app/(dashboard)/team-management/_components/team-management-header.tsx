@@ -1,26 +1,16 @@
 import Link from "next/link";
-import { logout } from "../app/(auth)/login/actions";
+import { logout } from "../../../(auth)/login/actions";
 
-type RequestReviewHeaderProps = {
-  title: string;
-  description: string;
-  reviewerName: string;
-};
-
-export function RequestReviewHeader({
-  title,
-  description,
-  reviewerName
-}: RequestReviewHeaderProps) {
+export function TeamManagementHeader() {
   return (
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
           ← Dashboard
         </Link>
-        <h1>{title}</h1>
+        <h1>Team Management</h1>
         <p className="muted">
-          {description} Reviewing as <strong>{reviewerName}</strong>.
+          Manage your team members, record employee notes, and complete performance documents
         </p>
       </div>
       <form action={logout}>
