@@ -6,7 +6,7 @@ export function TeamManagementHeader() {
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>Team Management</h1>
         <p className="muted">

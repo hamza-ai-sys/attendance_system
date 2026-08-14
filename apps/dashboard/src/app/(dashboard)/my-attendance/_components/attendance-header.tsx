@@ -17,7 +17,7 @@ export function AttendanceHeader({ fullName, range }: { fullName: string; range:
           🌴 Leave Portal
         </Link>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <form action={logout}>
           <button type="submit" className="logout-btn">

@@ -25,7 +25,7 @@ export default async function LeaveSettingsPage() {
         <header className="topbar">
           <div>
             <Link href="/" className="back-link">
-              ← Back to Dashboard
+              ← Back to Home
             </Link>
             <h1 style={{ color: "#ef4444", background: "none" }}>403 Access Restricted</h1>
           </div>
@@ -59,7 +59,7 @@ export default async function LeaveSettingsPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
             <Link href="/" className="back-link">
-              ← Dashboard
+              ← Home
             </Link>
           </div>
           <h1>HR Leave Policy Settings</h1>

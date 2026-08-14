@@ -12,7 +12,7 @@ export function TeamAttendanceHeader({
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>Team Attendance Status</h1>
         <p className="muted">

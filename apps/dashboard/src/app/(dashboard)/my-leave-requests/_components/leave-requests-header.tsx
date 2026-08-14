@@ -12,7 +12,7 @@ export function LeaveRequestsHeader({
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>My Leave Requests</h1>
         <p className="muted">

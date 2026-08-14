@@ -18,7 +18,7 @@ export function ManualRequestsHeader({
       </div>
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <form action={logout}>
           <button type="submit" className="logout-btn">

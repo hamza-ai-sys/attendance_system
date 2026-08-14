@@ -31,13 +31,13 @@ describe("employee form logic", () => {
     const formData = validFormData();
     formData.set("email", "invalid");
     expect(validateCreateEmployeeInput(parseCreateEmployeeForm(formData))).toBe(
-      "A valid login email is required when dashboard access is enabled."
+      "A valid login email is required when portal access is enabled."
     );
 
     formData.set("email", "valid@example.com");
     formData.set("password", "short");
     expect(validateCreateEmployeeInput(parseCreateEmployeeForm(formData))).toBe(
-      "Password must be at least 6 characters long when dashboard access is enabled."
+      "Password must be at least 6 characters long when portal access is enabled."
     );
   });
 });

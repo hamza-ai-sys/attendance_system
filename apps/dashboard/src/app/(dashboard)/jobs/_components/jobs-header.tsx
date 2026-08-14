@@ -7,7 +7,7 @@ export function JobsHeader({ signedIn, isHr }: { signedIn: boolean; isHr: boolea
       <div>
         {signedIn && (
           <Link href="/" className="back-link">
-            ← Dashboard
+            ← Home
           </Link>
         )}
         <h1>Open Positions</h1>

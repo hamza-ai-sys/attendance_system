@@ -15,7 +15,7 @@ export function UnauthorizedView({ featureName, message }: UnauthorizedViewProps
         <p>{displayMessage}</p>
       </div>
       <Link href="/" className="back-link">
-        ← Back to Dashboard
+        ← Back to Home
       </Link>
     </main>
   );

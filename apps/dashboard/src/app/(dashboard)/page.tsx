@@ -16,7 +16,7 @@ export default async function Home() {
         <div>
           <span className="dashboard-welcome-label">Overview</span>
           <h2>Welcome back, {user.fullName}</h2>
-          <p className="muted">Choose a workspace to continue managing attendance.</p>
+          <p className="muted">Choose a workspace to continue.</p>
         </div>
         <span className="dashboard-role-badge">{user.roleName}</span>
       </section>

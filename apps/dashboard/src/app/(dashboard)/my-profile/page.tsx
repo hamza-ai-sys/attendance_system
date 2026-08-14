@@ -27,7 +27,7 @@ export default async function PersonalRecordsPage() {
 
   const initialData = {
     fullName: employee.membership.person.preferredName ?? employee.membership.person.legalName,
-    email: employee.membership.person.userAccount?.loginEmail ?? "No dashboard account",
+    email: employee.membership.person.userAccount?.loginEmail ?? "No portal account",
     employeeCode: employee.employeeCode,
     roleName: user.roleName,
     phone: employee.membership.person.phone,
@@ -46,7 +46,7 @@ export default async function PersonalRecordsPage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
             <Link href="/" className="back-link">
-              ← Dashboard
+              ← Home
             </Link>
           </div>
           <h1>My Personal Records</h1>

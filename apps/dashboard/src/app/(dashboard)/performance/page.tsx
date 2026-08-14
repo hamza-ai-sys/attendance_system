@@ -120,12 +120,12 @@ export default async function PerformancePage() {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
             <Link href="/" className="back-link">
-              ← Dashboard
+              ← Home
             </Link>
           </div>
           <h1>Performance Tracking & Analysis</h1>
           <p className="muted">
-            HR Dashboard for evaluation form definition & organizational performance analytics
+            HR workspace for evaluation form definition and organizational performance analytics
           </p>
         </div>
         <form action={logout}>

@@ -21,10 +21,10 @@ export function parseCreateEmployeeForm(formData: FormData): CreateEmployeeInput
 export function validateCreateEmployeeInput(input: CreateEmployeeInput): string | null {
   if (!input.fullName) return "Full Name is required.";
   if (input.grantDashboardAccess && (!input.email || !input.email.includes("@"))) {
-    return "A valid login email is required when dashboard access is enabled.";
+    return "A valid login email is required when portal access is enabled.";
   }
   if (input.grantDashboardAccess && input.password.length < 6) {
-    return "Password must be at least 6 characters long when dashboard access is enabled.";
+    return "Password must be at least 6 characters long when portal access is enabled.";
   }
   if (!input.organizationUnitId) return "Organization unit selection is required.";
   if (!input.positionId) return "Position selection is required.";

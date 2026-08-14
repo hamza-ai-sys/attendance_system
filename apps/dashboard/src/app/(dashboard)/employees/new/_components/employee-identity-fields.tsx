@@ -45,8 +45,7 @@ export function EmployeeIdentityFields() {
       </div>
       <div className="form-group">
         <label>
-          <input name="grantDashboardAccess" type="checkbox" defaultChecked /> Grant dashboard
-          access
+          <input name="grantDashboardAccess" type="checkbox" defaultChecked /> Grant portal access
         </label>
         <span className="muted">Email and password are required only when access is granted.</span>
       </div>

@@ -48,7 +48,7 @@ export function DashboardTopbar({
           <span />
         </button>
         <div>
-          <span className="dashboard-topbar-eyebrow">Attendance System</span>
+          <span className="dashboard-topbar-eyebrow">Workforce Portal</span>
           <h1>{getPageTitle(pathname, modules)}</h1>
         </div>
       </div>

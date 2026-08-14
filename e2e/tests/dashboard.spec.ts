@@ -11,7 +11,7 @@ async function login(page: Page, email: string) {
 }
 
 function dashboard(page: Page) {
-  return page.getByRole("region", { name: "Dashboard modules" });
+  return page.getByRole("region", { name: "Portal workspaces" });
 }
 
 test("redirects unauthenticated users to login", async ({ page }) => {

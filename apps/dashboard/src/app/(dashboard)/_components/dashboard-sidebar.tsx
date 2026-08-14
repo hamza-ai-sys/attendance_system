@@ -28,11 +28,11 @@ export function DashboardSidebar({ modules, onNavigate, open }: DashboardSidebar
     >
       <div className="sidebar-brand">
         <span className="sidebar-brand-mark" aria-hidden="true">
-          A
+          W
         </span>
         <div>
-          <strong>Attendance</strong>
-          <span>Management System</span>
+          <strong>Workforce</strong>
+          <span>Portal</span>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export function DashboardSidebar({ modules, onNavigate, open }: DashboardSidebar
           onClick={onNavigate}
         >
           <span className="sidebar-link-dot" aria-hidden="true" />
-          Dashboard
+          Home
         </Link>
 
         {groups.map((group) => (
@@ -69,7 +69,7 @@ export function DashboardSidebar({ modules, onNavigate, open }: DashboardSidebar
         ))}
       </nav>
 
-      <div className="sidebar-footer">Secure workforce portal</div>
+      <div className="sidebar-footer">Secure Workforce Portal</div>
     </aside>
   );
 }

@@ -61,7 +61,7 @@ export function DashboardModuleGrid({
   modules: DashboardModule[];
 }) {
   return (
-    <section className="panel-grid" aria-label="Dashboard modules">
+    <section className="panel-grid" aria-label="Portal workspaces">
       {modules.length === 0 && (
         <p className="muted">You do not have permission to view any modules.</p>
       )}

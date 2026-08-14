@@ -36,7 +36,7 @@ export function getNavigationGroups(modules: DashboardModule[]): NavigationGroup
 }
 
 const routeTitles: Record<string, string> = {
-  "/": "Dashboard",
+  "/": "Home",
   "/my-profile": "My Profile",
   "/personal-records": "Personal Records",
   "/manual-requests": "Manual Requests",
@@ -52,5 +52,5 @@ export function getPageTitle(pathname: string, modules: DashboardModule[]): stri
     .sort((left, right) => right.href.length - left.href.length)
     .find(({ href }) => pathname === href || pathname.startsWith(`${href}/`));
 
-  return module?.name ?? "Attendance System";
+  return module?.name ?? "Workforce Portal";
 }

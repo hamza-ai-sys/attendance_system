@@ -10,7 +10,7 @@ export function AnnouncementsHeader({ canManageAnnouncements }: AnnouncementsHea
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>Announcements</h1>
         <p className="muted">Company-wide notices and policy updates.</p>

@@ -16,7 +16,7 @@ export function RequestReviewHeader({
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>{title}</h1>
         <p className="muted">

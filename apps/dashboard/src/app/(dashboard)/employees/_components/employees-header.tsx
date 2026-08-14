@@ -29,7 +29,7 @@ export function EmployeesHeader({
           </Link>
         )}
         <Link href={showAddEmployee ? "/" : "/employees"} className="back-link">
-          ← {showAddEmployee ? "Dashboard" : "Employees"}
+          ← {showAddEmployee ? "Home" : "Employees"}
         </Link>
         <form action={logout}>
           <button type="submit" className="logout-btn">

@@ -11,7 +11,7 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.glassCard}>
         <h1 className={styles.title}>Welcome Back</h1>
-        <p className={styles.subtitle}>Sign in to your attendance portal</p>
+        <p className={styles.subtitle}>Sign in to your workforce portal</p>
 
         {state?.error && <div className={styles.error}>{state.error}</div>}
 

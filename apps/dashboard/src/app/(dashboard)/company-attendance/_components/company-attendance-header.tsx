@@ -20,7 +20,7 @@ export function CompanyAttendanceHeader({
     <header className="topbar">
       <div>
         <Link href="/" className="back-link">
-          ← Dashboard
+          ← Home
         </Link>
         <h1>Company Attendance Metrics</h1>
         <p className="muted">{subtitle}</p>
