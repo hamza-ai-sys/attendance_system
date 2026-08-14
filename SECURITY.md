@@ -29,7 +29,7 @@ signatures. Signature details are documented in `docs/architecture/device-protoc
 
 - Keep Postgres off the public internet.
 - Bind app containers to localhost when nginx runs on the host.
-- Use TLS for dashboard and device traffic.
+- Use TLS for portal and device traffic.
 - Run `pnpm db:migrate:deploy`; do not use development migrations or seeds in production.
 
 ## Reporting Issues

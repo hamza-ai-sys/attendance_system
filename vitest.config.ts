@@ -5,7 +5,7 @@ export default defineConfig({
     coverage: {
       exclude: ["**/*.d.ts", "packages/db/src/generated/**"],
       include: [
-        "apps/dashboard/src/**/*.{ts,tsx}",
+        "apps/portal/src/**/*.{ts,tsx}",
         "apps/device-gateway/src/**/*.ts",
         "apps/worker/src/**/*.ts",
         "packages/attendance-core/src/**/*.ts",
@@ -23,7 +23,7 @@ export default defineConfig({
       }
     },
     projects: [
-      "apps/dashboard/vitest.config.ts",
+      "apps/portal/vitest.config.ts",
       "apps/device-gateway/vitest.config.ts",
       "apps/worker/vitest.config.ts",
       "packages/attendance-core/vitest.config.ts",

@@ -3,7 +3,7 @@
 ## Headers
 
 ```text
-x-device-id: device id issued by the dashboard
+x-device-id: device id issued by the portal
 x-device-timestamp: unix seconds, unix milliseconds, or ISO timestamp
 x-device-signature: HMAC-SHA256 signature as hex or sha256=<hex>
 ```

@@ -10,7 +10,7 @@ shape of the data and the safe path from an existing database to that shape.
    models.
 2. Identify the owning domain and lifecycle. Decide whether the value belongs to a `Person`,
    `UserAccount`, `OrganizationMembership`, `Employment`, or a feature-owned model.
-3. Search all readers and writers of the affected models, including dashboard queries/actions,
+3. Search all readers and writers of the affected models, including portal queries/actions,
    device gateway routes, worker jobs, tests, and seed scripts.
 4. Classify the change:
    - **Additive:** nullable column, table, or compatible index.
@@ -97,7 +97,7 @@ be rolled back after data has been transformed or old columns have been removed.
 Update affected:
 
 - Prisma selects/includes and transactions;
-- dashboard actions, queries, authorization, forms, and displayed labels;
+- portal actions, queries, authorization, forms, and displayed labels;
 - device gateway and worker logic;
 - shared validation schemas and TypeScript types;
 - unit, integration, and E2E tests; and

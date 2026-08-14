@@ -1,6 +1,6 @@
 # Database Architecture
 
-This document explains the intent and boundaries of the attendance system's PostgreSQL data
+This document explains the intent and boundaries of the workforce platform's PostgreSQL data
 model. It is the human-readable companion to the implementation; it is not a substitute for
 the schema or migration history.
 
@@ -106,8 +106,8 @@ Each mapping or assignment has a `PermissionScope`, such as `SELF`, `DIRECT_REPO
 `ORGANIZATION_UNIT_TREE`, or `ORGANIZATION`. A scoped role answers two separate questions:
 **what action is allowed** and **which records it applies to**. Features must check both.
 
-The current dashboard resolver is
-[`apps/dashboard/src/lib/authorization.ts`](../../apps/dashboard/src/lib/authorization.ts). It
+The current portal resolver is
+[`apps/portal/src/lib/authorization.ts`](../../apps/portal/src/lib/authorization.ts). It
 reloads access on each request and combines position and explicit roles, but its session user
 currently contains flattened role and permission keys, not the scope metadata. Until scoped
 resource checks are implemented centrally, a permission key alone must not be treated as proof
@@ -180,7 +180,7 @@ file size, retention, or external storage are architectural changes.
 ### Performance
 
 `PerformanceTemplate.fields` defines a dynamic evaluation form and
-`PerformanceEvaluation.responses` stores its answers. The dashboard must validate responses
+`PerformanceEvaluation.responses` stores its answers. The portal must validate responses
 against the referenced template version. Templates are currently mutable, so changing fields
 after evaluations exist can affect how historical responses are interpreted.
 
@@ -235,7 +235,7 @@ separate architectural migration that must include backfill and query-isolation 
   for display using the effective assignment timezone, then organization timezone as fallback.
 - Effective intervals are treated as half-open: `validFrom <= now < validUntil`, with null
   `validUntil` meaning open-ended. Shared query helpers live in
-  [`apps/dashboard/src/lib/employment.ts`](../../apps/dashboard/src/lib/employment.ts).
+  [`apps/portal/src/lib/employment.ts`](../../apps/portal/src/lib/employment.ts).
 - `Restrict` is used for history that must not be orphaned, `Cascade` for owned child records, and
   `SetNull` where evidence should survive deletion of its optional actor/match. Review every
   referential action as part of a schema change.

@@ -8,7 +8,7 @@ ESP32 + scanner
         <-> PostgreSQL
 
 Employees, managers, HR
-  <-> apps/dashboard
+  <-> apps/portal
         <-> PostgreSQL
 
 apps/worker
@@ -19,7 +19,7 @@ apps/worker
 
 - `firmware` runs on ESP32 and talks to the fingerprint scanner.
 - `device-gateway` is the only service ESP32 devices call.
-- `dashboard` is the human-facing full-stack Next.js application.
+- `portal` is the human-facing full-stack Next.js application.
 - `worker` handles time-based and background work.
 
 ## Principles

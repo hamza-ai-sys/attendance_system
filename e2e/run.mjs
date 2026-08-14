@@ -5,16 +5,16 @@ import { setTimeout } from "node:timers/promises";
 import { URL } from "node:url";
 
 const postgresPort = process.env.E2E_POSTGRES_PORT ?? "55432";
-const dashboardPort = process.env.E2E_DASHBOARD_PORT ?? "3100";
-const composeArgs = ["compose", "-f", "docker-compose.e2e.yml", "-p", "attendance-e2e"];
+const portalPort = process.env.E2E_PORTAL_PORT ?? "3100";
+const composeArgs = ["compose", "-f", "docker-compose.e2e.yml", "-p", "workforce-e2e"];
 const databaseUrl = `postgresql://attendance_e2e:attendance_e2e_password@127.0.0.1:${postgresPort}/attendance_e2e?schema=public`;
-const nextEnvPath = new URL("../apps/dashboard/next-env.d.ts", import.meta.url);
+const nextEnvPath = new URL("../apps/portal/next-env.d.ts", import.meta.url);
 const nextEnvBeforeTests = await readFile(nextEnvPath, "utf8");
 
 const e2eEnv = {
   ...process.env,
   DATABASE_URL: databaseUrl,
-  E2E_DASHBOARD_PORT: dashboardPort,
+  E2E_PORTAL_PORT: portalPort,
   E2E_POSTGRES_PORT: postgresPort,
   NODE_ENV: "test",
   SESSION_SECRET: "e2e-only-session-secret-at-least-32-bytes-long"

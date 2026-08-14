@@ -1,12 +1,12 @@
-# Attendance System
+# Workforce Platform
 
-Monorepo scaffold for an ESP32 fingerprint attendance system.
+Workforce management platform with an ESP32 fingerprint attendance integration.
 
 ## Projects
 
 - `apps/firmware`: ESP32 C++ firmware using PlatformIO.
 - `apps/device-gateway`: Express service used only by ESP32 devices.
-- `apps/dashboard`: Next.js human-facing dashboard.
+- `apps/portal`: Next.js human-facing workforce portal.
 - `apps/worker`: background jobs, notifications, reports, and cleanup.
 - `packages/db`: Prisma schema, database client, migrations, and seed data.
 - `packages/shared`: shared schemas and types.
@@ -20,7 +20,7 @@ See `docs/development/getting-started.md` for the full development guide.
 ```bash
 pnpm install
 cp .env.dev.example .env
-cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/portal/.env.dev.example apps/portal/.env
 cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
 pnpm docker:dev:db:up
 pnpm db:migrate
@@ -42,7 +42,7 @@ pnpm docker:dev:up
 ```
 
 When using `pnpm docker:dev:up`, do not also run `pnpm dev` unless you stop the app containers
-or change ports. The Docker stack already starts `dashboard`, `device-gateway`, and
+or change ports. The Docker stack already starts `portal`, `device-gateway`, and
 `worker`.
 
 ## Useful Commands
@@ -77,7 +77,7 @@ The production target is Docker Compose on an Ubuntu VPS behind nginx.
 - Use `.env.prod.example` as the template for `.env.prod`.
 - Validate production Compose with `pnpm docker:prod:config`.
 - Apply database migrations with `pnpm db:migrate:deploy`.
-- Use `infra/nginx/attendance.conf` as the nginx starting point.
+- Use `infra/nginx/workforce-portal.conf` as the nginx starting point.
 
 See `docs/deployment/vps-nginx.md` for the full runbook.
 
@@ -95,7 +95,7 @@ See `docs/deployment/vps-nginx.md` for the full runbook.
 `device-gateway` is hardware-facing. It accepts heartbeats, scan events, and enrollment
 results. Heartbeat responses carry the desired device mode and enrollment work.
 
-`dashboard` is human-facing. It owns employee management, attendance views, manual
+`portal` is human-facing. It owns employee management, attendance views, manual
 attendance requests, approvals, notification inboxes, and reports.
 
 `worker` reacts to durable records and time-based rules. It handles reminders, anomaly

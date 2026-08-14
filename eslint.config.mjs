@@ -42,7 +42,7 @@ export default [
     }
   },
   {
-    files: ["apps/dashboard/src/**/*.{ts,tsx}"],
+    files: ["apps/portal/src/**/*.{ts,tsx}"],
     plugins: {
       local: {
         rules: {
@@ -56,7 +56,7 @@ export default [
     }
   },
   {
-    files: ["apps/dashboard/src/**/*.tsx"],
+    files: ["apps/portal/src/**/*.tsx"],
     rules: {
       // UI modules should remain easy to review and split along component boundaries.
       "max-lines": [

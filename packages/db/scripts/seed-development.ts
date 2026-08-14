@@ -92,11 +92,11 @@ async function seedDevelopmentAccessFoundation(tx: Prisma.TransactionClient) {
   const organization = await tx.organization.upsert({
     where: { slug: "default" },
     create: {
-      name: "Attendance System Company",
+      name: "99xAutomation",
       slug: "default",
       timezone: "Asia/Karachi"
     },
-    update: { name: "Attendance System Company", isActive: true }
+    update: { name: "99xAutomation", isActive: true }
   });
 
   const permissionKeys = [...new Set(Object.values(developmentRolePermissions).flat())];

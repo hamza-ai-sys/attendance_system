@@ -1,4 +1,4 @@
-# Playwright starts the dashboard from source on the host. This stack only
+# Playwright starts the portal from source on the host. This stack only
 # supplies a disposable PostgreSQL instance and never uses a named volume.
 services:
   postgres-e2e:

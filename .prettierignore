@@ -19,9 +19,9 @@ build/
 coverage/
 playwright-report/
 test-results/
-apps/dashboard/.next/
-apps/dashboard/out/
-apps/dashboard/next-env.d.ts
+apps/portal/.next/
+apps/portal/out/
+apps/portal/next-env.d.ts
 
 # Generated firmware files
 apps/firmware/.pio/
