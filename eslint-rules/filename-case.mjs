@@ -6,7 +6,7 @@ export const filenameCaseRule = {
   meta: {
     type: "suggestion",
     docs: {
-      description: "Require kebab-case filenames for dashboard TypeScript source files"
+      description: "Require kebab-case filenames for portal TypeScript source files"
     },
     schema: [],
     messages: {

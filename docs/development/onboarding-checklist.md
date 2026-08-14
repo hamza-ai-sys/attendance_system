@@ -22,7 +22,7 @@ Use this checklist when a new engineer joins the project.
 - [ ] Run `pnpm db:migrate`.
 - [ ] Run `pnpm db:seed`.
 - [ ] Run `pnpm dev`.
-- [ ] Open dashboard at `http://localhost:3000`.
+- [ ] Open the portal at `http://localhost:3000`.
 - [ ] Open gateway health check at `http://localhost:4001/healthz`.
 
 ## Verification

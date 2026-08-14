@@ -5,7 +5,7 @@ Target shape:
 ```text
 internet
   -> nginx on Ubuntu host
-    -> 127.0.0.1:3000 dashboard container
+    -> 127.0.0.1:3000 portal container
     -> 127.0.0.1:4001 device-gateway container
 postgres stays inside Docker / localhost only
 ```
@@ -47,7 +47,7 @@ set `POSTGRES_VOLUME_NAME` to that exact name before starting the new production
 Keep these binds unless you intentionally move nginx into Docker:
 
 ```dotenv
-DASHBOARD_BIND=127.0.0.1:3000
+PORTAL_BIND=127.0.0.1:3000
 DEVICE_GATEWAY_BIND=127.0.0.1:4001
 POSTGRES_BIND=127.0.0.1:5432
 ```
@@ -55,14 +55,14 @@ POSTGRES_BIND=127.0.0.1:5432
 ## 3. Validate Compose Config
 
 ```bash
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml config
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml config
 ```
 
 ## 4. Build Images And Start PostgreSQL
 
 ```bash
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml build
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml up -d postgres
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml build
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml up -d postgres
 ```
 
 ## 5. Run Database Migrations
@@ -70,7 +70,7 @@ docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.ym
 Run migrations after the database is healthy and before sending traffic to the app:
 
 ```bash
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml run --rm dashboard pnpm db:migrate:deploy
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml run --rm portal pnpm db:migrate:deploy
 ```
 
 Do not run `pnpm db:seed` in production. The bundled seed is development-only.
@@ -78,13 +78,13 @@ Do not run `pnpm db:seed` in production. The bundled seed is development-only.
 ## 6. Start Application Services
 
 ```bash
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml up -d
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml up -d
 ```
 
 Check container health before directing traffic to a new deployment:
 
 ```bash
-docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.yml ps
+docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml ps
 ```
 
 ## 7. Configure Nginx
@@ -92,8 +92,8 @@ docker compose -p attendance-prod --env-file .env.prod -f docker-compose.prod.ym
 Copy the sample config:
 
 ```bash
-sudo cp infra/nginx/attendance.conf /etc/nginx/sites-available/attendance.conf
-sudo ln -s /etc/nginx/sites-available/attendance.conf /etc/nginx/sites-enabled/attendance.conf
+sudo cp infra/nginx/workforce-portal.conf /etc/nginx/sites-available/workforce-portal.conf
+sudo ln -s /etc/nginx/sites-available/workforce-portal.conf /etc/nginx/sites-enabled/workforce-portal.conf
 ```
 
 Replace `attendance.example.com` and `devices.attendance.example.com` with real domains.
@@ -124,7 +124,7 @@ The repo includes `infra/backups/postgres-backup.sh`. Run it from an environment
 Example cron entry:
 
 ```cron
-15 2 * * * cd /opt/attendance-system && DATABASE_URL='postgresql://...' BACKUP_DIR=/var/backups/attendance ./infra/backups/postgres-backup.sh
+15 2 * * * cd /opt/workforce-platform && DATABASE_URL='postgresql://...' BACKUP_DIR=/var/backups/attendance ./infra/backups/postgres-backup.sh
 ```
 
 Test restore procedures before relying on backups.

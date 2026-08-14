@@ -9,7 +9,7 @@ updates:
     schedule:
       interval: "weekly"
   - package-ecosystem: "docker"
-    directory: "/apps/dashboard"
+    directory: "/apps/portal"
     schedule:
       interval: "weekly"
   - package-ecosystem: "docker"

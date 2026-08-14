@@ -1,13 +1,13 @@
-# Dashboard Module Structure
+# Portal Module Structure
 
-Dashboard routes should be organized as small, feature-local modules. The route file coordinates
+Portal routes should be organized as small, feature-local modules. The route file coordinates
 authentication, authorization, data loading, and rendering; it should not contain the detailed UI
 or business logic for the feature.
 
 ## Recommended Layout
 
 ```text
-apps/dashboard/src/app/<route>/
+apps/portal/src/app/<route>/
 ├── page.tsx
 ├── actions.ts
 ├── permissions.ts
@@ -36,7 +36,7 @@ modules and may have their own `_components` and `_lib` folders.
 - `queries.ts` contains database reads and maps persistence records into page-facing data. React
   components should not know Prisma query details.
 - `permissions.ts` contains feature-specific authorization predicates. Generic role and permission
-  primitives remain in the dashboard's shared RBAC library.
+  primitives remain in the portal's shared RBAC library.
 - `types.ts` contains types owned by the feature. Do not export UI state or feature contracts from
   `actions.ts` merely because an action uses them.
 - `_components/` contains feature-local React components. The underscore keeps implementation
@@ -75,7 +75,7 @@ include headers, filters, metric cards, tables, rows, forms, modal bodies, and e
 component should receive display-ready data and expose events; query and policy details belong
 outside it.
 
-ESLint enforces these dashboard limits:
+ESLint enforces these portal limits:
 
 - React/TSX module: at most 250 effective lines.
 - Named React component: at most 100 effective lines.
@@ -97,7 +97,7 @@ disable the rules to avoid a reasonable extraction.
 
 ## Validation
 
-After changing a dashboard module, run its focused lint/tests during development and the complete
+After changing a portal module, run its focused lint/tests during development and the complete
 checks before opening a pull request:
 
 ```bash

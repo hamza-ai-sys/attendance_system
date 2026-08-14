@@ -23,9 +23,7 @@ if (existsSync(appEnvPath)) {
 }
 
 if (command !== "build" && !process.env.PORT) {
-  throw new Error(
-    "PORT is required. Create apps/dashboard/.env from apps/dashboard/.env.dev.example."
-  );
+  throw new Error("PORT is required. Create apps/portal/.env from apps/portal/.env.dev.example.");
 }
 
 process.argv = [process.argv[0], "next", ...process.argv.slice(2)];

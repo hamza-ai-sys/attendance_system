@@ -4,7 +4,7 @@ WORKDIR /app
 RUN npm install -g corepack@latest && corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
-COPY apps/dashboard/package.json apps/dashboard/package.json
+COPY apps/portal/package.json apps/portal/package.json
 COPY packages/attendance-core/package.json packages/attendance-core/package.json
 COPY packages/db/package.json packages/db/package.json
 COPY packages/db/prisma packages/db/prisma
@@ -14,10 +14,10 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm --filter @attendance/db generate
-RUN pnpm --filter @attendance/dashboard build
+RUN pnpm --filter @workforce/portal build
 RUN chown -R node:node /app
 
 ENV NODE_ENV=production
 USER node
 EXPOSE 3000
-CMD ["pnpm", "--filter", "@attendance/dashboard", "start"]
+CMD ["pnpm", "--filter", "@workforce/portal", "start"]

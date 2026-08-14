@@ -78,20 +78,20 @@ cross-environment backfill.
 ## Service Boundaries
 
 - `apps/device-gateway` is only for device traffic.
-- `apps/dashboard` owns human-facing workflows.
+- `apps/portal` owns human-facing workflows.
 - `apps/worker` owns background work.
 - Shared code belongs in `packages/*` only when at least two services need it.
 
-## Dashboard Modules
+## Portal Modules
 
-Dashboard route work must follow the feature-local structure described in
-[`docs/architecture/dashboard-module-structure.md`](docs/architecture/dashboard-module-structure.md).
+Portal route work must follow the feature-local structure described in
+[`docs/architecture/portal-module-structure.md`](docs/architecture/portal-module-structure.md).
 Keep route pages thin, put feature UI in `_components`, pure feature logic in `_lib`, and keep
 queries, permissions, actions, and types in modules named for those responsibilities.
 
-## Dashboard Component Size Limits
+## Portal Component Size Limits
 
-Dashboard React modules are limited to 250 effective lines. Ordinary functions are limited to 50
+Portal React modules are limited to 250 effective lines. Ordinary functions are limited to 50
 effective lines, while named React components are limited to 100. Blank lines and comment-only
 lines do not count. The limits are enforced by ESLint during `pnpm lint`.
 

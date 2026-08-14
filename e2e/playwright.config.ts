@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const dashboardPort = Number(process.env.E2E_DASHBOARD_PORT ?? 3100);
-const baseURL = `http://localhost:${dashboardPort}`;
+const portalPort = Number(process.env.E2E_PORTAL_PORT ?? 3100);
+const baseURL = `http://localhost:${portalPort}`;
 
 export default defineConfig({
   testDir: "./tests",
@@ -17,13 +17,13 @@ export default defineConfig({
     video: "retain-on-failure"
   },
   webServer: {
-    command: "pnpm --filter @attendance/dashboard dev",
+    command: "pnpm --filter @workforce/portal dev",
     url: `${baseURL}/healthz`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
       DATABASE_URL: process.env.DATABASE_URL ?? "",
-      PORT: String(dashboardPort),
+      PORT: String(portalPort),
       SESSION_SECRET: process.env.SESSION_SECRET ?? "e2e-only-session-secret-at-least-32-bytes-long"
     }
   },

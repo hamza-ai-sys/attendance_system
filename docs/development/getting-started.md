@@ -1,10 +1,10 @@
 # Development Guide
 
-This guide is the first stop for engineers working on the attendance system.
+This guide is the first stop for engineers working on the workforce platform.
 
 The repo is a pnpm monorepo with:
 
-- `apps/dashboard`: Next.js dashboard for employees, managers, HR, and owners.
+- `apps/portal`: Next.js portal for employees, managers, HR, and owners.
 - `apps/device-gateway`: Express API used by ESP32 devices only.
 - `apps/worker`: background jobs.
 - `apps/firmware`: ESP32 firmware using PlatformIO.
@@ -36,7 +36,7 @@ From the repo root:
 ```bash
 pnpm install
 cp .env.dev.example .env
-cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/portal/.env.dev.example apps/portal/.env
 cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
 pnpm docker:dev:db:up
 pnpm db:migrate
@@ -49,7 +49,7 @@ the TypeScript apps locally with watch mode.
 
 Default local URLs:
 
-- Dashboard: `http://localhost:3000`
+- Portal: `http://localhost:3000`
 - Device gateway health check: `http://localhost:4001/healthz`
 - PostgreSQL: `localhost:5432`
 
@@ -64,7 +64,7 @@ between them:
 | `docker-compose.e2e.yml`  | PostgreSQL for host-run Playwright tests     | Temporary in-memory filesystem |
 | `docker-compose.prod.yml` | Complete VPS production stack                | Persistent production volume   |
 
-The E2E file intentionally contains only PostgreSQL. The E2E runner starts the dashboard
+The E2E file intentionally contains only PostgreSQL. The E2E runner starts the portal
 directly from the working tree so tests avoid rebuilding a Docker image after every source
 change. Development and production contain the complete service set because they support
 running the deployed application topology.
@@ -131,7 +131,7 @@ pnpm docker:dev:logs
 ```
 
 Do not run `pnpm dev` while the full Docker stack is up unless you stop the app containers
-or change ports. The Docker stack already starts `dashboard`, `device-gateway`, and
+or change ports. The Docker stack already starts `portal`, `device-gateway`, and
 `worker`.
 
 Stop Docker services with:
@@ -145,7 +145,7 @@ pnpm docker:dev:down
 | Command                     | Purpose                                                       |
 | --------------------------- | ------------------------------------------------------------- |
 | `pnpm dev`                  | Run all TypeScript apps locally in watch mode.                |
-| `pnpm dev:dashboard`        | Run only the dashboard.                                       |
+| `pnpm dev:portal`           | Run only the portal.                                          |
 | `pnpm dev:device-gateway`   | Run only the device gateway.                                  |
 | `pnpm dev:worker`           | Run only the worker.                                          |
 | `pnpm docker:dev:db:up`     | Start only development PostgreSQL in Docker.                  |
@@ -161,7 +161,7 @@ pnpm docker:dev:down
 | `pnpm lint`                 | Run ESLint through Turbo.                                     |
 | `pnpm typecheck`            | Run TypeScript checks through Turbo.                          |
 | `pnpm test`                 | Run all TypeScript tests and generate coverage.               |
-| `pnpm e2e`                  | Run dashboard E2E tests with a fresh isolated database.       |
+| `pnpm e2e`                  | Run portal E2E tests with a fresh isolated database.          |
 | `pnpm e2e:install`          | Install the Chromium browser used by Playwright.              |
 | `pnpm build`                | Build all packages/apps.                                      |
 | `pnpm format`               | Format the repo with Prettier.                                |
@@ -192,7 +192,7 @@ pnpm test
 pnpm build
 ```
 
-## Dashboard E2E Tests
+## Portal E2E Tests
 
 Install the Playwright browser once, then run the E2E suite:
 
@@ -202,7 +202,7 @@ pnpm e2e
 ```
 
 The E2E runner starts PostgreSQL from `docker-compose.e2e.yml` on port `55432`, applies
-committed migrations, loads the deterministic E2E seed, starts the dashboard on port
+committed migrations, loads the deterministic E2E seed, starts the portal on port
 `3100`, and runs Playwright. It removes the container and its temporary database when the
 suite finishes, including after test failures. The normal development database and its
 named volume are not used or modified.
@@ -210,7 +210,7 @@ named volume are not used or modified.
 Override the default ports when they are already occupied:
 
 ```bash
-E2E_POSTGRES_PORT=55433 E2E_DASHBOARD_PORT=3101 pnpm e2e
+E2E_POSTGRES_PORT=55433 E2E_PORTAL_PORT=3101 pnpm e2e
 ```
 
 `pnpm test` prints a consolidated coverage summary and writes the browsable HTML report to
@@ -230,7 +230,7 @@ Use the `.env.dev.example` templates for local development:
 
 ```bash
 cp .env.dev.example .env
-cp apps/dashboard/.env.dev.example apps/dashboard/.env
+cp apps/portal/.env.dev.example apps/portal/.env
 cp apps/device-gateway/.env.dev.example apps/device-gateway/.env
 ```
 
@@ -253,7 +253,7 @@ Important shared local env values:
 
 Important app-owned values:
 
-- `apps/dashboard/.env`: `PORT` and `SESSION_SECRET`.
+- `apps/portal/.env`: `PORT` and `SESSION_SECRET`.
 - `apps/device-gateway/.env`: `PORT` and `DEVICE_SIGNATURE_MAX_AGE_SECONDS`.
 
 ## Database And Prisma
@@ -333,22 +333,22 @@ The development seed creates:
 
 Only the SHA-256 hash of the secret is stored in the database.
 
-## Dashboard Development
+## Portal Development
 
-Dashboard code lives under:
+Portal code lives under:
 
 ```text
-apps/dashboard/src
+apps/portal/src
 ```
 
 The current session-token helper is in:
 
 ```text
-apps/dashboard/src/lib/session-token.ts
-apps/dashboard/src/lib/session.ts
+apps/portal/src/lib/session-token.ts
+apps/portal/src/lib/session.ts
 ```
 
-The next major dashboard work should build on this:
+The next major portal work should build on this:
 
 - login/logout
 - password hashing
@@ -451,7 +451,7 @@ this repo.
 Keep changes inside the right service:
 
 - `device-gateway` is for hardware/device traffic only.
-- `dashboard` owns human workflows.
+- `portal` owns human workflows.
 - `worker` owns background jobs.
 - `packages/shared` holds shared schemas and types.
 - `packages/attendance-core` holds attendance rules.

@@ -44,10 +44,10 @@ services:
       timeout: 5s
       retries: 3
 
-  dashboard:
+  portal:
     build:
       context: .
-      dockerfile: apps/dashboard/Dockerfile
+      dockerfile: apps/portal/Dockerfile
     init: true
     restart: unless-stopped
     environment:
@@ -56,7 +56,7 @@ services:
       PORT: 3000
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
     ports:
-      - "${DASHBOARD_BIND:-127.0.0.1:3000}:3000"
+      - "${PORTAL_BIND:-127.0.0.1:3000}:3000"
     depends_on:
       postgres:
         condition: service_healthy

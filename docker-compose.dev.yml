@@ -42,10 +42,10 @@ services:
       timeout: 5s
       retries: 3
 
-  dashboard:
+  portal:
     build:
       context: .
-      dockerfile: apps/dashboard/Dockerfile
+      dockerfile: apps/portal/Dockerfile
     init: true
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-attendance}:${POSTGRES_PASSWORD:-attendance_dev_password}@postgres:5432/${POSTGRES_DB:-attendance}?schema=public
@@ -53,7 +53,7 @@ services:
       PORT: 3000
       SESSION_SECRET: ${SESSION_SECRET:-dev-only-session-secret-change-for-shared-envs}
     ports:
-      - "${DASHBOARD_BIND:-127.0.0.1:3000}:3000"
+      - "${PORTAL_BIND:-127.0.0.1:3000}:3000"
     depends_on:
       postgres:
         condition: service_healthy
