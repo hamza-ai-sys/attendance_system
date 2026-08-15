@@ -17,7 +17,8 @@ The repo is a pnpm monorepo with:
 Install these before starting:
 
 - Node.js 24 or newer.
-- pnpm 11.10.0 through Corepack.
+- Corepack, enabled so it uses the exact pnpm version pinned by the root `package.json`
+  `packageManager` field. Do not install or document a separate global pnpm version.
 - Docker Desktop or Docker Engine with the Compose plugin.
 - Git.
 - VS Code is recommended.
@@ -34,6 +35,7 @@ Recommended VS Code extensions are listed in `.vscode/extensions.json`.
 From the repo root:
 
 ```bash
+corepack enable
 pnpm install
 cp .env.dev.example .env
 cp apps/portal/.env.dev.example apps/portal/.env
@@ -160,6 +162,7 @@ pnpm docker:dev:down
 | `pnpm db:studio`            | Open Prisma Studio.                                           |
 | `pnpm lint`                 | Run ESLint through Turbo.                                     |
 | `pnpm typecheck`            | Run TypeScript checks through Turbo.                          |
+| `pnpm docs:check`           | Validate documentation links and architecture decisions.      |
 | `pnpm test:unit`            | Run the Vitest unit and service-level test suites.            |
 | `pnpm test:unit:coverage`   | Run the Vitest suites and enforce coverage thresholds.        |
 | `pnpm test:e2e`             | Run Playwright E2E tests with a fresh isolated database.      |
@@ -184,46 +187,10 @@ pnpm db:seed
 The cleanup is transactional, preserves migrations and schema objects, and refuses to run
 when `NODE_ENV=production`.
 
-Before opening a pull request, run:
+## Testing and Verification
 
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test:unit
-pnpm build
-```
-
-## Portal E2E Tests
-
-Install the Playwright browser once, then run the E2E suite:
-
-```bash
-pnpm test:e2e:install
-pnpm test:e2e
-```
-
-The E2E runner starts PostgreSQL from `docker-compose.e2e.yml` on port `55432`, applies
-committed migrations, loads the deterministic E2E seed, starts the portal on port
-`3100`, and runs Playwright. It removes the container and its temporary database when the
-suite finishes, including after test failures. The normal development database and its
-named volume are not used or modified.
-
-Override the default ports when they are already occupied:
-
-```bash
-E2E_POSTGRES_PORT=55433 E2E_PORTAL_PORT=3101 pnpm test:e2e
-```
-
-`pnpm test:unit:coverage` prints a consolidated coverage summary and writes the browsable HTML
-report to `coverage/index.html`. The command fails if coverage drops below the thresholds in
-`vitest.config.ts`. Firmware logic tests use PlatformIO and remain available through
-`pnpm firmware:test`; V8 coverage cannot instrument ESP32 C++.
-
-For firmware changes, also run:
-
-```bash
-pnpm firmware:build
-```
+The canonical [testing guide](testing.md) defines the unit, service-level, browser E2E, coverage,
+and firmware suites, including the checks required before a pull request.
 
 ## Environment Files
 
@@ -261,8 +228,8 @@ Important app-owned values:
 
 Read the database documents before changing persisted data:
 
-- [`docs/architecture/data-model.md`](../architecture/data-model.md) explains model ownership,
-  relationships, invariants, tenant boundaries, and known gaps.
+- [`docs/architecture/database-architecture.md`](../architecture/database-architecture.md)
+  explains model ownership, relationships, invariants, tenant boundaries, and known gaps.
 - [`docs/development/database-changes.md`](database-changes.md) defines the mandatory migration,
   seed, documentation, and verification workflow.
 
@@ -324,7 +291,7 @@ Device requests must include:
 The HMAC signing contract is documented in:
 
 ```text
-docs/architecture/device-protocol.md
+docs/architecture/attendance-device-api.md
 ```
 
 The development seed creates:
@@ -500,7 +467,7 @@ Then rerun the command from the repo root.
 ### Device requests get `invalid_signature`
 
 Check that the device signed the exact canonical string from
-`docs/architecture/device-protocol.md`. The raw request body, path, method, timestamp, and
+`docs/architecture/attendance-device-api.md`. The raw request body, path, method, timestamp, and
 secret must all match.
 
 ### `Arduino.h` is missing
@@ -515,13 +482,6 @@ Then rebuild the PlatformIO IntelliSense index in VS Code.
 
 ## Useful Reading Order
 
-New engineers should read these in order:
-
-1. `README.md`
-2. `docs/development/getting-started.md`
-3. `docs/architecture/overview.md`
-4. `docs/architecture/data-model.md`
-5. `docs/development/database-changes.md`
-6. `docs/architecture/device-protocol.md`
-7. `CONTRIBUTING.md`
-8. `SECURITY.md`
+New engineers should start with the [development documentation index](README.md) and use the
+[onboarding checklist](onboarding-checklist.md). Those documents link to the architecture,
+product, security, database, and testing material required for each role.

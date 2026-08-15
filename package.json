@@ -4,8 +4,7 @@
   "private": true,
   "packageManager": "pnpm@11.21.0",
   "engines": {
-    "node": ">=24.0.0",
-    "pnpm": ">=11.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "build": "turbo run build",
@@ -26,6 +25,7 @@
     "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
     "docker:dev:up": "docker compose -f docker-compose.dev.yml up -d --build",
     "docker:prod:config": "docker compose -p workforce-prod --env-file .env.prod -f docker-compose.prod.yml config",
+    "docs:check": "node scripts/check-docs.mjs",
     "firmware:build": "pio run -d apps/firmware",
     "firmware:clean": "pio run -d apps/firmware -t clean",
     "firmware:intellisense": "pio run -d apps/firmware -t compiledb",

@@ -159,7 +159,8 @@ erDiagram
   sequential `ApprovalStep` records.
 - A shift's `startTime` and `endTime` are `HH:mm` strings interpreted in `Shift.timezone`.
 
-See [`device-protocol.md`](device-protocol.md) for the device transport and heartbeat contract.
+See [`attendance-device-api.md`](attendance-device-api.md) for the device transport and heartbeat
+contract.
 
 ## Other Domain Rules
 

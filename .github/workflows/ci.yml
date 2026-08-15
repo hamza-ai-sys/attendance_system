@@ -17,8 +17,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6.0.10
-        with:
-          version: 11.21.0
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -34,6 +32,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Documentation
+        run: pnpm docs:check
 
       - name: Unit tests (Vitest)
         run: pnpm test:unit

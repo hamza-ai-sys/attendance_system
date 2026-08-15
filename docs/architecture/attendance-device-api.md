@@ -1,4 +1,4 @@
-# Device Protocol
+# Attendance Device HTTP API
 
 ## Headers
 

@@ -114,7 +114,7 @@ Every physical device must have:
 - A unique random device secret.
 - `Device.apiKeyHash` set to the SHA-256 hex digest of that secret.
 
-The device signs requests as documented in `docs/architecture/device-protocol.md`.
+The device signs requests as documented in `docs/architecture/attendance-device-api.md`.
 
 ## 9. Backups
 

@@ -8,7 +8,7 @@ Use this checklist when a new engineer joins the project.
 - [ ] Docker installed and running.
 - [ ] Node.js 24+ installed.
 - [ ] Corepack enabled.
-- [ ] pnpm available.
+- [ ] pnpm resolves to the version pinned by the root `package.json` `packageManager` field.
 - [ ] VS Code recommended extensions installed.
 - [ ] PlatformIO installed if working on firmware.
 
@@ -35,12 +35,14 @@ Use this checklist when a new engineer joins the project.
 
 ## Project Context
 
-- [ ] Read `docs/architecture/overview.md`.
-- [ ] Read `docs/architecture/data-model.md`.
+- [ ] Read `docs/development/contributing.md`.
+- [ ] Read `docs/development/testing.md`.
+- [ ] Read `docs/development/security.md`.
+- [ ] Read `docs/architecture/system-overview.md`.
+- [ ] Read `docs/architecture/database-architecture.md`.
+- [ ] Read `docs/architecture/decisions/README.md`.
 - [ ] Read `docs/development/database-changes.md` before making a database change.
-- [ ] Read `docs/architecture/device-protocol.md`.
-- [ ] Read `CONTRIBUTING.md`.
-- [ ] Read `SECURITY.md`.
+- [ ] Read `docs/architecture/attendance-device-api.md`.
 
 ## Before First Pull Request
 
