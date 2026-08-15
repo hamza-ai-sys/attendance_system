@@ -5,6 +5,7 @@
 - Roadmap week / feature key / issue:
 - User-visible outcome:
 - Explicitly out of scope:
+- Architecture decision / reason no ADR is needed:
 
 ## Safety review
 
@@ -15,12 +16,14 @@
 - [ ] Release flags and subscription entitlements are enforced server-side or not applicable
 - [ ] Validation, audit, idempotency, timezones, and failure/retry behavior are covered or not applicable
 - [ ] No secrets, personal data, biometric data, internal errors, or production payloads are exposed
+- [ ] A qualifying architecture decision is recorded and indexed, or this change is not architectural
 
 ## Verification
 
 - [ ] Focused tests added/updated and passing
 - [ ] `pnpm lint`
 - [ ] `pnpm typecheck`
+- [ ] `pnpm docs:check`
 - [ ] `pnpm test:unit`
 - [ ] `pnpm build`
 - [ ] `pnpm format:check`

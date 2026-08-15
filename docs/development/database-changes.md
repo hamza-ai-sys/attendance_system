@@ -17,9 +17,9 @@ shape of the data and the safe path from an existing database to that shape.
    - **Data-changing:** backfill, type conversion, rename, or relationship migration.
    - **Contracting/destructive:** dropping data, making a column required, removing an enum value,
      or changing a foreign-key/delete policy.
-5. For a new domain boundary or a decision with long-term alternatives, add an architecture
-   decision record under [`docs/adr/`](../adr/). Smaller changes belong directly in the data-model
-   document.
+5. For a new domain boundary or a decision with long-term alternatives, follow the architecture
+   decision policy under [`docs/architecture/decisions/`](../architecture/decisions/). Smaller
+   changes belong directly in the data-model document.
 
 ## Implementing The Change
 
@@ -180,8 +180,8 @@ Also verify the data path, not only compilation:
 5. Test a clean migration path with the committed migrations before release. Do not use
    `pnpm db:clear` against a database whose local data needs to be preserved.
 
-For production, take an appropriate backup, use `pnpm db:migrate:deploy`, monitor migration time
-and application errors, and verify the backfill/invariants after deployment.
+Production migration, backup, monitoring, and recovery procedures belong in the
+[deployment runbook](../deployment/vps-nginx.md).
 
 ## Pull Request Checklist
 

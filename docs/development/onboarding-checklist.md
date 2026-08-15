@@ -35,12 +35,14 @@ Use this checklist when a new engineer joins the project.
 
 ## Project Context
 
+- [ ] Read `docs/development/contributing.md`.
+- [ ] Read `docs/development/testing.md`.
+- [ ] Read `docs/development/security.md`.
 - [ ] Read `docs/architecture/overview.md`.
 - [ ] Read `docs/architecture/data-model.md`.
+- [ ] Read `docs/architecture/decisions/README.md`.
 - [ ] Read `docs/development/database-changes.md` before making a database change.
 - [ ] Read `docs/architecture/device-protocol.md`.
-- [ ] Read `CONTRIBUTING.md`.
-- [ ] Read `SECURITY.md`.
 
 ## Before First Pull Request
 

@@ -35,6 +35,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Documentation
+        run: pnpm docs:check
+
       - name: Unit tests (Vitest)
         run: pnpm test:unit
 
