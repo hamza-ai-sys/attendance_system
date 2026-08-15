@@ -160,7 +160,7 @@ pnpm --filter @attendance/db exec prisma validate
 pnpm db:generate
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 pnpm format:check
 ```
@@ -174,7 +174,7 @@ Also verify the data path, not only compilation:
 4. Run the E2E suite when a user-visible workflow, authorization query, or seed fixture changes:
 
    ```bash
-   pnpm e2e
+   pnpm test:e2e
    ```
 
 5. Test a clean migration path with the committed migrations before release. Do not use

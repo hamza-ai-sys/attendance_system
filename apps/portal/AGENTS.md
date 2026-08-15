@@ -34,4 +34,4 @@
 - Preserve keyboard access, labels, focus behavior, responsive layouts, and readable errors.
 - Test pure filters, calculations, mapping, and permission decisions directly. Add integration/E2E
   coverage for database, session, tenant, entitlement, and routing behavior.
-- Run focused portal tests plus root verification. Run `pnpm e2e` for critical user journeys.
+- Run focused portal tests plus root verification. Run `pnpm test:e2e` for critical user journeys.

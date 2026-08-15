@@ -21,10 +21,10 @@
 - [ ] Focused tests added/updated and passing
 - [ ] `pnpm lint`
 - [ ] `pnpm typecheck`
-- [ ] `pnpm test`
+- [ ] `pnpm test:unit`
 - [ ] `pnpm build`
 - [ ] `pnpm format:check`
-- [ ] `pnpm e2e` (if a critical user workflow changed)
+- [ ] `pnpm test:e2e` (if a critical user workflow changed)
 - [ ] `pnpm firmware:build` (if firmware changed)
 
 Record commands actually run, results, and any skipped/blocked check with its reason:

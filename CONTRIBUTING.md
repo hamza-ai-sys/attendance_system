@@ -49,7 +49,7 @@ Run the same checks CI runs:
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 ```
 

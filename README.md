@@ -52,7 +52,8 @@ The full command reference is in `docs/development/getting-started.md`.
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
+pnpm test:e2e
 pnpm build
 pnpm format
 pnpm db:studio

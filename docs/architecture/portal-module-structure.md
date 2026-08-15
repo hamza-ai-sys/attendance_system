@@ -103,7 +103,7 @@ checks before opening a pull request:
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 ```
 

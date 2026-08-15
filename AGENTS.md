@@ -124,12 +124,12 @@ pnpm --filter @attendance/db exec prisma validate
 pnpm db:generate
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 pnpm format:check
 ```
 
-- Run `pnpm e2e` for critical authentication, tenant, employee, attendance, leave, approval,
+- Run `pnpm test:e2e` for critical authentication, tenant, employee, attendance, leave, approval,
   entitlement, subscription, or other user-visible workflow changes.
 - Run `pnpm firmware:test` and `pnpm firmware:build` for firmware changes; run device tests when
   hardware is available.
