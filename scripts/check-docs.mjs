@@ -54,6 +54,18 @@ function checkLocalLinks(markdownFiles) {
   }
 }
 
+function checkPackageManagerVersionReferences(markdownFiles) {
+  const hardcodedPnpmVersion = /\bpnpm(?:\s+version)?\s+v?\d+\.\d+(?:\.\d+)?\b/iu;
+
+  for (const markdownFile of markdownFiles) {
+    if (hardcodedPnpmVersion.test(readFileSync(markdownFile, "utf8"))) {
+      errors.push(
+        `${display(markdownFile)} hardcodes a pnpm version; refer to package.json#packageManager instead`
+      );
+    }
+  }
+}
+
 function checkDocumentationLayout() {
   const allowedCategories = new Set(["architecture", "deployment", "development", "product"]);
 
@@ -122,6 +134,7 @@ function checkDecisions() {
 const markdownFiles = collectMarkdownFiles(repositoryRoot);
 checkDocumentationLayout();
 checkLocalLinks(markdownFiles);
+checkPackageManagerVersionReferences(markdownFiles);
 checkDecisions();
 
 if (errors.length > 0) {

@@ -17,7 +17,8 @@ The repo is a pnpm monorepo with:
 Install these before starting:
 
 - Node.js 24 or newer.
-- pnpm 11.10.0 through Corepack.
+- Corepack, enabled so it uses the exact pnpm version pinned by the root `package.json`
+  `packageManager` field. Do not install or document a separate global pnpm version.
 - Docker Desktop or Docker Engine with the Compose plugin.
 - Git.
 - VS Code is recommended.
@@ -34,6 +35,7 @@ Recommended VS Code extensions are listed in `.vscode/extensions.json`.
 From the repo root:
 
 ```bash
+corepack enable
 pnpm install
 cp .env.dev.example .env
 cp apps/portal/.env.dev.example apps/portal/.env

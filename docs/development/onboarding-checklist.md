@@ -8,7 +8,7 @@ Use this checklist when a new engineer joins the project.
 - [ ] Docker installed and running.
 - [ ] Node.js 24+ installed.
 - [ ] Corepack enabled.
-- [ ] pnpm available.
+- [ ] pnpm resolves to the version pinned by the root `package.json` `packageManager` field.
 - [ ] VS Code recommended extensions installed.
 - [ ] PlatformIO installed if working on firmware.
 
