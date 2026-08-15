@@ -18,8 +18,8 @@ shape of the data and the safe path from an existing database to that shape.
    - **Contracting/destructive:** dropping data, making a column required, removing an enum value,
      or changing a foreign-key/delete policy.
 5. For a new domain boundary or a decision with long-term alternatives, add an architecture
-   decision record under `docs/architecture/decisions/` (create the directory when the first ADR
-   is needed). Smaller changes belong directly in the data-model document.
+   decision record under [`docs/adr/`](../adr/). Smaller changes belong directly in the data-model
+   document.
 
 ## Implementing The Change
 
@@ -160,7 +160,7 @@ pnpm --filter @attendance/db exec prisma validate
 pnpm db:generate
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 pnpm format:check
 ```
@@ -174,7 +174,7 @@ Also verify the data path, not only compilation:
 4. Run the E2E suite when a user-visible workflow, authorization query, or seed fixture changes:
 
    ```bash
-   pnpm e2e
+   pnpm test:e2e
    ```
 
 5. Test a clean migration path with the committed migrations before release. Do not use

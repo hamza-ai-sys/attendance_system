@@ -52,7 +52,8 @@ The full command reference is in `docs/development/getting-started.md`.
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
+pnpm test:e2e
 pnpm build
 pnpm format
 pnpm db:studio
@@ -87,6 +88,8 @@ See `docs/deployment/vps-nginx.md` for the full runbook.
 - `docs/architecture/data-model.md`: database domains, relationships, invariants, and known gaps.
 - `docs/development/database-changes.md`: required schema, migration, seed, documentation, and verification workflow.
 - `docs/development/onboarding-checklist.md`: checklist for new engineers.
+- `docs/product/feature-catalog.md`: product scope, current implementation status, feature definitions, and packaging hypothesis.
+- `docs/product/roadmap-2-month.md`: August 17 through October 16, 2026 delivery roadmap, weekly goals, and launch gates.
 - `CONTRIBUTING.md`: pull request and contribution expectations.
 - `SECURITY.md`: secrets, device request security, and production safety rules.
 

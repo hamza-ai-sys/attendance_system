@@ -160,9 +160,10 @@ pnpm docker:dev:down
 | `pnpm db:studio`            | Open Prisma Studio.                                           |
 | `pnpm lint`                 | Run ESLint through Turbo.                                     |
 | `pnpm typecheck`            | Run TypeScript checks through Turbo.                          |
-| `pnpm test`                 | Run all TypeScript tests and generate coverage.               |
-| `pnpm e2e`                  | Run portal E2E tests with a fresh isolated database.          |
-| `pnpm e2e:install`          | Install the Chromium browser used by Playwright.              |
+| `pnpm test:unit`            | Run the Vitest unit and service-level test suites.            |
+| `pnpm test:unit:coverage`   | Run the Vitest suites and enforce coverage thresholds.        |
+| `pnpm test:e2e`             | Run Playwright E2E tests with a fresh isolated database.      |
+| `pnpm test:e2e:install`     | Install the Chromium browser used by Playwright.              |
 | `pnpm build`                | Build all packages/apps.                                      |
 | `pnpm format`               | Format the repo with Prettier.                                |
 | `pnpm firmware:build`       | Build the ESP32 firmware.                                     |
@@ -188,7 +189,7 @@ Before opening a pull request, run:
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
+pnpm test:unit
 pnpm build
 ```
 
@@ -197,8 +198,8 @@ pnpm build
 Install the Playwright browser once, then run the E2E suite:
 
 ```bash
-pnpm e2e:install
-pnpm e2e
+pnpm test:e2e:install
+pnpm test:e2e
 ```
 
 The E2E runner starts PostgreSQL from `docker-compose.e2e.yml` on port `55432`, applies
@@ -210,11 +211,11 @@ named volume are not used or modified.
 Override the default ports when they are already occupied:
 
 ```bash
-E2E_POSTGRES_PORT=55433 E2E_PORTAL_PORT=3101 pnpm e2e
+E2E_POSTGRES_PORT=55433 E2E_PORTAL_PORT=3101 pnpm test:e2e
 ```
 
-`pnpm test` prints a consolidated coverage summary and writes the browsable HTML report to
-`coverage/index.html`. The command fails if coverage drops below the thresholds in
+`pnpm test:unit:coverage` prints a consolidated coverage summary and writes the browsable HTML
+report to `coverage/index.html`. The command fails if coverage drops below the thresholds in
 `vitest.config.ts`. Firmware logic tests use PlatformIO and remain available through
 `pnpm firmware:test`; V8 coverage cannot instrument ESP32 C++.
 

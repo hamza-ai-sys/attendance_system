@@ -29,7 +29,7 @@ Use this checklist when a new engineer joins the project.
 
 - [ ] Run `pnpm lint`.
 - [ ] Run `pnpm typecheck`.
-- [ ] Run `pnpm test`.
+- [ ] Run `pnpm test:unit`.
 - [ ] Run `pnpm build`.
 - [ ] Run `pnpm firmware:build` if working on firmware.
 
