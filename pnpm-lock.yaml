@@ -137,8 +137,8 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0
       nodemailer:
-        specifier: ^6.10.1
-        version: 6.10.1
+        specifier: ^9.0.5
+        version: 9.0.5
       pino:
         specifier: ^10.3.1
         version: 10.3.1
@@ -1915,8 +1915,8 @@ packages:
     resolution: {integrity: sha512-Si/bzYiKRHOB8/a99T2+SDGN582ONDMSTlJr5oCkT6GtnqPjZ2s10eoQRYkW9ZHwjVxONL+W8Fb+qR0AHMQsdg==}
     engines: {node: '>=20'}
 
-  nodemailer@6.10.1:
-    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+  nodemailer@9.0.5:
+    resolution: {integrity: sha512-wvjiKvjczmsN7U/8006JOdXubgBk2XFAbioDMbT+sM7cPs0QrhJTa6KBRX7P5REGGkDcLUz/EarWidb8G8C1jQ==}
     engines: {node: '>=6.0.0'}
 
   object-inspect@1.13.4:
@@ -4059,7 +4059,7 @@ snapshots:
 
   node-cron@4.6.0: {}
 
-  nodemailer@6.10.1: {}
+  nodemailer@9.0.5: {}
 
   object-inspect@1.13.4: {}
 
