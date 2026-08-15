@@ -18,8 +18,8 @@ shape of the data and the safe path from an existing database to that shape.
    - **Contracting/destructive:** dropping data, making a column required, removing an enum value,
      or changing a foreign-key/delete policy.
 5. For a new domain boundary or a decision with long-term alternatives, add an architecture
-   decision record under `docs/architecture/decisions/` (create the directory when the first ADR
-   is needed). Smaller changes belong directly in the data-model document.
+   decision record under [`docs/adr/`](../adr/). Smaller changes belong directly in the data-model
+   document.
 
 ## Implementing The Change
 

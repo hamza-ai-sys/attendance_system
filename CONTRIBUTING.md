@@ -1,5 +1,20 @@
 # Contributing
 
+## AI-Assisted Development
+
+AI-assisted changes must follow the canonical root and directory-specific `AGENTS.md` files.
+
+- Codex loads the `AGENTS.md` hierarchy directly.
+- Claude Code loads the checked-in `CLAUDE.md` adapters, which import the corresponding
+  `AGENTS.md` files.
+- Antigravity loads `.agents/rules/project-governance.md`, which requires the same instruction
+  hierarchy and task-specific documentation.
+
+Instruction files guide the tools; they do not replace engineering review. The pull request author
+is responsible for reading all generated code, validating assumptions, running applicable checks,
+and reporting failures or skipped verification accurately. Do not merge generated code merely
+because an agent reports success.
+
 ## Local Setup
 
 Read `docs/development/getting-started.md` before starting. The recommended daily workflow
