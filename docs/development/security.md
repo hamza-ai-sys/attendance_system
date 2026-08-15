@@ -27,7 +27,7 @@
 - Support explicit session revocation and credential rotation.
 - Apply rate limits to authentication, device, file, export, and other abuse-sensitive endpoints.
 - Sign device requests exactly as specified in
-  [`../architecture/device-protocol.md`](../architecture/device-protocol.md).
+  [`../architecture/attendance-device-api.md`](../architecture/attendance-device-api.md).
 - Never expose stored device-key hashes or signature material.
 
 ## Files, Audit, and External Effects

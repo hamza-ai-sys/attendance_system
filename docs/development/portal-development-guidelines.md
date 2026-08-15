@@ -1,4 +1,4 @@
-# Portal Module Structure
+# Portal Development Guidelines
 
 Portal routes should be organized as small, feature-local modules. The route file coordinates
 authentication, authorization, data loading, and rendering; it should not contain the detailed UI

@@ -226,8 +226,8 @@ Important app-owned values:
 
 Read the database documents before changing persisted data:
 
-- [`docs/architecture/data-model.md`](../architecture/data-model.md) explains model ownership,
-  relationships, invariants, tenant boundaries, and known gaps.
+- [`docs/architecture/database-architecture.md`](../architecture/database-architecture.md)
+  explains model ownership, relationships, invariants, tenant boundaries, and known gaps.
 - [`docs/development/database-changes.md`](database-changes.md) defines the mandatory migration,
   seed, documentation, and verification workflow.
 
@@ -289,7 +289,7 @@ Device requests must include:
 The HMAC signing contract is documented in:
 
 ```text
-docs/architecture/device-protocol.md
+docs/architecture/attendance-device-api.md
 ```
 
 The development seed creates:
@@ -465,7 +465,7 @@ Then rerun the command from the repo root.
 ### Device requests get `invalid_signature`
 
 Check that the device signed the exact canonical string from
-`docs/architecture/device-protocol.md`. The raw request body, path, method, timestamp, and
+`docs/architecture/attendance-device-api.md`. The raw request body, path, method, timestamp, and
 secret must all match.
 
 ### `Arduino.h` is missing

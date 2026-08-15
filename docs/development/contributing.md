@@ -42,8 +42,7 @@ author remains responsible for reviewing generated code and verifying correctnes
 - Move code into a shared package only when at least two consumers need the same contract or pure
   logic.
 
-Portal modules must follow
-[`../architecture/portal-module-structure.md`](../architecture/portal-module-structure.md).
+Portal modules must follow [`portal-development-guidelines.md`](portal-development-guidelines.md).
 Database changes must follow [`database-changes.md`](database-changes.md).
 
 ## Environment and Secrets

@@ -59,4 +59,4 @@ The fingerprint templates remain inside the scanner. The firmware only sends mat
 template IDs to `device-gateway`.
 
 Device requests must be signed with the HMAC protocol documented in
-`../../docs/architecture/device-protocol.md`.
+`../../docs/architecture/attendance-device-api.md`.

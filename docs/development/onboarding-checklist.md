@@ -38,11 +38,11 @@ Use this checklist when a new engineer joins the project.
 - [ ] Read `docs/development/contributing.md`.
 - [ ] Read `docs/development/testing.md`.
 - [ ] Read `docs/development/security.md`.
-- [ ] Read `docs/architecture/overview.md`.
-- [ ] Read `docs/architecture/data-model.md`.
+- [ ] Read `docs/architecture/system-overview.md`.
+- [ ] Read `docs/architecture/database-architecture.md`.
 - [ ] Read `docs/architecture/decisions/README.md`.
 - [ ] Read `docs/development/database-changes.md` before making a database change.
-- [ ] Read `docs/architecture/device-protocol.md`.
+- [ ] Read `docs/architecture/attendance-device-api.md`.
 
 ## Before First Pull Request
 

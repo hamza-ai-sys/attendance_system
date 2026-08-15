@@ -6,8 +6,8 @@ shape of the data and the safe path from an existing database to that shape.
 
 ## Before Editing
 
-1. Read [`docs/architecture/data-model.md`](../architecture/data-model.md) and the affected Prisma
-   models.
+1. Read [`docs/architecture/database-architecture.md`](../architecture/database-architecture.md)
+   and the affected Prisma models.
 2. Identify the owning domain and lifecycle. Decide whether the value belongs to a `Person`,
    `UserAccount`, `OrganizationMembership`, `Employment`, or a feature-owned model.
 3. Search all readers and writers of the affected models, including portal queries/actions,
@@ -19,7 +19,7 @@ shape of the data and the safe path from an existing database to that shape.
      or changing a foreign-key/delete policy.
 5. For a new domain boundary or a decision with long-term alternatives, follow the architecture
    decision policy under [`docs/architecture/decisions/`](../architecture/decisions/). Smaller
-   changes belong directly in the data-model document.
+   changes belong directly in the database architecture document.
 
 ## Implementing The Change
 
@@ -133,7 +133,8 @@ be created by a migration or an explicitly managed production operation.
 Every database change must update documentation when it changes meaning, not merely generated
 types.
 
-Update [`docs/architecture/data-model.md`](../architecture/data-model.md) for any changed:
+Update [`docs/architecture/database-architecture.md`](../architecture/database-architecture.md)
+for any changed:
 
 - model responsibility or field ownership;
 - relationship, cardinality, or lifecycle;
@@ -197,7 +198,7 @@ Copy the relevant items into the pull request description:
 - [ ] Foreign keys, indexes, uniqueness, tenant boundaries, and delete behavior were reviewed.
 - [ ] Development seed, E2E seed, and clear script were reviewed/updated.
 - [ ] All application readers, writers, types, and tests were updated.
-- [ ] `docs/architecture/data-model.md` and affected feature docs were updated.
+- [ ] `docs/architecture/database-architecture.md` and affected feature docs were updated.
 - [ ] Deployment compatibility and forward-recovery plan are described.
 - [ ] Prisma validation, lint, typecheck, tests, build, and formatting checks pass.
 ```

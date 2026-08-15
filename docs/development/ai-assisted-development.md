@@ -22,11 +22,11 @@ Before planning or editing, read the documents that own the affected contract:
 | Change                                   | Required documents                                                                               |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Product behavior or roadmap              | `docs/product/feature-catalog.md` and, when prioritizing work, `docs/product/roadmap-2-month.md` |
-| Cross-service or structural architecture | `docs/architecture/overview.md` and `docs/architecture/decisions/`                               |
-| Database or persisted domain             | `docs/architecture/data-model.md` and `docs/development/database-changes.md`                     |
-| Portal module                            | `docs/architecture/portal-module-structure.md`                                                   |
-| Device gateway or firmware               | `docs/architecture/device-protocol.md`                                                           |
-| Approval behavior                        | `docs/architecture/approval-workflow.md`                                                         |
+| Cross-service or structural architecture | `docs/architecture/system-overview.md` and `docs/architecture/decisions/`                        |
+| Database or persisted domain             | `docs/architecture/database-architecture.md` and `docs/development/database-changes.md`          |
+| Portal module                            | `docs/development/portal-development-guidelines.md`                                              |
+| Device gateway or firmware               | `docs/architecture/attendance-device-api.md`                                                     |
+| Approval behavior                        | `docs/product/attendance-approval-workflow.md`                                                   |
 | Development security                     | `docs/development/security.md`                                                                   |
 | Production/deployment                    | `docs/deployment/README.md` and the applicable runbook                                           |
 

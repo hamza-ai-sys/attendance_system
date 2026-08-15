@@ -1,4 +1,4 @@
-# Approval Workflow
+# Attendance Approval Workflow
 
 Manual attendance requests are sequential.
 
